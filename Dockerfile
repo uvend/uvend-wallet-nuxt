@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install dependencies (includes dev deps by default)
 COPY package*.json ./
-RUN npm ci
+RUN npm install --no-audit --no-fund
 
 # Copy source and build production output
 COPY . .
