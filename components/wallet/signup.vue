@@ -126,6 +126,18 @@ export default{
                 const refresh_token = response.refresh_token;
                 localStorage.setItem('wallet-access-token',access_token);
                 localStorage.setItem('wallet-refresh-token',refresh_token);
+                
+                // Fetch meters immediately after successful signup
+                try {
+                    const metersStore = useMetersStore();
+                    // Clear any existing meters and fetch fresh ones
+                    metersStore.clearMeters();
+                    await metersStore.fetchMeters();
+                } catch (error) {
+                    console.error('Error fetching meters on signup:', error);
+                    // Don't block navigation if meters fetch fails
+                }
+                
                 return navigateTo('/');
             }catch(e){
                 this.$toast({

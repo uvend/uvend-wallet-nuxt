@@ -94,8 +94,8 @@
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-xs font-medium text-gray-700">Actions</label>
-                        <WalletPopup buttonLabel="Add Meter">
-                            <WalletAddMeter @success="fetchMeters()"/>
+                        <WalletPopup buttonLabel="Add Meter" v-model="showAddMeterDialog">
+                            <WalletAddMeter @success="onMeterAdded()"/>
                         </WalletPopup>
                     </div>
                 </div>
@@ -492,7 +492,9 @@ definePageMeta({
             },
             // Meter filter
             selectedMeterFilter: 'all',
-            allMeters: []
+            allMeters: [],
+            // Add meter dialog
+            showAddMeterDialog: false
         }
     },
     methods: {
@@ -655,9 +657,19 @@ definePageMeta({
         async fetchMeters() {
             this.metersLoading = true;
             try {
-                const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`)
-                this.allMeters = response.meters;
-                this.meters = response.meters;
+                const metersStore = useMetersStore();
+                // Fetch from store if already loaded, otherwise fetch from API
+                if (metersStore.isLoaded && metersStore.meters.length > 0) {
+                    this.allMeters = [...metersStore.meters];
+                    this.meters = [...metersStore.meters];
+                } else {
+                    const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`)
+                    const meters = response.meters || [];
+                    // Update store with fetched meters
+                    metersStore.setMeters(meters);
+                    this.allMeters = [...meters];
+                    this.meters = [...meters];
+                }
             } catch (error) {
                 console.error('Error fetching meters:', error);
                 this.$toast({
@@ -667,6 +679,22 @@ definePageMeta({
                 });
             } finally {
                 this.metersLoading = false;
+            }
+        },
+        
+        async refreshMeters() {
+            // Refresh meters from API and update store
+            const metersStore = useMetersStore();
+            try {
+                const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`)
+                const meters = response.meters || [];
+                // Update store with fresh meters
+                metersStore.setMeters(meters);
+                this.allMeters = [...meters];
+                // Apply current filter
+                this.filterMeters();
+            } catch (error) {
+                console.error('Error refreshing meters:', error);
             }
         },
         
@@ -823,10 +851,30 @@ definePageMeta({
                    transaction.latestReading.meterState.State !== null && 
                    transaction.latestReading.meterState.State !== undefined &&
                    (transaction.latestReading.meterState.State === 0 || transaction.latestReading.meterState.State === 1);
+        },
+        
+        onMeterAdded() {
+            console.log('onMeterAdded called - refreshing page');
+            
+            // Close the dialog first
+            this.showAddMeterDialog = false;
+            
+            // Show success toast
+            this.$toast({
+                title: 'Meter Added Successfully',
+                description: 'Refreshing page to load updated meters...',
+                variant: 'default'
+            });
+            
+            // Refresh the page after a brief delay to show the toast
+            setTimeout(() => {
+                console.log('Executing page refresh');
+                location.reload();
+            }, 1000);
         }
     },
-
-    async mounted() {
+        
+        async mounted() {
         this.setDateRange('30days');
         // Fetch both transactions and meters data
         await Promise.all([

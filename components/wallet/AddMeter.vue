@@ -1,6 +1,12 @@
 <template>
-  <div v-if="meterAddedSuccessfully">
-    Meter added succesfully
+  <div v-if="meterAddedSuccessfully" class="flex flex-col items-center justify-center py-8 gap-4">
+    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+      <Icon name="lucide:check-circle" class="w-8 h-8 text-green-600"/>
+    </div>
+    <div class="text-center">
+      <h3 class="text-lg font-semibold text-gray-900 mb-1">Meter Added Successfully!</h3>
+      <p class="text-sm text-gray-600">Your meter is being refreshed...</p>
+    </div>
   </div>
   <div v-else>
     <Form class="flex flex-col gap-2 p-4">
@@ -84,23 +90,47 @@ export default{
             }
           })
           if(response.id){
+            // Optimistically update the meters store immediately
+            const metersStore = useMetersStore();
+            const newMeter = {
+              id: response.id,
+              meterNumber: this.meterNumber.trim(),
+              name: this.meterName,
+              utilityType: response.utilityType || null,
+              favourite: 0,
+              ...response
+            };
+            metersStore.addMeter(newMeter);
+            
+            // Reset form state
+            this.meterNumber = null;
+            this.meterName = null;
+            this.isValid = false;
             this.dialogOpen = false;
             this.meterAddedSuccessfully = true;
-            this.$emit('success')
+            
+            // Emit success event to parent
+            this.$emit('success');
           }
           this.isLoading = false
         },
     },
     watch: {
-    dialogOpen(newVal) {
-      if (!newVal) {
-        // Reset form when dialog closes
-        this.meterNumber = null;
-        this.meterName = null;
-        this.isValid = false;
+      dialogOpen(newVal) {
+        if (!newVal) {
+          // Reset form when dialog closes
+          this.meterNumber = null;
+          this.meterName = null;
+          this.isValid = false;
+          this.meterAddedSuccessfully = false;
+        }
       }
+    },
+    // Watch for parent dialog closing to reset state
+    mounted() {
+      // Reset success state when component is mounted (dialog opens)
+      this.meterAddedSuccessfully = false;
     }
-  }
 }
 </script>
 <style>

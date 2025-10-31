@@ -35,13 +35,40 @@
                     <p class="text-xs text-white/90 font-medium">Account</p>
                     <p class="text-sm tracking-widest font-bold">{{ maskedAccount }}</p>
                 </div>
-                <button 
-                    class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg"
-                    @click="handleTopUp"
-                >
-                    <span class="relative z-10">Top up</span>
-                    <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-white opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
-                </button>
+                <div class="flex flex-col items-end gap-1">
+                    <!-- Loading state - shown while meters are being fetched -->
+                    <button 
+                        v-if="metersLoading"
+                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 opacity-75 transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md cursor-wait"
+                        disabled
+                        title="Loading meters..."
+                    >
+                        <Icon name="lucide:loader-2" class="w-3 h-3 mr-1.5 animate-spin relative z-10"/>
+                        <span class="relative z-10">Loading...</span>
+                    </button>
+                    <!-- Top up button - shown when meters exist -->
+                    <button 
+                        v-else-if="hasMeters"
+                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg"
+                        @click="handleTopUp"
+                        title="Top up your wallet"
+                    >
+                        <Icon name="lucide:wallet" class="w-3 h-3 mr-1.5 relative z-10"/>
+                        <span class="relative z-10">Top up</span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-white opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                    </button>
+                    <!-- Add meter button - shown when no meters exist (and loaded) -->
+                    <button 
+                        v-else
+                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg"
+                        @click="navigateToTransactions"
+                        title="Add a meter to get started"
+                    >
+                        <Icon name="lucide:plus-circle" class="w-3 h-3 mr-1.5 relative z-10"/>
+                        <span class="relative z-10">Add Meter</span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-white opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                    </button>
+                </div>
             </div>
 
             <!-- Enhanced decorative elements -->
@@ -232,6 +259,16 @@ export default {
         },
         maskedAccount(){
             return `${this.accountNumber}`
+        },
+        hasMeters() {
+            const metersStore = useMetersStore();
+            // Only return true if meters are loaded AND we have meters
+            return metersStore.isLoaded && metersStore.meters && metersStore.meters.length > 0;
+        },
+        metersLoading() {
+            const metersStore = useMetersStore();
+            // Show loading if we haven't loaded yet or are currently loading
+            return !metersStore.isLoaded || metersStore.isLoading;
         }
     },
     methods: {
@@ -240,6 +277,9 @@ export default {
             this.currentTab = 'payment';
             this.amount = 0.00;
             this.getCards();
+        },
+        navigateToTransactions(){
+            this.$router.push('/transactions');
         },
         async addCard(){
             try {

@@ -261,6 +261,13 @@ export default{
 		toggleNav(){
 			this.isNavOpen = false
 		}
+	},
+	async mounted() {
+		// Load meters once when wallet layout is mounted
+		const metersStore = useMetersStore();
+		if (!metersStore.isLoaded && !metersStore.isLoading) {
+			await metersStore.fetchMeters();
+		}
 	}
 }
 </script>
