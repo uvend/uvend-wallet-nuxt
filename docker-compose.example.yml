@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  wallet:
+    image: ${DOCKERHUB_USERNAME}/${DOCKERHUB_REPO}:${TAG:-latest}
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: unless-stopped
+
+

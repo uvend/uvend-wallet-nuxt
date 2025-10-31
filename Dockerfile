@@ -1,21 +1,27 @@
-FROM node:20-alpine
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy package files
+# Install dependencies (includes dev deps by default)
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm install
-
-# Copy project files
+# Copy source and build production output
 COPY . .
-
-# Build the app
 RUN npm run build
 
-# Expose port
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+ 
+# Copy runtime needs for both modes
+COPY --from=build /app/node_modules /app/node_modules
+COPY --from=build /app/package*.json /app/
+COPY . .
+COPY --from=build /app/.output /app/.output
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 3000
 
-# Start the app
-CMD ["npm", "run", "dev"]
+ENTRYPOINT ["/entrypoint.sh"]
