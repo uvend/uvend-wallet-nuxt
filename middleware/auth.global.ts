@@ -2,20 +2,23 @@ export default defineNuxtRouteMiddleware((to, from) => {
     
     //console.log('middleware', APP_ENV)
     const path = to.path.split('/');
-    if (to.meta.layout !== 'noauth') {
+    const layoutName: string | undefined = typeof to.meta.layout === 'string' ? (to.meta.layout as string) : undefined
+    const isNoauthLayout = to.meta.layout === false || layoutName === 'noauth'
+    if (!isNoauthLayout) {
+        const { public: { APP_ENV: appEnv } } = useRuntimeConfig()
         let redirect = false;
         const auth = localStorage.getItem('token')
         const walletAuth = localStorage.getItem('wallet-access-token');
-        if (!auth && APP_ENV == '') {
+        if (!auth && appEnv == '') {
             console.error('You are not logged in to app')
             return navigateTo('/login')
-        }else if(!walletAuth && APP_ENV == 'wallet'){
+        }else if(!walletAuth && appEnv == 'wallet'){
             console.error('You are not logged in to wallet')
             return navigateTo('/login')
         }
     }
-
-    if(['wallet'].includes(APP_ENV)){
+    const { public: { APP_ENV: appEnv } } = useRuntimeConfig()
+    if(['wallet'].includes(appEnv)){
         return;
     }
 

@@ -1,13 +1,16 @@
 version: '3.8'
 
 services:
-  wallet:
-    image: ${DOCKERHUB_USERNAME}/${DOCKERHUB_REPO}:${NODE_ENV:-production}
-    environment:
-      - NODE_ENV=production
-      - HOST=0.0.0.0
+  nuxt:
+    image: ${DOCKERHUB_USERNAME}/${DOCKERHUB_REPO}:${TAG:-main}
+    platform: linux/amd64
     env_file:
       - .env
+    environment:
+      - NODE_ENV=production
+      - APP_ENV=${APP_ENV:-production}
+      - HOST=${HOST:-0.0.0.0}
+      - PORT=${PORT:-3000}
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     restart: unless-stopped

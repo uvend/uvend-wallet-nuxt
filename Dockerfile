@@ -19,9 +19,14 @@ COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/package*.json /app/
 COPY . .
 COPY --from=build /app/.output /app/.output
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+ 
 
-EXPOSE 3000
+ARG PORT=${PORT:-3000}
+ARG HOST=${HOST:-0.0.0.0}
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENV PORT=${PORT:-3000}
+ENV HOST=${HOST:-0.0.0.0}
+
+EXPOSE ${PORT}
+
+CMD ["node", ".output/server/index.mjs"]
