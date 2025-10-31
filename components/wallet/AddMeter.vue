@@ -90,18 +90,6 @@ export default{
             }
           })
           if(response.id){
-            // Optimistically update the meters store immediately
-            const metersStore = useMetersStore();
-            const newMeter = {
-              id: response.id,
-              meterNumber: this.meterNumber.trim(),
-              name: this.meterName,
-              utilityType: response.utilityType || null,
-              favourite: 0,
-              ...response
-            };
-            metersStore.addMeter(newMeter);
-            
             // Reset form state
             this.meterNumber = null;
             this.meterName = null;
@@ -110,6 +98,7 @@ export default{
             this.meterAddedSuccessfully = true;
             
             // Emit success event to parent
+            // Don't update store here - let the page refresh fetch fresh data from server
             this.$emit('success');
           }
           this.isLoading = false
