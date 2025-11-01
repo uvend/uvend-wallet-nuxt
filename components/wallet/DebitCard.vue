@@ -283,7 +283,7 @@ export default {
         },
         async addCard(){
             try {
-                const response = await useWalletAuthFetch(`${WALLET_API_URL}/pay/addCard`)
+                const response = await useWalletAuthFetch(`/pay/addCard`)
                 this.payRequestId = response.PAY_REQUEST_ID
                 this.checksum = response.CHECKSUM
                 this.currentTab = 'paygate'
@@ -293,7 +293,7 @@ export default {
         },
         async getCards(primary = false){
             try {
-                const response = await useWalletAuthFetch(`${WALLET_API_URL}/pay/card`,{
+                const response = await useWalletAuthFetch(`/pay/card`,{
                     params: {
                         primary: primary
                     }
@@ -317,7 +317,7 @@ export default {
             if(!this.selectedCard && this.amount < 1) return;
             try{
                 this.isLoading = true;
-                let url = `${WALLET_API_URL}/pay/addFunds`;
+                let url = `/pay/addFunds`;
                 if(this.selectedCard){
                     url = `${url}/${this.selectedCard}`
                 }
@@ -339,7 +339,7 @@ export default {
         },
         async getWalletBalance(){
             try {
-                const response = await useWalletAuthFetch(`${WALLET_API_URL}/pay/balance`)
+                const response = await useWalletAuthFetch(`/pay/balance`)
                 this.actualBalance = Number(response.balance);
                 this.accountNumber = response.account
                 this.$emit('balance-updated', this.actualBalance);

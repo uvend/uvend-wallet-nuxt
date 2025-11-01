@@ -101,7 +101,7 @@ export default{
             }
             this.isLoading = true;
             try{
-                await useWalletAuthFetch(`${WALLET_API_URL}/auth/send-reset-code`,{
+                await useWalletAuthFetch(`/auth/send-reset-code`,{
                     method : "POST",
                     body: {
                         email : this.email,

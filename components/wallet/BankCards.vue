@@ -22,7 +22,7 @@ export default{
     },
     methods:{
         async getCards(primary = false){
-            const response = await useWalletAuthFetch(`${WALLET_API_URL}/pay/card`,{
+            const response = await useWalletAuthFetch(`/pay/card`,{
                 params: {
                     primary: primary
                 }

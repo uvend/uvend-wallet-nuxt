@@ -501,7 +501,7 @@ definePageMeta({
       async fetchTransactionsData() {
         this.isLoading = true;        
         try {
-                const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter/token/history`, {
+                const response = await useWalletAuthFetch(`/meter/token/history`, {
           })
           this.transactions = response.transactions;
           this.summary.totalSpent = Number(response.totalAmount).toFixed(2)
@@ -663,7 +663,7 @@ definePageMeta({
                     this.allMeters = [...metersStore.meters];
                     this.meters = [...metersStore.meters];
                 } else {
-                    const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`)
+                    const response = await useWalletAuthFetch(`/meter`)
                     const meters = response.meters || [];
                     // Update store with fetched meters
                     metersStore.setMeters(meters);
@@ -686,7 +686,7 @@ definePageMeta({
             // Refresh meters from API and update store
             const metersStore = useMetersStore();
             try {
-                const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`)
+                const response = await useWalletAuthFetch(`/meter`)
                 const meters = response.meters || [];
                 // Update store with fresh meters
                 metersStore.setMeters(meters);

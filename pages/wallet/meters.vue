@@ -471,7 +471,7 @@
       async fetchMeters() {
         this.isLoading = true;
         try {
-          const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`)
+          const response = await useWalletAuthFetch(`/meter`)
           //console.log(response)
           
           // Reset when API integrations are ready
@@ -490,7 +490,7 @@
       },
       async getMeterTransactions(){
         this.graphTransactions = []
-        const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter/token/history`,{
+        const response = await useWalletAuthFetch(`/meter/token/history`,{
           params: {
             meterNumber: this.selectedMeter.meterNumber
           }
@@ -523,7 +523,7 @@
       },
       async getMeterInfo(){
         const meterNumber = this.selectedMeter.meterNumber;
-        const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter/${meterNumber}/info`)
+        const response = await useWalletAuthFetch(`/meter/${meterNumber}/info`)
         console.log(response)
         this.meterInfo = response;
       }

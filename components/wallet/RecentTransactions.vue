@@ -277,7 +277,7 @@ async function fetchRecentTransactions() {
     isLoading.value = true
     try {
         // Fetch transactions data
-        const transactionsResponse = await useWalletAuthFetch(`${WALLET_API_URL}/meter/token/history`)
+        const transactionsResponse = await useWalletAuthFetch(`/meter/token/history`)
         
         // Store the totals from the response for potential future use
         const transactionTotals = {

@@ -53,13 +53,13 @@ export default{
     },
     methods:{
         async addCard(){
-            const response = await useWalletAuthFetch(`${WALLET_API_URL}/pay/addCard`)
+            const response = await useWalletAuthFetch(`/pay/addCard`)
             this.pay_requst_id = response.PAY_REQUEST_ID
             this.checksum = response.CHECKSUM
             this.tab = 'paygate'
         },
         async getCards(primary = false){
-            const response = await useWalletAuthFetch(`${WALLET_API_URL}/pay/card`,{
+            const response = await useWalletAuthFetch(`/pay/card`,{
                 params: {
                     primary: primary
                 }
@@ -78,7 +78,7 @@ export default{
         async addFunds(){
             if(!this.selectedCard && this.amount < 1) return;
             try{
-                let url = `${WALLET_API_URL}/pay/addFunds`;
+                let url = `/pay/addFunds`;
                 if(this.selectedCard){
                     url = `${url}/${this.selectedCard}`
                 }

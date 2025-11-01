@@ -21,7 +21,7 @@ export const useMetersStore = defineStore('meters', {
       
       this.isLoading = true;
       try {
-        const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`) as any;
+        const response = await useWalletAuthFetch(`/meter`) as any;
         this.meters = response?.meters || [];
         this.isLoaded = true;
       } catch (error) {

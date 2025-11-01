@@ -22,7 +22,7 @@ export default defineNuxtConfig({
   css: ['@/assets/css/tailwind.css'],
   vite: {
     define: {
-      WALLET_API_URL : JSON.stringify(process.env.NUXT_PUBLIC_WALLET_API_URL || process.env.WALLET_API_URL || ''),
+      WALLET_API_URL : JSON.stringify(process.env.WALLET_API_URL || ''),
       APP_BG_1: JSON.stringify(process.env.APP_BG_1 || ''),
       APP_BG_2: JSON.stringify(process.env.APP_BG_2 || ''),
       APP_BG_3: JSON.stringify(process.env.APP_BG_3 || ''),
@@ -57,7 +57,7 @@ export default defineNuxtConfig({
     // Public keys that are exposed to the client (runtime-configurable)
     public: {
       APP_ENV: 'wallet',
-      WALLET_API_URL: JSON.stringify(process.env.NUXT_PUBLIC_WALLET_API_URL || process.env.WALLET_API_URL || ''),
+      WALLET_API_URL: JSON.stringify(process.env.WALLET_API_URL || ''),
       APP_BG_1: JSON.stringify(process.env.APP_BG_1 || ''),
       APP_BG_2: JSON.stringify(process.env.APP_BG_2 || ''),
       APP_BG_3: JSON.stringify(process.env.APP_BG_3 || ''),
