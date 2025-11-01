@@ -23,11 +23,9 @@ COPY --from=build /app/.output /app/.output
 
 ARG PORT=${PORT:-3000}
 ARG HOST=${HOST:-0.0.0.0}
-ARG APP_ENV=${APP_ENV:-}
 
 ENV PORT=${PORT:-3000}
 ENV HOST=${HOST:-0.0.0.0}
-ENV APP_ENV=${APP_ENV:-}
 
 EXPOSE ${PORT}
 
