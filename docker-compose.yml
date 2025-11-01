@@ -5,12 +5,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file:
-      - .env
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
+      - WALLET_API_URL=${WALLET_API_URL:-}
+      - NUXT_PUBLIC_WALLET_API_URL=${WALLET_API_URL:-}
       - HOST=${HOST:-0.0.0.0}
       - PORT=${PORT:-3000}
+    env_file:
+      - .env
     restart: unless-stopped

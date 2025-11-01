@@ -24,6 +24,7 @@ export default defineNuxtConfig({
   css: ['@/assets/css/tailwind.css'],
   vite: {
     define: {
+<<<<<<< Updated upstream
       API_URL: JSON.stringify(process.env.API_URL || ''),
       VEND_URL: JSON.stringify(process.env.VEND_URL || ''),
       WALLET_API_URL : JSON.stringify(process.env.WALLET_API_URL || ''),
@@ -34,6 +35,9 @@ export default defineNuxtConfig({
       VEND_TerminalID: JSON.stringify(process.env.VEND_TerminalID || ''),
       VEND_OperatorID: JSON.stringify(process.env.VEND_OperatorID || ''),
       APP_LOGO: JSON.stringify(process.env.APP_LOGO || ''),
+=======
+      WALLET_API_URL : JSON.stringify(process.env.NUXT_PUBLIC_WALLET_API_URL || process.env.WALLET_API_URL || ''),
+>>>>>>> Stashed changes
       APP_BG_1: JSON.stringify(process.env.APP_BG_1 || ''),
       APP_BG_2: JSON.stringify(process.env.APP_BG_2 || ''),
       APP_BG_3: JSON.stringify(process.env.APP_BG_3 || ''),
@@ -69,6 +73,7 @@ export default defineNuxtConfig({
 
     // Public keys that are exposed to the client (runtime-configurable)
     public: {
+<<<<<<< Updated upstream
       APP_ENV: process.env.NUXT_PUBLIC_APP_ENV || process.env.APP_ENV || 'default',
       API_URL: process.env.NUXT_PUBLIC_API_URL || process.env.API_URL || '',
       VEND_URL: process.env.NUXT_PUBLIC_VEND_URL || process.env.VEND_URL || '',
@@ -87,6 +92,16 @@ export default defineNuxtConfig({
       APP_FONT_COLOR_2: process.env.NUXT_PUBLIC_APP_FONT_COLOR_2 || process.env.APP_FONT_COLOR_2 || '',
       APP_FONT_COLOR_3: process.env.NUXT_PUBLIC_APP_FONT_COLOR_3 || process.env.APP_FONT_COLOR_3 || '',
       CUSTOMER_API: process.env.NUXT_PUBLIC_CUSTOMER_API || process.env.CUSTOMER_API || ''
+=======
+      APP_ENV: 'wallet',
+      WALLET_API_URL: JSON.stringify(process.env.NUXT_PUBLIC_WALLET_API_URL || process.env.WALLET_API_URL || ''),
+      APP_BG_1: JSON.stringify(process.env.APP_BG_1 || ''),
+      APP_BG_2: JSON.stringify(process.env.APP_BG_2 || ''),
+      APP_BG_3: JSON.stringify(process.env.APP_BG_3 || ''),
+      APP_FONT_COLOR_1: JSON.stringify(process.env.APP_FONT_COLOR_1 || ''),
+      APP_FONT_COLOR_2: JSON.stringify(process.env.APP_FONT_COLOR_2 || ''),
+      APP_FONT_COLOR_3: JSON.stringify(process.env.APP_FONT_COLOR_3 || ''),
+>>>>>>> Stashed changes
     }
   },
   routeRules: {

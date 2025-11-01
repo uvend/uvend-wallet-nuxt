@@ -4,15 +4,16 @@ services:
   nuxt:
     image: ${DOCKERHUB_USERNAME}/${DOCKERHUB_REPO}:${TAG:-production}
     platform: linux/amd64
-    env_file:
-      - .env
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     environment:
       - NODE_ENV=${NODE_ENV:-production}
-      - APP_ENV=${APP_ENV:-}
+      - WALLET_API_URL=${WALLET_API_URL:-}
+      - NUXT_PUBLIC_WALLET_API_URL=${WALLET_API_URL:-}
       - HOST=${HOST:-0.0.0.0}
       - PORT=${PORT:-3000}
+    env_file:
+      - .env
     restart: unless-stopped
 
 
