@@ -217,7 +217,7 @@ export default {
     async fetchData() {
         this.isLoading = true;
         try {
-          const response = await useWalletAuthFetch(`${WALLET_API_URL}/pay/history`)
+          const response = await useWalletAuthFetch(`/pay/history`)
           this.fundingHistory = response.payments.reverse();
         } catch (error) {
           console.error('Error fetching payments:', error);

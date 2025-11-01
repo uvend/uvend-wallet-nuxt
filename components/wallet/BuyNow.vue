@@ -67,7 +67,7 @@ export default {
     async fetchMeters() {
       this.isLoading = true;
       try {
-        const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`)
+        const response = await useWalletAuthFetch(`/meter`)
         this.meters = response.meters; // Will be populated by API in the future
       } catch (error) {
         console.error('Error fetching meters:', error);
@@ -84,7 +84,7 @@ export default {
       this.vending = true;
       try {
         const id = this.value?.id ?? null
-        const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter/token/${id}`, {
+        const response = await useWalletAuthFetch(`/meter/token/${id}`, {
           method: 'POST',
           body: {
             amount: this.amount,

@@ -138,7 +138,7 @@ export default{
                 }
                 
                 this.isLoading = true;
-                const response = await useWalletAuthFetch(`${WALLET_API_URL}/auth/reset`,{
+                const response = await useWalletAuthFetch(`/auth/reset`,{
                     method : "POST",
                     body: {
                         password : this.password,

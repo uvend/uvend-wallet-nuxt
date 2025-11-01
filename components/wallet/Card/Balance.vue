@@ -28,7 +28,7 @@ export default{
     methods:{
         async getWalletBalance(){
             this.isLoading = true;
-            const response = await useWalletAuthFetch(`${WALLET_API_URL}/pay/balance`)
+            const response = await useWalletAuthFetch(`/pay/balance`)
             this.$store.balance = Number(response.balance).toFixed(2);
             this.isLoading = false;
         }

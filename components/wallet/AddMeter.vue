@@ -63,7 +63,7 @@ export default{
     methods:{
         async validateMeterNumber(){
             this.isLoading = true
-            const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter/valid`,{
+            const response = await useWalletAuthFetch(`/meter/valid`,{
                 params: {
                     meterNumber : this.meterNumber.trim()
                 }
@@ -81,7 +81,7 @@ export default{
         },
         async addNewMeter(){
           this.isLoading = true
-          const response = await useWalletAuthFetch(`${WALLET_API_URL}/meter`, {
+          const response = await useWalletAuthFetch(`/meter`, {
             method: "POST",
             body: {
               meterNumber : this.meterNumber.trim(),

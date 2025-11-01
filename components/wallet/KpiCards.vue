@@ -78,7 +78,7 @@ async function fetchKpiData() {
     isLoading.value = true
     try {
         // Fetch transactions data to get total amounts
-        const transactionsResponse = await useWalletAuthFetch(`${WALLET_API_URL}/meter/token/history`)
+        const transactionsResponse = await useWalletAuthFetch(`/meter/token/history`)
         
         // Use the totalAmount from the response instead of calculating
         totalSpent.value = parseFloat(transactionsResponse.totalAmount || 0)
@@ -87,7 +87,7 @@ async function fetchKpiData() {
 
         // For now, we'll use wallet balance as deposited amount
         // In a real scenario, you'd have separate deposit transactions
-        const balanceResponse = await useWalletAuthFetch(`${WALLET_API_URL}/pay/balance`)
+        const balanceResponse = await useWalletAuthFetch(`/pay/balance`)
         totalDeposited.value = parseFloat(balanceResponse.balance)
 
     } catch (error) {

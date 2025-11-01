@@ -114,7 +114,7 @@ export default{
             if(!this.valid()) return
             this.isLoading = true;
             try{
-                const response = await useWalletAuthFetch(`${WALLET_API_URL}/auth/create`,{
+                const response = await useWalletAuthFetch(`/auth/create`,{
                     method: "POST",
                     body : {
                         email : this.email,
