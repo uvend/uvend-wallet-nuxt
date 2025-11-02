@@ -33,6 +33,8 @@ jobs:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
+            type=raw,value=latest,enable={{branch=="main"}}
+            type=raw,value=latest,enable={{branch=="production"}}
 
       - name: Build and push
         uses: docker/build-push-action@v6
