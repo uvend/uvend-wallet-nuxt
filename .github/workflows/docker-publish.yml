@@ -2,7 +2,7 @@ name: Build and push Docker image
 
 on:
   push:
-    branches: ["production","staging","development","main"]
+    branches: ["main","staging","development"]
   workflow_dispatch:
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}
           tags: |
             type=ref,event=branch
-            type=raw,value=latest,enable=${{ github.ref_name == 'main' || github.ref_name == 'production' }}
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
