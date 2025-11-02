@@ -22,7 +22,6 @@ export default defineNuxtConfig({
   css: ['@/assets/css/tailwind.css'],
   vite: {
     define: {
-      WALLET_API_URL : JSON.stringify(process.env.WALLET_API_URL || ''),
       APP_BG_1: JSON.stringify(process.env.APP_BG_1 || ''),
       APP_BG_2: JSON.stringify(process.env.APP_BG_2 || ''),
       APP_BG_3: JSON.stringify(process.env.APP_BG_3 || ''),
@@ -52,19 +51,9 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     // Private keys are only available on the server
-    // apiSecret: '123'
-
     // Public keys that are exposed to the client (runtime-configurable)
     public: {
-      APP_ENV: 'wallet',
       walletApiUrl: process.env.NUXT_PUBLIC_WALLET_API_URL || '',
-      // WALLET_API_URL: process.env.WALLET_API_URL || 'https://wallet-api.uatvend.co.za',
-      APP_BG_1: JSON.stringify(process.env.APP_BG_1 || ''),
-      APP_BG_2: JSON.stringify(process.env.APP_BG_2 || ''),
-      APP_BG_3: JSON.stringify(process.env.APP_BG_3 || ''),
-      APP_FONT_COLOR_1: JSON.stringify(process.env.APP_FONT_COLOR_1 || ''),
-      APP_FONT_COLOR_2: JSON.stringify(process.env.APP_FONT_COLOR_2 || ''),
-      APP_FONT_COLOR_3: JSON.stringify(process.env.APP_FONT_COLOR_3 || ''),
     }
   },
   routeRules: {
