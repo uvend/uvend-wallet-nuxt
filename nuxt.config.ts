@@ -57,7 +57,8 @@ export default defineNuxtConfig({
     // Public keys that are exposed to the client (runtime-configurable)
     public: {
       APP_ENV: 'wallet',
-      WALLET_API_URL: process.env.WALLET_API_URL || 'https://wallet-api.uatvend.co.za',
+      walletApiUrl: process.env.NUXT_PUBLIC_WALLET_API_URL || '',
+      // WALLET_API_URL: process.env.WALLET_API_URL || 'https://wallet-api.uatvend.co.za',
       APP_BG_1: JSON.stringify(process.env.APP_BG_1 || ''),
       APP_BG_2: JSON.stringify(process.env.APP_BG_2 || ''),
       APP_BG_3: JSON.stringify(process.env.APP_BG_3 || ''),

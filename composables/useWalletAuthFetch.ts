@@ -1,4 +1,5 @@
-const walletApiUrl = useRuntimeConfig().public.WALLET_API_URL;
+const config = useRuntimeConfig();
+const walletApiUrl = config.public.walletApiUrl;
 
 export default async function fetch<T>(url: string, options: any = {}, retry = true): Promise<T | null> {
   try {
