@@ -110,6 +110,10 @@ export default{
             showPassword: false
         }
     },
+    mounted(){
+        const config = useRuntimeConfig();
+        console.log(config.public.walletApiUrl);
+    },
     methods:{
         async signIn(){
             if(!this.valid()) return
