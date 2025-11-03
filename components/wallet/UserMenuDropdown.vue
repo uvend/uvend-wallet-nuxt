@@ -23,6 +23,15 @@
 
         <!-- Menu Items -->
         <div class="py-1">
+          <!-- Help Option -->
+          <button
+            @click="handleHelp"
+            class="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+          >
+            <Icon name="lucide:help-circle" class="w-4 h-4 mr-3" />
+            <span>Help</span>
+          </button>
+          
           <!-- Logout Option -->
           <button
             @click="handleLogout"
@@ -34,6 +43,9 @@
         </div>
       </div>
     </Teleport>
+    
+    <!-- FAQ Popup -->
+    <WalletFaqPopup v-model="showFaq" />
 
     <!-- Overlay to close dropdown when clicking outside -->
     <Teleport to="body">
@@ -51,7 +63,8 @@ export default {
   data() {
     return {
       isOpen: false,
-      buttonRect: null
+      buttonRect: null,
+      showFaq: false
     }
   },
   
@@ -77,6 +90,11 @@ export default {
     
     closeDropdown() {
       this.isOpen = false
+    },
+    
+    handleHelp() {
+      this.showFaq = true
+      this.closeDropdown()
     },
     
     async handleLogout() {
