@@ -126,20 +126,19 @@ export default {
                     height: 300,
                     toolbar: {
                         show: true,
+                        autoSelected: 'pan',
                         tools: {
                             download: true,
-                            selection: true,
-                            zoom: true,
-                            zoomin: true,
-                            zoomout: true,
+                            selection: false,
+                            zoom: false,
+                            zoomin: false,
+                            zoomout: false,
                             pan: true,
-                            reset: true
+                            reset: false
                         }
                     },
                     zoom: {
-                        enabled: true,
-                        type: 'x',
-                        autoScaleYaxis: true
+                        enabled: false
                     },
                     pan: {
                         enabled: true,
@@ -241,10 +240,43 @@ export default {
                 },
                 responsive: [
                     {
+                        breakpoint: 1024,
+                        options: {
+                            chart: {
+                                toolbar: {
+                                    show: false
+                                },
+                                zoom: {
+                                    enabled: false
+                                },
+                                pan: {
+                                    enabled: true,
+                                    type: 'x'
+                                }
+                            },
+                            markers: {
+                                size: 4
+                            },
+                            stroke: {
+                                width: 3
+                            }
+                        }
+                    },
+                    {
                         breakpoint: 640,
                         options: {
                             chart: {
-                                height: 250
+                                height: 250,
+                                toolbar: {
+                                    show: false
+                                },
+                                zoom: {
+                                    enabled: false
+                                },
+                                pan: {
+                                    enabled: true,
+                                    type: 'x'
+                                }
                             },
                             xaxis: {
                                 labels: {

@@ -39,27 +39,33 @@
                                 <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'" 
                                       :class="transaction.type === 'electricity' ? 'h-5 w-5 text-yellow-600' : 'h-5 w-5 text-blue-600'"/>
                             </div>
-                            <div class="space-y-1">
+                            <div class="space-y-2">
                                 <p class="text-sm font-bold text-gray-900">
                                     {{ transaction.type === 'electricity' ? 'Electricity prepaid purchase' : 'Water prepaid purchase' }}
                                 </p>
-                                <div class="flex items-center gap-2">
-                                    <p class="text-xs text-gray-600 font-medium">
-                                        {{ formatDate(transaction.date) }}
-                                    </p>
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 font-medium">
+                                    <span>{{ formatDate(transaction.date) }}</span>
                                     <div class="w-1 h-1 rounded-full bg-gray-400"></div>
-                                    <p class="text-xs text-gray-600 font-medium">
-                                        {{ transaction.meterNumber }}
-                                    </p>
+                                    <span>{{ formatTime(transaction.date) }}</span>
+                                    <div class="w-1 h-1 rounded-full bg-gray-400"></div>
+                                    <span>{{ transaction.meterNumber }}</span>
                                 </div>
-                                <p v-if="getRemainingUnits(transaction)" class="text-xs text-gray-500 font-medium">
-                                    {{ getRemainingUnits(transaction) }}
+                                <p v-if="transaction.token" class="text-xs text-gray-500 font-mono break-all">
+                                    {{ transaction.token }}
                                 </p>
+                                <!-- <p v-if="getRemainingUnits(transaction)" class="text-xs text-gray-500 font-medium">
+                                    {{ getRemainingUnits(transaction) }}
+                                </p> -->
                                 
                                 <!-- Battery and State Info -->
                                 <div v-if="hasValidBatteryOrState(transaction)" class="flex items-center gap-3 mt-2">
                                     <!-- Battery Status -->
-                                    <div v-if="hasValidBattery(transaction)" class="flex items-center gap-1">
+                                <div v-if="hasValidBattery(transaction)" class="flex items-center gap-2">
+                                    <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-md">
+                                        <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'"
+                                              :class="transaction.type === 'electricity' ? 'w-3 h-3 text-orange-500' : 'w-3 h-3 text-blue-500'"/>
+                                        <span class="text-[11px] font-medium text-gray-600">{{ getRemainingUnits(transaction) }}</span>
+                                    </div>
                                         <Icon name="lucide:battery" 
                                               :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
                                               class="w-3 h-3"/>
@@ -101,15 +107,18 @@
                     <!-- Mobile Layout -->
                     <div class="sm:hidden space-y-2">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-start gap-2">
                                 <div class="w-8 h-8 rounded-lg flex items-center justify-center"
                                      :class="transaction.type === 'electricity' ? 'bg-orange-100' : 'bg-blue-100'">
                                     <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'" 
                                           :class="transaction.type === 'electricity' ? 'h-4 w-4 text-orange-600' : 'h-4 w-4 text-blue-600'"/>
                                 </div>
-                                <div>
+                                <div class="space-y-1">
                                     <p class="text-xs font-mono text-gray-700 font-medium">{{ transaction.meterNumber }}</p>
-                                    <p class="text-xs text-gray-500">{{ formatDate(transaction.date) }}</p>
+                                    <p class="text-xs text-gray-500">{{ formatDate(transaction.date) }} · {{ formatTime(transaction.date) }}</p>
+                                    <p v-if="transaction.token" class="text-xs text-gray-500 font-mono break-all">
+                                        {{ transaction.token }}
+                                    </p>
                                 </div>
                             </div>
                             <div class="text-right">
@@ -122,16 +131,21 @@
                                 </p>
                             </div>
                         </div>
-                        <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-2">
+                        <!-- <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-2">
                             <div class="w-1.5 h-1.5 rounded-full"
                                  :class="transaction.type === 'electricity' ? 'bg-orange-400' : 'bg-blue-400'"></div>
-                            <p class="text-xs text-gray-600 font-medium">{{ getRemainingUnits(transaction) }}</p>
-                        </div>
+                            <p class="text-xs text-gray-600 font-medium">{{ getRemainingUnits(transaction) }}</p> -->
+                        <!-- </div> -->
 
                         <!-- Battery and State Info - Mobile -->
                         <div v-if="hasValidBatteryOrState(transaction)" class="flex items-center justify-between">
                             <!-- Battery Status -->
-                            <div v-if="hasValidBattery(transaction)" class="flex items-center gap-1">
+                            <div v-if="hasValidBattery(transaction)" class="flex items-center gap-2">
+                                <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-md">
+                                    <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'"
+                                          :class="transaction.type === 'electricity' ? 'w-3 h-3 text-orange-500' : 'w-3 h-3 text-blue-500'"/>
+                                    <span class="text-[11px] font-medium text-gray-600">{{ getRemainingUnits(transaction) }}</span>
+                                </div>
                                 <Icon name="lucide:battery" 
                                       :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
                                       class="w-3 h-3"/>
@@ -188,20 +202,41 @@ function formatAmount(amount) {
 }
 
 function formatDate(dateString) {
-    try {
-    const date = new Date(dateString)
-        if (isNaN(date.getTime())) {
-            return 'Invalid Date'
-        }
-    return date.toLocaleDateString('en-ZA', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-    })
-    } catch (error) {
-        console.warn('Error formatting date:', dateString, error)
-        return 'Invalid Date'
+    if (!dateString || typeof dateString !== 'string') {
+        return 'Unknown Date'
     }
+
+    const [datePart] = dateString.split('T')
+
+    if (!datePart) {
+        console.warn('Unable to extract date from:', dateString)
+        return 'Unknown Date'
+    }
+
+    return datePart
+}
+
+function formatTime(dateString) {
+    if (!dateString || typeof dateString !== 'string') {
+        return 'Unknown Time'
+    }
+
+    const [, timePartWithZone] = dateString.split('T')
+
+    if (!timePartWithZone) {
+        console.warn('Unable to extract time from:', dateString)
+        return 'Unknown Time'
+    }
+
+    const timePart = timePartWithZone.replace('Z', '').split('.')[0] || timePartWithZone
+    const [hours, minutes] = timePart.split(':')
+
+    if (!hours || !minutes) {
+        console.warn('Unable to extract hour/minute from:', dateString)
+        return 'Unknown Time'
+    }
+
+    return `${hours}:${minutes}`
 }
 
 function getRemainingUnits(transaction) {
@@ -290,17 +325,29 @@ async function fetchRecentTransactions() {
         recentTransactions.value = transactionsResponse.transactions
             .slice(0, 4)
             .map(transaction => {
-                
-                const totalUnitsPaid = JSON.parse(transaction.vendResponse).listOfTokenTransactions[0]?.tokens[0]?.units || ""
+                let vendResponse
+                try {
+                    vendResponse = JSON.parse(transaction.vendResponse || '{}')
+                } catch (error) {
+                    console.warn('Failed to parse vendResponse for transaction:', transaction.id, error)
+                    vendResponse = {}
+                }
+
+                const firstToken = vendResponse?.listOfTokenTransactions?.[0]?.tokens?.[0] || {}
+                const totalUnitsPaid = firstToken?.units || ''
+                const tokenNumber = firstToken?.delimitedTokenNumber || ''
+
                 return {
-                id: transaction.id || transaction.meterNumber + transaction.created,
-                type: transaction.utilityType === 'Electricity' ? 'electricity' : 'water',
-                date: transaction.created,
-                meterNumber: transaction.meterNumber,
-                totalUnits:totalUnitsPaid,
-                amount: parseFloat(transaction.amount),
-                latestReading: transaction.latestReading
-            }})
+                    id: transaction.id || transaction.meterNumber + transaction.created,
+                    type: transaction.utilityType === 'Electricity' ? 'electricity' : 'water',
+                    date: transaction.created,
+                    meterNumber: transaction.meterNumber,
+                    totalUnits: totalUnitsPaid,
+                    token: tokenNumber,
+                    amount: parseFloat(transaction.amount),
+                    latestReading: transaction.latestReading
+                }
+            })
             // console.log(recentTransactions.value)
     } catch (error) {
         console.error('Error fetching recent transactions:', error)
