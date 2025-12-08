@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full h-[100vh] flex items-center justify-center bg-gradient-to-br from-blue-200 via-blue-100 to-orange-50 p-4">
+    <div class="w-full h-[100vh] flex items-center justify-center bg-gradient-to-br from-orange-200 via-orange-100 to-orange-50 p-4">
         <WalletSignin v-if="login && !resetPassword" @changeState="signUp(false)" @forgotPassword="toggleResetPassword()"/>
         <WalletSignup v-if="!login && !resetPassword" @changeState="signUp(true)"/>
         <WalletForgotPassword v-if="resetPassword" @backToLogin="toggleResetPassword()"/>

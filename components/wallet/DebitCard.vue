@@ -39,7 +39,7 @@
                     <!-- Loading state - shown while meters are being fetched -->
                     <button 
                         v-if="metersLoading"
-                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 opacity-75 transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md cursor-wait"
+                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-orange-700 opacity-75 transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md cursor-wait"
                         disabled
                         title="Loading meters..."
                     >
@@ -49,24 +49,24 @@
                     <!-- Top up button - shown when meters exist -->
                     <button 
                         v-else-if="hasMeters"
-                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg"
+                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-orange-700 hover:bg-white transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg"
                         @click="handleTopUp"
                         title="Top up your wallet"
                     >
                         <Icon name="lucide:wallet" class="w-3 h-3 mr-1.5 relative z-10"/>
                         <span class="relative z-10">Top up</span>
-                        <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-white opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-orange-50 to-white opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
                     </button>
                     <!-- Add meter button - shown when no meters exist (and loaded) -->
                     <button 
                         v-else
-                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg"
+                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-orange-700 hover:bg-white transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg"
                         @click="navigateToTransactions"
                         title="Add a meter to get started"
                     >
                         <Icon name="lucide:plus-circle" class="w-3 h-3 mr-1.5 relative z-10"/>
                         <span class="relative z-10">Add Meter</span>
-                        <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-white opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-orange-50 to-white opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
                     </button>
                 </div>
             </div>
@@ -86,8 +86,8 @@
                 <!-- PayGate iframe for payment processing -->
                 <div v-if="currentTab === 'paygate'" class="space-y-4">
                     <div class="text-center">
-                        <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <Icon name="lucide:shield-check" class="h-8 w-8 text-blue-600"/>
+                        <div class="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <Icon name="lucide:shield-check" class="h-8 w-8 text-orange-600"/>
                         </div>
                         <h4 class="text-lg font-semibold text-gray-900 mb-1">Secure Payment</h4>
                         <p class="text-sm text-gray-600">Processing your payment securely</p>
@@ -102,15 +102,15 @@
                 <!-- Payment form -->
                 <div v-if="currentTab === 'payment'" class="space-y-6">
                     <!-- Current Balance Display -->
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
+                    <div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-100">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                                <div class="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
                                     <Icon name="lucide:wallet" class="h-5 w-5 text-white"/>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-600">Current Balance</p>
-                                    <p class="text-xl font-bold text-blue-700">{{ currency }} {{ formattedBalance }}</p>
+                                    <p class="text-xl font-bold text-orange-700">{{ currency }} {{ formattedBalance }}</p>
                                 </div>
                             </div>
                         </div>
@@ -131,7 +131,7 @@
                                     minimumFractionDigits: 2,
                                 }"
                             >
-                                <NumberFieldContent class="bg-white border-2 border-gray-200 rounded-xl focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                                <NumberFieldContent class="bg-white border-2 border-gray-200 rounded-xl focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-100">
                                     <NumberFieldInput class="text-lg font-semibold py-4 px-4"/>
                                 </NumberFieldContent>
                             </NumberField>
@@ -144,14 +144,14 @@
                                 :key="quickAmount"
                                 variant="outline" 
                                 @click="amount = quickAmount"
-                                class="py-2 px-3 text-sm font-medium border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                                class="py-2 px-3 text-sm font-medium border-gray-200 hover:border-orange-300 hover:bg-orange-50"
                             >
                                 {{ currency }} {{ quickAmount }}
                             </Button>
                         </div>
                         
                         <Button 
-                            class="w-full py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300" 
+                            class="w-full py-4 text-lg font-semibold bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300" 
                             @click="addFunds" 
                             :disabled="amount < 1 || isLoading"
                         >

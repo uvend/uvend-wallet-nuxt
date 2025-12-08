@@ -27,7 +27,7 @@
             </div>
         </div>
         
-        <!-- Recent Transactions Table -->
+        <!-- Recent Deductions Table -->
    
     </div>
 </template>

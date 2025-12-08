@@ -1,5 +1,5 @@
 <template>
-    <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+    <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
         <CardHeader class="pb-3">
             <div class="flex items-center justify-between">
                 <div>

@@ -1,7 +1,7 @@
 <template>
     <Card class="w-[450px] max-w-[90vw] bg-white/95 backdrop-blur-sm border-0 shadow-2xl overflow-hidden">
         <!-- Header with gradient background -->
-        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white relative overflow-hidden">
+        <div class="bg-gradient-to-r from-orange-600 via-orange-700 to-orange-800 p-6 text-white relative overflow-hidden">
             <!-- Decorative elements -->
             <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
             <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
@@ -60,7 +60,7 @@
                         <Icon :name="showPassword ? 'lucide:eye-off' : 'lucide:eye'" class="h-5 w-5"/>
                     </button>
                 </div>
-                <p class="text-sm text-blue-600 cursor-pointer hover:text-blue-700 transition-colors flex items-center gap-1" @click="$emit('forgotPassword')">
+                <p class="text-sm text-orange-600 cursor-pointer hover:text-orange-700 transition-colors flex items-center gap-1" @click="$emit('forgotPassword')">
                     <Icon name="lucide:lock" class="h-3 w-3"/>
                     Forgot your password?
                 </p>
@@ -69,7 +69,7 @@
         
         <CardFooter class="p-6 pt-0 flex flex-col gap-3">
             <Button 
-                class="w-full h-11 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200" 
+                class="w-full h-11 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold shadow-lg shadow-orange-500/30 transition-all duration-200" 
                 @click="debounceSignIn"
                 :disabled="isLoading"
             >
@@ -119,12 +119,43 @@ export default{
             if(!this.valid()) return
             this.isLoading = true;
             try{
+                // Trim and validate inputs
+                const email = this.email?.trim();
+                const password = this.password?.trim();
+                
+                if (!email || !password) {
+                    this.$toast({
+                        title: 'Validation Error',
+                        description: 'Please enter both email and password',
+                        variant: "destructive"
+                    });
+                    this.isLoading = false;
+                    return;
+                }
+                
+                // Basic email validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    this.$toast({
+                        title: 'Validation Error',
+                        description: 'Please enter a valid email address',
+                        variant: "destructive"
+                    });
+                    this.isLoading = false;
+                    return;
+                }
+                
+                // Prepare request body
+                const requestBody = {
+                    email: email,
+                    password: password
+                };
+                
+                console.log('Sign-in request body:', requestBody);
+                
                 const response = await useWalletAuthFetch(`/auth/sign-in`,{
                     method: "POST",
-                    body : {
-                        "email" : this.email,
-                        "password" : this.password
-                    }
+                    body: requestBody
                 });
                 if(!response.access_token){
                     throw new Error(response)
@@ -147,9 +178,28 @@ export default{
                 
                 return navigateTo('/');
             }catch(e){
+                console.error('Sign in error:', e);
+                // Extract error message from response
+                let errorMessage = 'There was a problem with your request.';
+                const errorData = e?.response?._data || e?.data || {};
+                
+                if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else if (Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+                    errorMessage = errorData.errors.map(err => err.message || err).join(', ');
+                } else if (e?.message) {
+                    errorMessage = e.message;
+                } else if (typeof e === 'string') {
+                    errorMessage = e;
+                }
+                
                 this.$toast({
-                    title: 'Uh oh! Something went wrong.',
-                    description: 'There was a problem with your request.',
+                    title: 'Sign In Failed',
+                    description: errorMessage,
                     variant: "destructive"
                 });
             }finally{
@@ -158,8 +208,8 @@ export default{
         },
         valid(){
             this.invalid = []
-            if(!this.email) this.invalid.push('email')
-            if(!this.password) this.invalid.push('password')
+            if(!this.email || !this.email.trim()) this.invalid.push('email')
+            if(!this.password || !this.password.trim()) this.invalid.push('password')
             if(this.invalid.length > 0) return false
             return true
         }

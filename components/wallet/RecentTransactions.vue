@@ -6,11 +6,11 @@
                     <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-200 transition-colors duration-300">
                         <Icon name="lucide:history" class="h-4 w-4 text-gray-600"/>
                     </div>
-                    <CardTitle class="text-lg font-bold text-gray-900">Recent Transactions</CardTitle>
+                    <CardTitle class="text-lg font-bold text-gray-900">Recent Deductions</CardTitle>
                 </div>
                 <Button 
                     variant="ghost" 
-                    class="group/btn relative overflow-hidden text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300"
+                    class="group/btn relative overflow-hidden text-orange-600 hover:text-orange-700 hover:bg-orange-50 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-300"
                     @click="navigateTo('/transactions')"
                 >
                     <span class="relative z-10 flex items-center gap-1">
@@ -24,7 +24,7 @@
             <div v-if="isLoading" class="py-8 flex justify-center">
                 <div class="flex flex-col items-center gap-3">
                     <MyLoader />
-                    <p class="text-xs text-gray-500">Loading transactions...</p>
+                    <p class="text-xs text-gray-500">Loading deductions...</p>
                 </div>
             </div>
             <div v-else-if="recentTransactions.length > 0" class="space-y-3">
@@ -35,9 +35,9 @@
                     <div class="hidden sm:flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center group-hover/item:scale-110 transition-transform duration-300"
-                                 :class="transaction.type === 'electricity' ? 'bg-gradient-to-br from-yellow-100 to-orange-100' : 'bg-gradient-to-br from-blue-100 to-cyan-100'">
+                                 :class="transaction.type === 'electricity' ? 'bg-gradient-to-br from-orange-100 to-amber-100' : 'bg-gradient-to-br from-blue-100 to-cyan-100'">
                                 <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'" 
-                                      :class="transaction.type === 'electricity' ? 'h-5 w-5 text-yellow-600' : 'h-5 w-5 text-blue-600'"/>
+                                      :class="transaction.type === 'electricity' ? 'h-5 w-5 text-orange-600' : 'h-5 w-5 text-blue-600'"/>
                             </div>
                             <div class="space-y-2">
                                 <p class="text-sm font-bold text-gray-900">
@@ -61,9 +61,9 @@
                                 <div v-if="hasValidBatteryOrState(transaction)" class="flex items-center gap-3 mt-2">
                                     <!-- Battery Status -->
                                 <div v-if="hasValidBattery(transaction)" class="flex items-center gap-2">
-                                    <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-md">
-                                        <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'"
-                                              :class="transaction.type === 'electricity' ? 'w-3 h-3 text-orange-500' : 'w-3 h-3 text-blue-500'"/>
+                                <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-md">
+                                    <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'"
+                                          :class="transaction.type === 'electricity' ? 'w-3 h-3 text-orange-500' : 'w-3 h-3 text-blue-500'"/>
                                         <span class="text-[11px] font-medium text-gray-600">{{ getRemainingUnits(transaction) }}</span>
                                     </div>
                                         <Icon name="lucide:battery" 
@@ -177,7 +177,7 @@
                         <Icon name="lucide:receipt" class="h-8 w-8 text-gray-400"/>
                     </div>
                     <div class="space-y-1">
-                        <p class="text-lg font-semibold text-gray-500">No recent transactions</p>
+                        <p class="text-lg font-semibold text-gray-500">No recent deductions</p>
                         <p class="text-sm text-gray-400">Your transaction history will appear here</p>
                     </div>
                 </div>
@@ -350,7 +350,7 @@ async function fetchRecentTransactions() {
             })
             // console.log(recentTransactions.value)
     } catch (error) {
-        console.error('Error fetching recent transactions:', error)
+        console.error('Error fetching recent deductions:', error)
         // Show sample data if API fails
        
     } finally {

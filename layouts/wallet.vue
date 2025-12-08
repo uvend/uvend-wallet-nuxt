@@ -5,10 +5,10 @@
         @click="toggleNav"
         class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden transition-opacity duration-300">
     </div>
-    <div class="flex h-screen bg-gradient-to-br from-blue-200 via-blue-100 to-orange-50">
+    <div class="flex h-screen bg-gradient-to-br from-orange-200 via-orange-100 to-orange-50">
     <!-- Sidebar -->
     <aside
-        class="bg-gradient-to-b from-blue-600 to-blue-700 h-screen shadow-xl transition-all duration-300 ease-in-out flex-shrink-0 relative flex-col"
+        class="bg-gradient-to-b from-orange-600 to-orange-700 h-screen shadow-xl transition-all duration-300 ease-in-out flex-shrink-0 relative flex-col"
         :class="[
             'hidden md:flex w-64 flex-col',
             isMobile && isNavOpen ? 'fixed top-0 left-0 z-50 w-64 p-4 flex' : '',
@@ -17,7 +17,7 @@
         :style="{ backgroundColor: bgColor, color: fontColor }"
     >
         <!-- Logo Section -->
-        <div class="flex items-center justify-between p-6 border-b border-blue-500/30">
+        <div class="flex items-center justify-between p-6 border-b border-orange-500/30">
             <div class="flex items-center gap-4">
                 <MyLogo />
             </div>
@@ -35,7 +35,7 @@
                 </div>
                 <div class="flex flex-col ml-3">
                     <span class="text-sm font-medium">Home</span>
-                    <span class="text-xs text-blue-200">Overview</span>
+                    <span class="text-xs text-orange-200">Overview</span>
                 </div>
             </NuxtLink>
             <!-- Transactions -->
@@ -48,8 +48,8 @@
                     <Icon name="lucide:receipt" class="h-5 w-5"/>
                 </div>
                 <div class="flex flex-col ml-3">
-                    <span class="text-sm font-medium">Buy</span>
-                    <span class="text-xs text-blue-200">Payment History</span>
+                    <span class="text-sm font-medium">Transactions</span>
+                    <span class="text-xs text-orange-200">Payment History</span>
                 </div>
             </NuxtLink>
             <!-- Payments -->
@@ -63,7 +63,7 @@
                 </div>
                 <div class="flex flex-col ml-3">
                     <span class="text-sm font-medium">Payments</span>
-                    <span class="text-xs text-blue-200">Manage</span>
+                    <span class="text-xs text-orange-200">Manage</span>
                 </div>
             </NuxtLink>
 
@@ -87,7 +87,7 @@
     </aside>
     <!-- Main content -->
     <div class="flex-1 flex flex-col h-screen">
-        <header class="flex justify-between items-center py-3 px-4 sm:px-6 bg-white/95 backdrop-blur-sm shadow-sm border-b border-blue-200 flex-shrink-0">
+        <header class="flex justify-between items-center py-3 px-4 sm:px-6 bg-white/95 backdrop-blur-sm shadow-sm border-b border-orange-200 flex-shrink-0">
             <!-- Left side - Greeting Section -->
             <div class="flex items-center gap-3 sm:gap-4">
                 <div class="flex items-center gap-2 z-[9999999999]">
@@ -100,25 +100,6 @@
                 </div>
             </div>
             
-            <!-- Right side - Buy Button -->
-            <div class="relative group">
-                <button 
-                    @click="showPurchaseDialog = true"
-                    class="group relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 text-white px-4 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-0"
-                >
-                    <div class="flex items-center gap-1 sm:gap-2">
-                        <Icon name="lucide:zap" class="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span class="relative z-10">Buy</span>
-                    </div>
-                    
-                    <!-- Decorative elements -->
-                    <div class="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div class="absolute top-0 right-0 w-6 h-6 sm:w-8 sm:h-8 bg-white/10 rounded-full -translate-y-1 translate-x-1 sm:-translate-y-2 sm:translate-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </button>
-                
-                <!-- Additional glow effect -->
-                <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 opacity-0 group-hover:opacity-20 blur-lg transition-opacity duration-300 -z-10"></div>
-            </div>
         </header>
         <div class="flex-1 overflow-y-auto pb-20 md:pb-0" style="max-width: 100vw">
             <slot class="w-full"/>
@@ -127,18 +108,18 @@
     <!-- Mobile Bottom Nav -->
     <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-50">
         <div class="flex justify-around items-stretch h-14">
-            <NuxtLink to="/" :class="['flex flex-col items-center justify-center text-xs font-medium w-full relative', isActive('/') ? 'text-blue-700' : 'text-gray-700']" @click="toggleNav">
-                <span v-if="isActive('/')" class="absolute top-0 inset-x-6 h-0.5 bg-blue-600 rounded-full"></span>
+            <NuxtLink to="/" :class="['flex flex-col items-center justify-center text-xs font-medium w-full relative', isActive('/') ? 'text-orange-700' : 'text-gray-700']" @click="toggleNav">
+                <span v-if="isActive('/')" class="absolute top-0 inset-x-6 h-0.5 bg-orange-600 rounded-full"></span>
                 <Icon name="lucide:home" class="h-5 w-5"/>
                 <span>Home</span>
             </NuxtLink>
-            <NuxtLink to="/transactions" :class="['flex flex-col items-center justify-center text-xs font-medium w-full relative', isActive('/transactions') ? 'text-blue-700' : 'text-gray-700']" @click="toggleNav">
-                <span v-if="isActive('/transactions')" class="absolute top-0 inset-x-6 h-0.5 bg-blue-600 rounded-full"></span>
+            <NuxtLink to="/transactions" :class="['flex flex-col items-center justify-center text-xs font-medium w-full relative', isActive('/transactions') ? 'text-orange-700' : 'text-gray-700']" @click="toggleNav">
+                <span v-if="isActive('/transactions')" class="absolute top-0 inset-x-6 h-0.5 bg-orange-600 rounded-full"></span>
                 <Icon name="lucide:receipt" class="h-5 w-5"/>
-                <span>Buy</span>
+                <span>Transactions</span>
             </NuxtLink>
-            <NuxtLink to="/payments" :class="['flex flex-col items-center justify-center text-xs font-medium w-full relative', isActive('/payments') ? 'text-blue-700' : 'text-gray-700']" @click="toggleNav">
-                <span v-if="isActive('/payments')" class="absolute top-0 inset-x-6 h-0.5 bg-blue-600 rounded-full"></span>
+            <NuxtLink to="/payments" :class="['flex flex-col items-center justify-center text-xs font-medium w-full relative', isActive('/payments') ? 'text-orange-700' : 'text-gray-700']" @click="toggleNav">
+                <span v-if="isActive('/payments')" class="absolute top-0 inset-x-6 h-0.5 bg-orange-600 rounded-full"></span>
                 <Icon name="lucide:wallet" class="h-5 w-5"/>
                 <span>Payments</span>
             </NuxtLink>
@@ -151,44 +132,6 @@
         </div>
     </nav>
     
-    <!-- Purchase Token Dialog -->
-    <Dialog v-model:open="showPurchaseDialog">
-        <DialogContent class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
-            <div class="relative overflow-hidden rounded-2xl">
-                <!-- Header with gradient background -->
-                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                                <Icon name="lucide:zap" class="h-5 w-5 text-white"/>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-white">Purchase Token</h3>
-                                <p class="text-sm text-white/90">Buy tokens for your meters</p>
-                            </div>
-                        </div>
-                        <!-- <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            @click="showPurchaseDialog = false"
-                            class="text-white hover:bg-white/20 hover:text-white rounded-xl"
-                        >
-                            <Icon name="lucide:x" class="h-5 w-5"/>
-                        </Button> -->
-                    </div>
-                    
-                    <!-- Decorative elements -->
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-12 translate-x-12"></div>
-                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
-                </div>
-                
-                <!-- Content area -->
-                <div class="p-6 bg-gradient-to-b from-white to-blue-50/30">
-                    <WalletBuyNow />
-                </div>
-            </div>
-        </DialogContent>
-    </Dialog>
     </div>
 </div>
 </template>
@@ -201,7 +144,6 @@ export default{
 	},
 	data(){
 		return {
-			showPurchaseDialog: false
 		}
 	},
 	computed:{

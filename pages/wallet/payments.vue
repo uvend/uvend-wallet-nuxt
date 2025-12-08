@@ -6,11 +6,11 @@
     <!-- Summary Statistics -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Total Deposits -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
+        <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300">
             <CardContent class="p-4">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Icon name="lucide:wallet" class="w-4 h-4 text-blue-600" />
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Icon name="lucide:wallet" class="w-4 h-4 text-orange-600" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Total Deposits</span>
                 </div>
@@ -66,7 +66,7 @@
     <WalletBalanceHistoryChart :transactions="fundingHistory" :isLoading="isLoading" />
 
     <!-- Payments Table -->
-    <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+    <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
         <CardHeader>
             <CardTitle class="text-lg font-semibold text-gray-800">Payment History</CardTitle>
             <CardDescription class="text-sm">{{ fundingHistory.length }} payments found</CardDescription>
@@ -93,7 +93,7 @@
                                 <tbody class="divide-y divide-gray-100 bg-white">
                                     <tr v-for="payment in fundingHistory" 
                                         :key="payment.id"
-                                        class="hover:bg-blue-50/50 transition-colors duration-200"
+                                        class="hover:bg-orange-50/50 transition-colors duration-200"
                                     >
                                         <td class="py-3 px-4 whitespace-nowrap">
                                             <p class="text-sm font-medium text-gray-900">{{ formatDate(payment.created) }}</p>
@@ -104,14 +104,14 @@
                                         </td>
                                         <td class="py-3 px-4 whitespace-nowrap">
                                             <div class="flex items-center gap-2">
-                                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                    <Icon name="lucide:credit-card" class="w-4 h-4 text-blue-600" />
+                                                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <Icon name="lucide:credit-card" class="w-4 h-4 text-orange-600" />
                                                 </div>
                                                 <span class="text-sm font-medium text-gray-900">Card</span>
                                             </div>
                                         </td>
                                         <td class="py-3 px-4 text-right whitespace-nowrap">
-                                            <p class="text-sm font-semibold text-blue-600">
+                                            <p class="text-sm font-semibold text-orange-600">
                                                 R {{ formatAmount(payment.amount) }}
                                             </p>
                                         </td>
@@ -142,8 +142,8 @@
                             @click="toggleExpand(payment.id)"
                         >
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100">
-                                    <Icon name="lucide:credit-card" class="w-5 h-5 text-blue-600" />
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-orange-100">
+                                    <Icon name="lucide:credit-card" class="w-5 h-5 text-orange-600" />
                                 </div>
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900">Deposit</p>
@@ -151,7 +151,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <p class="text-sm font-bold text-blue-600">
+                                <p class="text-sm font-bold text-orange-600">
                                     R {{ formatAmount(payment.amount) }}
                                 </p>
                                 <Icon 

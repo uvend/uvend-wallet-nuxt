@@ -15,7 +15,7 @@
     <!-- Summary Statistics -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Total Spent -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
+        <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300">
             <CardContent class="p-4">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -29,7 +29,7 @@
         </Card>
 
         <!-- Average per Transaction -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
+        <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300">
             <CardContent class="p-4">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
@@ -43,7 +43,7 @@
         </Card>
 
         <!-- Highest Utility -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
+        <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300">
             <CardContent class="p-4">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="highestUtility.bgClass">
@@ -57,7 +57,7 @@
         </Card>
 
         <!-- Lowest Utility -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
+        <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300">
             <CardContent class="p-4">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="lowestUtility.bgClass">
@@ -71,7 +71,7 @@
         </Card>
     </div>
         <!-- My Meters Section -->
-    <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+    <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
         <CardHeader>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -169,17 +169,6 @@
                             </div>
                         </div>
                         
-                        <!-- Buy Button -->
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <Button 
-                                @click="openPurchaseDialog(meter)"
-                                size="sm"
-                                class="px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                            >
-                                <Icon name="lucide:credit-card" class="w-4 h-4 mr-2"/>
-                                Purchase Token
-                            </Button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -193,12 +182,12 @@
         </CardContent>
     </Card>
 
-    <!-- Spending Trends Chart -->
-    <SpendingTrendsChart :transactions="transactions" :isLoading="isLoading" />
+    <!-- Usage Trends Chart -->
+    <UsageTrendsChart :meters="meters || []" :isLoading="isLoading || metersLoading" />
         
 
     <!-- Transactions Table -->
-    <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ">
+    <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ">
         <CardHeader>
             <CardTitle class="text-lg font-semibold text-gray-800">Transaction History</CardTitle>
             <CardDescription class="text-sm">{{ summary.transactionCount }} transactions found</CardDescription>
@@ -226,7 +215,7 @@
                                 <tbody class="divide-y divide-gray-100 bg-white">
                                     <tr v-for="transaction in transactions" 
                                         :key="transaction.id"
-                                        class="hover:bg-blue-50/50 transition-colors duration-200"
+                                        class="hover:bg-orange-50/50 transition-colors duration-200"
                                     >
                                         <td class="py-3 px-2 whitespace-nowrap">
                                             <p class="text-sm font-medium text-gray-900">{{ formatDate(transaction.created) }}</p>
@@ -421,42 +410,12 @@
         </CardContent>
     </Card>
     
-    <!-- Purchase Token Dialog -->
-    <Dialog v-model:open="showPurchaseDialog">
-        <DialogContent class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
-            <div class="relative overflow-hidden rounded-2xl">
-                <!-- Header with gradient background -->
-                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                                <Icon name="lucide:zap" class="h-5 w-5 text-white"/>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-white">Purchase Token</h3>
-                                <p class="text-sm text-white/90">Buy tokens for your meters</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Decorative elements -->
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-12 translate-x-12"></div>
-                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
-                </div>
-                
-                <!-- Content area -->
-                <div class="p-6 bg-gradient-to-b from-white to-blue-50/30">
-                    <WalletBuyNow :selectedMeter="selectedMeterForPurchase" />
-                </div>
-            </div>
-        </DialogContent>
-    </Dialog>
     
 </div>
 </template>
 
 <script>
-import SpendingTrendsChart from '~/components/wallet/SpendingTrendsChart.vue'
+import UsageTrendsChart from '~/components/wallet/SpendingTrendsChart.vue'
 
 definePageMeta({
     layout: 'wallet'
@@ -464,7 +423,7 @@ definePageMeta({
 
   export default {
     components: {
-      SpendingTrendsChart
+      UsageTrendsChart
     },
     data() {
       return {
@@ -480,10 +439,8 @@ definePageMeta({
             endDate: null,
             expandedRows: [],
             // Meters data
-            meters: null,
+            meters: [],
             metersLoading: false,
-            showPurchaseDialog: false,
-            selectedMeterForPurchase: null,
             // Transaction totals from API
             transactionTotals: {
                 totalAmount: 0,
@@ -698,10 +655,6 @@ definePageMeta({
             }
         },
         
-        openPurchaseDialog(meter) {
-            this.selectedMeterForPurchase = meter;
-            this.showPurchaseDialog = true;
-        },
         
         
         // Meter filter method

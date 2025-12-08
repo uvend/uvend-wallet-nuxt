@@ -51,9 +51,12 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     // Private keys are only available on the server
+    hexingApiUrl: process.env.HEXING_API || 'https://api.m2m.co.za',
     // Public keys that are exposed to the client (runtime-configurable)
     public: {
-      walletApiUrl: process.env.NUXT_PUBLIC_WALLET_API_URL || '',
+      walletApiUrl: process.env.NUXT_PUBLIC_WALLET_API_URL || process.env.WALLET_API_URL || '',
+      clientId: process.env.NUXT_PUBLIC_CLIENT_ID || process.env.CLIENT_ID || '',
+      clientSecret: process.env.NUXT_PUBLIC_CLIENT_SECRET || process.env.CLIENT_SECRET || '',
     }
   },
   routeRules: {

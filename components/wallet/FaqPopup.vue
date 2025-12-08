@@ -3,7 +3,7 @@
         <DialogContent class="p-0 max-w-3xl mx-auto bg-white border-0 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-3xl">
             <div class="relative overflow-hidden rounded-3xl flex flex-col max-h-[90vh]">
                 <!-- Header with gradient background -->
-                <div class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 text-white flex-shrink-0 overflow-hidden">
+                <div class="relative bg-gradient-to-br from-orange-600 via-orange-700 to-amber-800 p-8 text-white flex-shrink-0 overflow-hidden">
                     <!-- Animated background elements -->
                     <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 blur-2xl animate-pulse"></div>
                     <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12 blur-xl"></div>
@@ -19,7 +19,7 @@
                             </div>
                             <div>
                                 <h3 class="text-2xl font-bold text-white mb-1 tracking-tight">Help Center</h3>
-                                <p class="text-sm text-blue-100 font-medium">Frequently Asked Questions</p>
+                                <p class="text-sm text-orange-100 font-medium">Frequently Asked Questions</p>
                             </div>
                         </div>
                         <div class="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20">

@@ -1,7 +1,7 @@
 <template>
     <Card class="w-[450px] max-w-[90vw] bg-white/95 backdrop-blur-sm border-0 shadow-2xl overflow-hidden">
         <!-- Header with gradient background -->
-        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white relative overflow-hidden">
+        <div class="bg-gradient-to-r from-orange-600 via-orange-700 to-orange-800 p-6 text-white relative overflow-hidden">
             <!-- Decorative elements -->
             <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
             <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
@@ -68,7 +68,7 @@
         
         <CardFooter class="p-6 pt-0 flex flex-col gap-3">
             <Button 
-                class="w-full h-11 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200" 
+                class="w-full h-11 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold shadow-lg shadow-orange-500/30 transition-all duration-200" 
                 @click="debounceSignUp"
                 :disabled="isLoading"
             >
@@ -140,9 +140,22 @@ export default{
                 
                 return navigateTo('/');
             }catch(e){
+                console.error('Sign up error:', e);
+                // Extract error message from response
+                let errorMessage = 'There was a problem with your request.';
+                if (e?.response?._data?.message) {
+                    errorMessage = e.response._data.message;
+                } else if (e?.data?.message) {
+                    errorMessage = e.data.message;
+                } else if (e?.message) {
+                    errorMessage = e.message;
+                } else if (typeof e === 'string') {
+                    errorMessage = e;
+                }
+                
                 this.$toast({
-                    title: 'Uh oh! Something went wrong.',
-                    description: 'There was a problem with your request.',
+                    title: 'Sign Up Failed',
+                    description: errorMessage,
                     variant: "destructive"
                 });
             }finally{

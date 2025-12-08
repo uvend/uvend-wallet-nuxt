@@ -1,10 +1,10 @@
 <template>
-    <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+        <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
         <CardHeader class="pb-3">
             <div class="flex items-center justify-between">
                 <div>
-                    <CardTitle class="text-lg font-semibold text-gray-800">Spending Trends</CardTitle>
-                    <CardDescription class="text-sm">Spending trends over time</CardDescription>
+                    <CardTitle class="text-lg font-semibold text-gray-800">Usage Trends</CardTitle>
+                    <CardDescription class="text-sm">Daily consumption trends</CardDescription>
                 </div>
                 <div class="flex items-center gap-3 text-xs">
                     <div class="flex items-center gap-1">
@@ -19,15 +19,15 @@
             </div>
         </CardHeader>
         <CardContent class="p-4 sm:p-6">
-            <div v-if="isLoading" class="py-8 flex justify-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div v-if="isChartLoading" class="py-8 flex justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
             </div>
                                      <div v-else-if="chartData.length === 0" class="py-8 text-center">
                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Icon name="lucide:bar-chart-3" class="w-8 h-8 text-gray-400" />
                 </div>
-                <p class="text-gray-600 font-medium">No spending data available</p>
-                <p class="text-gray-400 text-sm mt-1">Transactions will appear here when they occur</p>
+                <p class="text-gray-600 font-medium">No usage data available</p>
+                <p class="text-gray-400 text-sm mt-1">Usage logs will appear here when available</p>
             </div>
             <div v-else class="w-full">
                 <apexchart
@@ -42,10 +42,12 @@
 </template>
 
 <script>
+import { useM2MApi } from '~/composables/useM2MApi'
+
 export default {
-    name: 'SpendingTrendsChart',
+    name: 'UsageTrendsChart',
     props: {
-        transactions: {
+        meters: {
             type: Array,
             default: () => []
         },
@@ -54,54 +56,16 @@ export default {
             default: false
         }
     },
+    data() {
+        return {
+            usageData: [],
+            isUsageLoading: false
+        }
+    },
     computed: {
         chartData() {
-            if (!this.transactions || this.transactions.length === 0) return [];
-            
-            // Group transactions by date
-            const groupedByDate = {};
-            
-            this.transactions.forEach(transaction => {
-                // Validate and parse date safely
-                let date;
-                try {
-                    date = new Date(transaction.created);
-                    if (isNaN(date.getTime())) {
-                        console.warn('Invalid date for transaction:', transaction.created);
-                        return;
-                    }
-                } catch (error) {
-                    console.warn('Error parsing date for transaction:', transaction.created, error);
-                    return;
-                }
-                
-                const dateKey = date.toISOString().split('T')[0];
-                
-                if (!groupedByDate[dateKey]) {
-                    groupedByDate[dateKey] = {
-                        date: dateKey,
-                        electricity: 0,
-                        water: 0
-                    };
-                }
-                
-                if (transaction.utilityType === 'Electricity') {
-                    groupedByDate[dateKey].electricity += parseFloat(transaction.amount || 0);
-                } else if (transaction.utilityType === 'Water') {
-                    groupedByDate[dateKey].water += parseFloat(transaction.amount || 0);
-                }
-            });
-            
-            // Convert to array and sort by date
-            return Object.values(groupedByDate)
-                .sort((a, b) => new Date(a.date) - new Date(b.date))
-                .map(day => ({
-                    x: day.date,
-                    electricity: parseFloat(day.electricity.toFixed(2)),
-                    water: parseFloat(day.water.toFixed(2))
-                }));
+            return this.usageData || [];
         },
-        
         chartSeries() {
             if (this.chartData.length === 0) return [];
             
@@ -195,7 +159,7 @@ export default {
                 },
                 yaxis: {
                     labels: {
-                        formatter: (value) => `R${value.toFixed(0)}`,
+                        formatter: (value) => `${value.toFixed(0)} kWh`,
                         style: {
                             fontSize: '12px',
                             colors: '#6b7280'
@@ -231,7 +195,7 @@ export default {
                     y: {
                         formatter: (value, { seriesIndex }) => {
                             const seriesName = seriesIndex === 0 ? 'Electricity' : 'Water';
-                            return `R${value.toFixed(2)}`;
+                            return `${value.toFixed(2)} kWh`;
                         }
                     },
                     style: {
@@ -296,6 +260,95 @@ export default {
                     }
                 ]
             };
+        },
+        isChartLoading() {
+            return this.isLoading || this.isUsageLoading;
+        }
+    },
+    watch: {
+        meters: {
+            handler(newMeters) {
+                this.loadUsageTrends(newMeters);
+            },
+            deep: true,
+            immediate: true
+        }
+    },
+    methods: {
+        async loadUsageTrends(meters = []) {
+            if (!Array.isArray(meters) || meters.length === 0) {
+                this.usageData = [];
+                this.isUsageLoading = false;
+                return;
+            }
+            
+            this.isUsageLoading = true;
+            const usageByDate = {};
+            const m2mApi = useM2MApi();
+            
+            await Promise.all(
+                meters.map(async (meter) => {
+                    const serial = this.getDeviceSerial(meter);
+                    if (!serial) return;
+                    const utilityType = (meter?.utilityType || 'electricity').toLowerCase();
+                    try {
+                        const logs = await m2mApi.getDeviceLogsBySerial(serial, { utilityType });
+                        this.processLogs(logs, utilityType, usageByDate);
+                    } catch (error) {
+                        console.error(`Error fetching usage logs for meter ${meter?.meterNumber || serial}:`, error);
+                    }
+                })
+            );
+            
+            this.usageData = Object.values(usageByDate)
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .map(day => ({
+                    x: day.date,
+                    electricity: parseFloat(day.electricity.toFixed(2)),
+                    water: parseFloat(day.water.toFixed(2))
+                }));
+            this.isUsageLoading = false;
+        },
+        getDeviceSerial(meter) {
+            return meter?.deviceSerial || meter?.serial || meter?.meterNumber || null;
+        },
+        processLogs(logs, utilityType, usageByDate) {
+            if (!Array.isArray(logs)) return;
+            logs.forEach((log) => {
+                const entries = log?.entries || log?.readings || [];
+                entries.forEach((entry) => {
+                    const date = this.safeDate(entry?.timestamp || entry?.time || entry?.created || log?.timestamp || log?.created);
+                    if (!date) return;
+                    const dateKey = date.toISOString().split('T')[0];
+                    const value = parseFloat(
+                        entry?.value ??
+                        entry?.Value ??
+                        entry?.reading ??
+                        entry?.Reading ??
+                        log?.value ??
+                        log?.reading ??
+                        0
+                    );
+                    if (isNaN(value)) return;
+                    
+                    if (!usageByDate[dateKey]) {
+                        usageByDate[dateKey] = { date: dateKey, electricity: 0, water: 0 };
+                    }
+                    if (utilityType === 'water') {
+                        usageByDate[dateKey].water += value;
+                    } else {
+                        usageByDate[dateKey].electricity += value;
+                    }
+                });
+            });
+        },
+        safeDate(value) {
+            if (!value) return null;
+            const date = new Date(value);
+            if (isNaN(date.getTime())) {
+                return null;
+            }
+            return date;
         }
     }
 }

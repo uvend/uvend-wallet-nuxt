@@ -3,9 +3,9 @@
         {{ buttonLabel }}
     </Button>
     <Drawer v-if="isMobile" v-model:open="isOpen">
-        <DrawerContent class="h-[90vh] flex flex-col bg-gradient-to-br from-white via-blue-50/30 to-white">
+        <DrawerContent class="h-[90vh] flex flex-col bg-gradient-to-br from-white via-orange-50/30 to-white">
             <!-- Header with gradient - fixed -->
-            <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-2xl">
+            <div class="flex-shrink-0 bg-gradient-to-r from-orange-600 to-orange-700 p-4 rounded-t-2xl">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -28,7 +28,7 @@
             </div>
             
             <!-- Scrollable content area -->
-            <div class="flex-1 overflow-y-auto bg-gradient-to-b from-white to-blue-50/20">
+            <div class="flex-1 overflow-y-auto bg-gradient-to-b from-white to-orange-50/20">
                 <div class="p-4 pb-8">
                     <slot />
                 </div>
@@ -39,7 +39,7 @@
         <DialogContent class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
             <div class="relative overflow-hidden rounded-2xl">
                 <!-- Header with gradient background -->
-                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
+                <div class="bg-gradient-to-r from-orange-600 via-orange-700 to-orange-800 p-6 text-white">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -66,7 +66,7 @@
                 </div>
                 
                 <!-- Content area with subtle background -->
-                <div class="p-6 bg-gradient-to-b from-white to-blue-50/30">
+                <div class="p-6 bg-gradient-to-b from-white to-orange-50/30">
                     <slot />
                 </div>
             </div>

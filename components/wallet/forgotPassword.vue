@@ -1,7 +1,7 @@
 <template>
     <Card class="w-[450px] max-w-[90vw] bg-white/95 backdrop-blur-sm border-0 shadow-2xl overflow-hidden">
         <!-- Header with gradient background -->
-        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white relative overflow-hidden">
+        <div class="bg-gradient-to-r from-orange-600 via-orange-700 to-orange-800 p-6 text-white relative overflow-hidden">
             <!-- Decorative elements -->
             <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
             <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
@@ -34,9 +34,9 @@
         <!-- Content area -->
         <CardContent class="p-6">
             <div class="space-y-4">
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
                     <div class="flex items-start gap-3">
-                        <Icon name="lucide:mail" class="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5"/>
+                        <Icon name="lucide:mail" class="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5"/>
                         <p class="text-sm text-gray-700">
                             Enter your email address and we'll send you instructions to reset your password.
                         </p>
@@ -57,7 +57,7 @@
         
         <CardFooter class="p-6 pt-0 flex flex-col gap-3">
             <Button 
-                class="w-full h-11 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200" 
+                class="w-full h-11 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-semibold shadow-lg shadow-orange-500/30 transition-all duration-200" 
                 @click="resetPassword"
                 :disabled="isLoading"
             >

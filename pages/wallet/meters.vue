@@ -5,8 +5,8 @@
       <!-- Simple Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center">
-            <Icon name="lucide:home" class="w-5 h-5 text-white"/>
+          <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center">
+            <Icon name="lucide:home" class="w-5 w-5 text-white"/>
           </div>
           <div>
             <h1 class="text-xl sm:text-2xl font-bold text-gray-900">My Meters</h1>
@@ -17,9 +17,9 @@
         </div>
         
         <!-- Service Type Badge -->
-        <div v-if="selectedServiceType" class="flex items-center gap-2 px-3 py-2 bg-blue-100 rounded-xl">
-          <Icon :name="getServiceIcon(selectedServiceType)" class="w-4 h-4 text-blue-600"/>
-          <span class="text-sm font-semibold text-blue-700 capitalize">{{ selectedServiceType }}</span>
+        <div v-if="selectedServiceType" class="flex items-center gap-2 px-3 py-2 bg-orange-100 rounded-xl">
+          <Icon :name="getServiceIcon(selectedServiceType)" class="w-4 h-4 text-orange-600"/>
+          <span class="text-sm font-semibold text-orange-700 capitalize">{{ selectedServiceType }}</span>
         </div>
       </div>
 
@@ -42,10 +42,10 @@
         </div>
         
         <!-- Service Type Filter Display -->
-        <div v-if="selectedServiceType" class="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+        <div v-if="selectedServiceType" class="mt-4 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-100">
           <div class="flex items-center gap-3">
-            <div class="w-6 h-6 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Icon :name="getServiceIcon(selectedServiceType)" class="w-3 h-3 text-blue-600"/>
+            <div class="w-6 h-6 bg-orange-100 rounded-lg flex items-center justify-center">
+              <Icon :name="getServiceIcon(selectedServiceType)" class="w-3 h-3 text-orange-600"/>
             </div>
             <div class="flex-1">
               <p class="text-sm font-medium text-gray-700">
@@ -108,8 +108,8 @@
       <!-- Loading State -->
       <div v-if="isLoading" class="bg-white/95 backdrop-blur-sm border border-gray-200/50 shadow-xl rounded-3xl overflow-hidden">
         <div class="p-12 flex flex-col items-center justify-center">
-          <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-4">
-            <Icon name="lucide:loader-2" class="w-8 h-8 text-blue-600 animate-spin"/>
+          <div class="w-16 h-16 bg-gradient-to-br from-orange-100 to-amber-100 rounded-2xl flex items-center justify-center mb-4">
+            <Icon name="lucide:loader-2" class="w-8 h-8 text-orange-600 animate-spin"/>
           </div>
           <h3 class="text-lg font-semibold text-gray-700 mb-2">Loading Meters</h3>
           <p class="text-sm text-gray-500">Fetching your utility meters...</p>
@@ -205,15 +205,6 @@
                   <span class="sm:hidden">View</span>
                 </Button> -->
                 
-                <Button 
-                  @click="openPurchaseDialog(meter)"
-                  size="sm"
-                  class="px-3 py-2 text-xs sm:text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  <Icon name="lucide:credit-card" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"/>
-                  <span class="hidden sm:inline">Purchase Token</span>
-                  <span class="sm:hidden">Buy</span>
-                </Button>
               </div>
             </div>
           </div>
@@ -237,36 +228,6 @@
       </div>
     </div>
     
-    <!-- Purchase Token Dialog -->
-    <Dialog v-model:open="showPurchaseDialog">
-        <DialogContent class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
-            <div class="relative overflow-hidden rounded-2xl">
-                <!-- Header with gradient background -->
-                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                                <Icon name="lucide:zap" class="h-5 w-5 text-white"/>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-white">Purchase Token</h3>
-                                <p class="text-sm text-white/90">Buy tokens for your meters</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Decorative elements -->
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-12 translate-x-12"></div>
-                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
-                </div>
-                
-                <!-- Content area -->
-                <div class="p-6 bg-gradient-to-b from-white to-blue-50/30">
-                    <WalletBuyNow :selectedMeter="selectedMeterForPurchase" />
-                </div>
-            </div>
-        </DialogContent>
-    </Dialog>
     
 </div>    
 </template>
@@ -285,9 +246,7 @@
         meterTransactions: [],
         graphTransactions: [],
         meterInfo: null,
-        selectedServiceType: null,
-        showPurchaseDialog: false,
-        selectedMeterForPurchase: null
+        selectedServiceType: null
       }
     },
     computed: {
@@ -437,10 +396,6 @@
           return 'text-blue-600';
         }
         return 'text-gray-600';
-      },
-      openPurchaseDialog(meter) {
-        this.selectedMeterForPurchase = meter;
-        this.showPurchaseDialog = true;
       },
       
       // Validation methods
