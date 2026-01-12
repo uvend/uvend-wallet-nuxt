@@ -1,45 +1,26 @@
-name: SonarQube - PR Analysis
+name: Build
 
 on:
-  pull_request:
-    branches: ["main", "staging", "development"]
+  push:
+    branches:
+      - main
 
 jobs:
-  sonar:
-    name: Analyze with SonarQube
+  build:
+    name: Build and analyze
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-
-    env:
-      PROJECT_KEY: ${{ github.repository_owner }}_${{ github.event.repository.name }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # Optional: install to allow linters/type-checks to run before scan
-      # - name: Install dependencies
-      #   run: npm ci
-
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@v2
+      - uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-      - name: SonarQube Quality Gate
-        uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      # If you wish to fail your job when the Quality Gate is red, uncomment the
+      # following lines. This would typically be used to fail a deployment.
+      # - uses: SonarSource/sonarqube-quality-gate-action@v1
+      #   timeout-minutes: 5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
