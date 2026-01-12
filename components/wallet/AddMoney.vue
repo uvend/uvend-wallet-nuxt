@@ -76,6 +76,8 @@ export default{
             this.selectedCard = id;
         },
         async addFunds(){
+            console.log("addFunds")
+            return;
             if(!this.selectedCard && this.amount < 1) return;
             try{
                 let url = `/pay/addFunds`;

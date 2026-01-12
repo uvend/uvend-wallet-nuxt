@@ -98,7 +98,6 @@
                         @payment-complete="paymentComplete"
                     />
                 </div>
-                
                 <!-- Payment form -->
                 <div v-if="currentTab === 'payment'" class="space-y-6">
                     <!-- Current Balance Display -->
@@ -238,6 +237,7 @@ export default {
             amount: 0.00,
             payRequestId: null,
             checksum: null,
+                payAtUrl: null,
             cards: [],
             selectedCard: null,
             isLoading: false,
@@ -314,9 +314,13 @@ export default {
             this.selectedCard = id;
         },
         async addFunds(){
+            console.log("addFunds")
+            this.addPayAtFunds();
+            return;
             if(!this.selectedCard && this.amount < 1) return;
             try{
                 this.isLoading = true;
+                return;
                 let url = `/pay/addFunds`;
                 if(this.selectedCard){
                     url = `${url}/${this.selectedCard}`
@@ -335,6 +339,28 @@ export default {
                 console.error('Error adding funds:', error)
             } finally {
                 this.isLoading = false;
+            }
+        },
+        async addPayAtFunds(){
+            console.log("addPayAtFunds")
+            try{
+                // @Todo: disable button to prevent clicks while waitinf for response
+                const response = await useWalletAuthFetch(`/payat/request`, {
+                method: "POST",
+                body: {
+                    amount: this.amount
+                    }
+                })
+                // Expecting response.payAtUrl
+                console.log(response)
+                this.payAtUrl = response?.payAtUrl || null
+                if (this.payAtUrl) {
+                    // Open Pay@ in a new tab and close the popup
+                    window.open(this.payAtUrl, '_blank', 'noopener,noreferrer')
+                    this.showTopUpDialog = false
+                }
+            }catch(error){
+                console.error('Error adding payat funds:', error)
             }
         },
         async getWalletBalance(){
