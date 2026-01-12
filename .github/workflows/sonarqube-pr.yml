@@ -37,12 +37,6 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
-            -Dsonar.projectKey=${{ env.PROJECT_KEY }}
-            -Dsonar.projectName=${{ github.event.repository.name }}
-            -Dsonar.sources=.
-            -Dsonar.exclusions=**/node_modules/**,**/.nuxt/**,**/.output/**,**/dist/**,**/coverage/**,**/*.spec.*,
-            **/*.test.*,**/cypress/**,**/.husky/**,**/.vscode/**,**/.github/**
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.head_ref }}
             -Dsonar.pullrequest.base=${{ github.base_ref }}
