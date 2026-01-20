@@ -19,8 +19,8 @@
             </div>
         </CardHeader>
         <CardContent class="p-4 sm:p-6">
-            <div v-if="isLoading" class="py-8 flex justify-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div v-if="isLoading" class="py-8 flex justify-center text-sm text-gray-600">
+                Loading...
             </div>
                                      <div v-else-if="chartData.length === 0" class="py-8 text-center">
                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
