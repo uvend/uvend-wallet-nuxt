@@ -1,12 +1,10 @@
 <template>
-    <Card class="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/20 border border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01]">
+    <Card class="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.01] border-0">
         <CardHeader class="pb-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-gray-200 transition-colors duration-300">
-                        <Icon name="lucide:history" class="h-4 w-4 text-gray-600"/>
-                    </div>
-                    <CardTitle class="text-lg font-bold text-gray-900">Recent Transactions</CardTitle>
+                <div>
+                    <CardTitle class="text-lg font-semibold text-gray-800">Transaction History</CardTitle>
+                    <CardDescription class="text-sm">Recent transactions</CardDescription>
                 </div>
                 <Button 
                     variant="ghost" 
@@ -21,16 +19,29 @@
             </div>
         </CardHeader>
         <CardContent>
-            <div v-if="isLoading" class="py-8 flex justify-center">
-                <div class="flex flex-col items-center gap-3">
-                    <MyLoader />
-                    <p class="text-xs text-gray-500">Loading transactions...</p>
+            <div v-if="isLoading" class="space-y-3">
+                <div v-for="i in 4" :key="'rtx-'+i" class="flex items-center justify-between p-3 rounded-xl bg-white/60">
+                    <div class="flex items-center gap-3">
+                        <Skeleton class="w-10 h-10 rounded-xl" />
+                        <div class="space-y-2">
+                            <Skeleton class="w-48 h-4" />
+                            <div class="flex items-center gap-2">
+                                <Skeleton class="w-20 h-3" />
+                                <Skeleton class="w-16 h-3" />
+                                <Skeleton class="w-24 h-3" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right space-y-2">
+                        <Skeleton class="w-20 h-5" />
+                        <Skeleton class="w-16 h-3" />
+                    </div>
                 </div>
             </div>
             <div v-else-if="recentTransactions.length > 0" class="space-y-3">
                 <div v-for="transaction in recentTransactions" 
                      :key="transaction.id"
-                     class="group/item relative overflow-hidden bg-gradient-to-r from-white to-gray-50/50 rounded-xl border border-gray-200/50 p-3 hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
+                     class="group/item relative overflow-hidden bg-gradient-to-r from-white to-gray-50/50 rounded-xl p-3 hover:shadow-lg transition-all duration-300 hover:scale-[1.01]">
                     <!-- Desktop Layout -->
                     <div class="hidden sm:flex items-center justify-between">
                         <div class="flex items-center gap-3">
@@ -91,7 +102,7 @@
                         <div class="text-right">
                             <p class="text-lg font-bold"
                                :class="transaction.type === 'electricity' ? 'text-orange-600' : 'text-blue-600'">
-                                -{{ formatAmount(transaction.amount) }}
+                                -{{ $currency(transaction.amount) }}
                             </p>
                             <p v-if="transaction.totalUnits" class="text-xs text-gray-600 font-medium mt-1">
                                 {{ transaction.totalUnits }} units
@@ -124,7 +135,7 @@
                             <div class="text-right">
                                 <p class="text-sm font-bold"
                                    :class="transaction.type === 'electricity' ? 'text-orange-600' : 'text-blue-600'">
-                                    -{{ formatAmount(transaction.amount) }}
+                                    -{{ $currency(transaction.amount) }}
                                 </p>
                                 <p v-if="transaction.totalUnits" class="text-xs text-gray-600 font-medium mt-1">
                                     {{ transaction.totalUnits }} units
@@ -327,7 +338,7 @@ async function fetchRecentTransactions() {
             .map(transaction => {
                 let vendResponse
                 try {
-                    vendResponse = JSON.parse(transaction.vendResponse || '{}')
+                    vendResponse = transaction.vendResponse || '{}'
                 } catch (error) {
                     console.warn('Failed to parse vendResponse for transaction:', transaction.id, error)
                     vendResponse = {}

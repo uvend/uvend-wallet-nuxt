@@ -1,74 +1,85 @@
 <template>
 <div class="flex flex-col p-4 gap-6">
-    <!-- Wallet Card and Meter Spending Chart -->
-    <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
-    <!-- Wallet Card -->
-         
-    <WalletDebitCard />
-        
-        <!-- Meter Spending Chart -->
-       
-    </div>
-
-
-
-    <!-- Summary Statistics -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Top grid: Debit card (left) and summary cards (right) on desktop -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <!-- Left column: Debit Card (same as home) -->
+        <div class="lg:col-span-6">
+            <WalletDebitCard />
+        </div>
+        <!-- Right column: Summary cards (2x2 on all breakpoints) -->
+        <div class="grid grid-cols-2 gap-3 items-stretch lg:col-span-6">
         <!-- Total Spent -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <CardContent class="p-4">
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+            <CardContent class="p-3">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                         <Icon name="lucide:coins" class="w-4 h-4 text-purple-600" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Total Spent</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">R {{ totalSpent }}</p>
+                <Skeleton class="w-24 h-8" v-if="isLoading" />
+                <p v-else class="text-2xl font-bold text-gray-900">{{ totalSpent }}</p>
                 <p class="text-xs text-gray-500 mt-1">Lifetime</p>
             </CardContent>
         </Card>
 
         <!-- Average per Transaction -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <CardContent class="p-4">
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+            <CardContent class="p-3">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                         <Icon name="lucide:trending-up" class="w-4 h-4 text-green-600" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Average</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">R {{ averageTransaction }}</p>
+                <Skeleton class="w-24 h-8" v-if="isLoading" />
+                <p v-else class="text-2xl font-bold text-gray-900">{{ averageTransaction }}</p>
                 <p class="text-xs text-gray-500 mt-1">Lifetime average</p>
             </CardContent>
         </Card>
 
         <!-- Highest Utility -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <CardContent class="p-4">
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+            <CardContent class="p-3">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="highestUtility.bgClass">
+                    <Skeleton v-if="isLoading" class="w-8 h-8 rounded-lg" />
+                    <div v-else class="w-8 h-8 rounded-lg flex items-center justify-center" :class="highestUtility.bgClass">
                         <Icon :name="highestUtility.icon" class="w-4 h-4" :class="highestUtility.iconClass" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Highest</span>
                 </div>
-                <p class="text-2xl font-bold" :class="highestUtility.textClass">{{ highestUtility.name }}</p>
-                <p class="text-xs text-gray-500 mt-1">R {{ highestUtility.amount }} lifetime</p>
+                <div v-if="isLoading">
+                    <Skeleton class="w-28 h-6 mb-2" />
+                    <Skeleton class="w-24 h-4" />
+                </div>
+                <template v-else>
+                    <p class="text-2xl font-bold" :class="highestUtility.textClass">{{ highestUtility.name }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ $currency(highestUtility.amount) }} lifetime</p>
+                </template>
             </CardContent>
         </Card>
 
         <!-- Lowest Utility -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <CardContent class="p-4">
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+            <CardContent class="p-3">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="lowestUtility.bgClass">
+                    <Skeleton v-if="isLoading" class="w-8 h-8 rounded-lg" />
+                    <div v-else class="w-8 h-8 rounded-lg flex items-center justify-center" :class="lowestUtility.bgClass">
                         <Icon :name="lowestUtility.icon" class="w-4 h-4" :class="lowestUtility.iconClass" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Lowest</span>
                 </div>
-                <p class="text-2xl font-bold" :class="lowestUtility.textClass">{{ lowestUtility.name }}</p>
-                <p class="text-xs text-gray-500 mt-1">R {{ lowestUtility.amount }} lifetime</p>
+                <div v-if="isLoading">
+                    <Skeleton class="w-28 h-6 mb-2" />
+                    <Skeleton class="w-24 h-4" />
+                </div>
+                <template v-else>
+                    <p class="text-2xl font-bold" :class="lowestUtility.textClass">{{ lowestUtility.name }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ $currency(lowestUtility.amount) }} lifetime</p>
+                </template>
             </CardContent>
         </Card>
+        </div>
     </div>
         <!-- My Meters Section -->
     <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
@@ -102,14 +113,28 @@
             </div>
         </CardHeader>
         <CardContent class="p-0">
-            <div v-if="metersLoading" class="py-8 flex justify-center">
-                <MyLoader />
+            <div v-if="metersLoading" class="p-6 space-y-4">
+                <div v-for="i in 3" :key="i" class="flex items-center justify-between">
+                    <div class="flex items-center gap-4 flex-1">
+                        <Skeleton class="w-12 h-12 rounded-2xl" />
+                        <div class="flex-1 space-y-2">
+                            <Skeleton class="w-40 h-4" />
+                            <Skeleton class="w-24 h-3" />
+                        </div>
+                    </div>
+                    <Skeleton class="w-32 h-8 rounded-xl" />
+                </div>
             </div>
             <div v-else-if="meters && meters.length > 0" class="divide-y divide-gray-100">
                 <div v-for="meter in meters" :key="meter.meterNumber" class="p-6">
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <!-- Meter Info -->
-                        <div class="flex items-center gap-4 flex-1">
+                        <div
+                            class="flex items-center gap-4 flex-1 cursor-pointer"
+                            role="button"
+                            tabindex="0"
+                            @click="openMeterActions(meter)"
+                        >
                             <!-- Service Icon -->
                             <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                                  :class="getServiceIconBg(meter.utilityType || 'all')">
@@ -173,6 +198,7 @@
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                             <Button 
                                 @click="openPurchaseDialog(meter)"
+                                @click.stop
                                 size="sm"
                                 class="px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                             >
@@ -193,6 +219,124 @@
         </CardContent>
     </Card>
 
+    <!-- Meter Actions Dialog - mobile drawer + desktop modal -->
+    <Drawer v-if="isMobile" v-model:open="showMeterActionsDialog">
+        <DrawerContent :noMargin="true" :hideHandle="true" class="h-[90vh] flex flex-col bg-gradient-to-br from-white via-blue-50/30 to-white">
+            <!-- Header with gradient -->
+            <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-[10px]">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                            <Icon name="lucide:settings" class="h-4 w-4 text-white" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Meter Options</h3>
+                            <p class="text-xs text-white/80">{{ selectedMeterForActions?.name || 'Meter' }}</p>
+                        </div>
+                    </div>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        @click="showMeterActionsDialog = false"
+                        class="text-white hover:bg-white/20 hover:text-white"
+                    >
+                        <Icon name="lucide:x" class="h-4 w-4"/>
+                    </Button>
+                </div>
+            </div>
+
+            <!-- Scrollable content area -->
+            <div class="flex-1 overflow-y-auto bg-gradient-to-b from-white to-blue-50/20">
+                <div class="p-4 pb-8 space-y-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Meter Number</p>
+                        <p class="text-sm font-semibold text-gray-800">{{ selectedMeterForActions?.meterNumber }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Most Recent Token</p>
+                        <p class="text-sm font-semibold text-gray-800">
+                            {{ getLatestTokenNumber(selectedMeterForActions?.meterNumber) || 'Not available' }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label class="text-sm font-semibold text-gray-700">Meter Nickname</Label>
+                        <Input v-model="editMeterNameValue" class="h-11" />
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 pt-2">
+                        <Button
+                            class="flex-1"
+                            @click="saveMeterNickname"
+                            :disabled="!canSaveMeterName"
+                        >
+                            {{ editingMeterNumber === selectedMeterForActions?.meterNumber ? 'Saving...' : 'Save' }}
+                        </Button>
+                        <Button
+                            class="flex-1"
+                            variant="destructive"
+                            @click="deleteMeter(selectedMeterForActions)"
+                            :disabled="deletingMeterNumber === selectedMeterForActions?.meterNumber"
+                        >
+                            {{ deletingMeterNumber === selectedMeterForActions?.meterNumber ? 'Deleting...' : 'Delete' }}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </DrawerContent>
+    </Drawer>
+    <Dialog v-else v-model:open="showMeterActionsDialog">
+        <DialogContent closeClass="text-white hover:text-white hover:bg-white/20" class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl sm:rounded-2xl overflow-hidden">
+            <div class="relative overflow-hidden rounded-2xl">
+                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                            <Icon name="lucide:settings" class="h-5 w-5 text-white"/>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Meter Options</h3>
+                            <p class="text-sm text-white/90">{{ selectedMeterForActions?.name || 'Meter' }}</p>
+                        </div>
+                    </div>
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-12 translate-x-12"></div>
+                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
+                </div>
+
+                <div class="p-6 bg-gradient-to-b from-white to-blue-50/30 space-y-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Meter Number</p>
+                        <p class="text-sm font-semibold text-gray-800">{{ selectedMeterForActions?.meterNumber }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Most Recent Token</p>
+                        <p class="text-sm font-semibold text-gray-800">
+                            {{ getLatestTokenNumber(selectedMeterForActions?.meterNumber) || 'Not available' }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label class="text-sm font-semibold text-gray-700">Meter Nickname</Label>
+                        <Input v-model="editMeterNameValue" class="h-11" />
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 pt-2">
+                        <Button
+                            class="flex-1"
+                            @click="saveMeterNickname"
+                            :disabled="!canSaveMeterName"
+                        >
+                            {{ editingMeterNumber === selectedMeterForActions?.meterNumber ? 'Saving...' : 'Save' }}
+                        </Button>
+                        <Button
+                            class="flex-1"
+                            variant="destructive"
+                            @click="deleteMeter(selectedMeterForActions)"
+                            :disabled="deletingMeterNumber === selectedMeterForActions?.meterNumber"
+                        >
+                            {{ deletingMeterNumber === selectedMeterForActions?.meterNumber ? 'Deleting...' : 'Delete' }}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </DialogContent>
+    </Dialog>
+
     <!-- Spending Trends Chart -->
     <SpendingTrendsChart :transactions="transactions" :isLoading="isLoading" />
         
@@ -204,8 +348,91 @@
             <CardDescription class="text-sm">{{ summary.transactionCount }} transactions found</CardDescription>
         </CardHeader>
         <CardContent class="p-0">
-            <div v-if="isLoading" class="py-8 flex justify-center">
-                <MyLoader />
+            <div v-if="isLoading" class="p-6 space-y-4">
+                <!-- Desktop: table-like skeleton per column -->
+                <div class="hidden md:block overflow-x-auto">
+                    <div class="inline-block min-w-full align-middle">
+                        <table class="min-w-[1000px] w-full">
+                            <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                                <tr>
+                                    <th class="text-left py-3 px-2">
+                                        <Skeleton class="w-28 h-4" />
+                                    </th>
+                                    <th class="text-left py-3 px-2">
+                                        <Skeleton class="w-20 h-4" />
+                                    </th>
+                                    <th class="text-left py-3 px-2">
+                                        <Skeleton class="w-24 h-4" />
+                                    </th>
+                                    <th class="text-left py-3 px-2">
+                                        <Skeleton class="w-16 h-4" />
+                                    </th>
+                                    <th class="text-center py-3 px-2">
+                                        <Skeleton class="mx-auto w-16 h-4" />
+                                    </th>
+                                    <th class="text-right py-3 px-2">
+                                        <Skeleton class="ml-auto w-16 h-4" />
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                <tr v-for="i in 6" :key="'tx-row-'+i">
+                                    <td class="py-3 px-2">
+                                        <div class="space-y-1">
+                                            <Skeleton class="w-32 h-4" />
+                                            <Skeleton class="w-20 h-3" />
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2">
+                                        <div class="flex items-center gap-2">
+                                            <Skeleton class="w-8 h-8 rounded-lg" />
+                                            <div class="space-y-1">
+                                                <Skeleton class="w-20 h-4" />
+                                                <Skeleton class="w-16 h-3" />
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2">
+                                        <div class="space-y-1">
+                                            <Skeleton class="w-28 h-4" />
+                                            <Skeleton class="w-24 h-3" />
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2">
+                                        <div class="space-y-1">
+                                            <Skeleton class="w-14 h-4" />
+                                            <Skeleton class="w-10 h-3" />
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2 text-center">
+                                        <Skeleton class="mx-auto w-20 h-6 rounded-md" />
+                                    </td>
+                                    <td class="py-3 px-2 text-right">
+                                        <Skeleton class="ml-auto w-20 h-4" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Mobile: card-like skeletons -->
+                <div class="md:hidden space-y-3">
+                    <div v-for="i in 5" :key="'tx-m-row-'+i" class="p-4 border rounded-lg bg-white">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <Skeleton class="w-12 h-12 rounded-xl" />
+                                <div class="space-y-2">
+                                    <Skeleton class="w-24 h-4" />
+                                    <Skeleton class="w-20 h-3" />
+                                </div>
+                            </div>
+                            <div class="text-right space-y-2">
+                                <Skeleton class="w-20 h-4" />
+                                <Skeleton class="w-16 h-3" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div v-else-if="transactions.length > 0">
                 <!-- Desktop Table - Scrollable -->
@@ -291,7 +518,7 @@
                                       
                                         <td class="py-3 px-2 text-right whitespace-nowrap">
                                             <p class="text-sm font-semibold" :class="getAmountClass(transaction.utilityType)">
-                                                R {{ parseFloat(transaction.amount).toFixed(2) }}
+                                                {{ $currency(transaction.amount) }}
                                             </p>
                                             <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
                                                 {{ transaction.unitsIssued }} units
@@ -330,7 +557,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="text-right">
                                 <p class="text-sm font-bold" :class="getAmountClass(transaction.utilityType)">
-                                    R {{ parseFloat(transaction.amount).toFixed(2) }}
+                                    {{ $currency(transaction.amount) }}
                                 </p>
                                     <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
                                         {{ transaction.unitsIssued }} units
@@ -468,6 +695,7 @@ definePageMeta({
     },
     data() {
       return {
+                isMobile: false,
             isLoading: false,
         activeFilter: null,
             transactions: [],
@@ -484,6 +712,11 @@ definePageMeta({
             metersLoading: false,
             showPurchaseDialog: false,
             selectedMeterForPurchase: null,
+            deletingMeterNumber: null,
+            editingMeterNumber: null,
+            showMeterActionsDialog: false,
+            selectedMeterForActions: null,
+            editMeterNameValue: '',
             // Transaction totals from API
             transactionTotals: {
                 totalAmount: 0,
@@ -498,51 +731,59 @@ definePageMeta({
         }
     },
     methods: {
-      async fetchTransactionsData() {
-        this.isLoading = true;        
-        try {
-                const response = await useWalletAuthFetch(`/meter/token/history`, {
-          })
-          this.transactions = response.transactions;
-          this.summary.totalSpent = Number(response.totalAmount).toFixed(2)
-          this.summary.transactionCount = this.transactions.length;
-         
+        async fetchTransactionsData() {
+            this.isLoading = true;        
+            try {
+                const response = await useWalletAuthFetch(`/meter/token/history`, {})
+                this.transactions = response.transactions;
+                this.summary.totalSpent = Number(response.totalAmount).toFixed(2)
+                this.summary.transactionCount = this.transactions.length;
+            
                 // Store the totals from the response instead of calculating
                 this.transactionTotals = {
                     totalAmount: parseFloat(response.totalAmount || 0),
                     electricityTotal: parseFloat(response.electricityTotal || 0),
                     waterTotal: parseFloat(response.waterTotal || 0)
                 }
-         
+            
                 // Add unitsIssued to each transaction
                 this.transactions = this.transactions.map(transaction => {
-                    const unitsIssued = JSON.parse(transaction.vendResponse).listOfTokenTransactions[0]?.tokens[0]?.units || ""
-                    const delimitedTokenNumber = JSON.parse(transaction.vendResponse).listOfTokenTransactions[0]?.tokens[0]?.delimitedTokenNumber || ""
+                    let vendResponse = transaction.vendResponse
+                    if (typeof vendResponse === 'string') {
+                        try {
+                            vendResponse = JSON.parse(vendResponse)
+                        } catch (error) {
+                            console.warn('Invalid vendResponse JSON', { id: transaction.id, error })
+                            vendResponse = null
+                        }
+                    }
+                    const tokenTransaction = vendResponse?.listOfTokenTransactions?.[0]?.tokens?.[0]
+                    const unitsIssued = tokenTransaction?.units || ""
+                    const delimitedTokenNumber = tokenTransaction?.delimitedTokenNumber || ""
                     return {
                         ...transaction,
-                        unitsIssued: unitsIssued,
-                        delimitedTokenNumber:delimitedTokenNumber
+                        unitsIssued,
+                        delimitedTokenNumber
                     }
                 })
-         
+            
                 // Prepare chart data
                 this.chartData = this.transactions.map(t => ({
                     transactionDate: t.created,
                     managedTenderAmount: parseFloat(t.amount),
                     utilityType: t.utilityType
                 }))
-
-        } catch (error) {
-          console.error('Error fetching transactions data:', error);
-          this.$toast({
-            title: 'Error',
-            description: 'Failed to load transactions data',
-            variant: 'destructive'
-          });
-        } finally {
-          this.isLoading = false;
-        }
-      },
+            } catch (error) {
+                console.error('Error fetching transactions data:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to load transactions data',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
       
         getUtilityIcon(type) {
             return type === 'Electricity' ? 'lucide:zap' : 'lucide:droplet'
@@ -664,7 +905,7 @@ definePageMeta({
                     this.meters = [...metersStore.meters];
                 } else {
                     const response = await useWalletAuthFetch(`/meter`)
-                    const meters = response.meters || [];
+                    const meters = (response.meters || []).filter(meter => meter?.active !== 0 && meter?.active !== '0');
                     // Update store with fetched meters
                     metersStore.setMeters(meters);
                     this.allMeters = [...meters];
@@ -681,13 +922,21 @@ definePageMeta({
                 this.metersLoading = false;
             }
         },
+
+        checkMobile() {
+            this.isMobile =
+                window.innerWidth <= 768 ||
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                    navigator.userAgent
+                );
+        },
         
         async refreshMeters() {
             // Refresh meters from API and update store
             const metersStore = useMetersStore();
             try {
                 const response = await useWalletAuthFetch(`/meter`)
-                const meters = response.meters || [];
+                const meters = (response.meters || []).filter(meter => meter?.active !== 0 && meter?.active !== '0');
                 // Update store with fresh meters
                 metersStore.setMeters(meters);
                 this.allMeters = [...meters];
@@ -701,6 +950,138 @@ definePageMeta({
         openPurchaseDialog(meter) {
             this.selectedMeterForPurchase = meter;
             this.showPurchaseDialog = true;
+        },
+
+        openMeterActions(meter) {
+            this.selectedMeterForActions = meter;
+            this.editMeterNameValue = meter?.name || '';
+            this.showMeterActionsDialog = true;
+        },
+
+        getLatestTokenNumber(meterNumber) {
+            if (!meterNumber || !this.transactions?.length) return '';
+            const latest = this.transactions
+                .filter(t => t.meterNumber === meterNumber)
+                .sort((a, b) => new Date(b.created) - new Date(a.created))[0];
+            return latest?.delimitedTokenNumber || '';
+        },
+
+        async saveMeterNickname() {
+            const meter = this.selectedMeterForActions;
+            const meterNumber = meter?.meterNumber;
+            if (!meterNumber) return;
+            const trimmedName = this.editMeterNameValue.trim();
+            if (!trimmedName || trimmedName === meter?.name) return;
+            this.editingMeterNumber = meterNumber;
+            try {
+                await useWalletAuthFetch(`/meter/${meterNumber}`, {
+                    method: 'PATCH',
+                    body: {
+                        name: trimmedName,
+                        favourite: meter?.favourite ?? 0,
+                        active: meter?.active ?? 1
+                    }
+                });
+                this.$toast({
+                    title: 'Meter updated',
+                    description: 'The meter nickname was updated.'
+                });
+                if (this.selectedMeterForPurchase?.meterNumber === meterNumber) {
+                    this.selectedMeterForPurchase = { ...this.selectedMeterForPurchase, name: trimmedName };
+                }
+                if (this.selectedMeterForActions?.meterNumber === meterNumber) {
+                    this.selectedMeterForActions = { ...this.selectedMeterForActions, name: trimmedName };
+                }
+                await this.refreshMeters();
+            } catch (error) {
+                console.error('Error updating meter nickname:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to update meter nickname',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.editingMeterNumber = null;
+            }
+        },
+
+        async editMeterName(meter) {
+            const meterNumber = meter?.meterNumber;
+            if (!meterNumber) return;
+            const currentName = meter?.name || '';
+            const newName = window.prompt('Update meter nickname', currentName);
+            if (newName === null) return;
+            const trimmedName = newName.trim();
+            if (!trimmedName || trimmedName === currentName) return;
+            this.editingMeterNumber = meterNumber;
+            try {
+                await useWalletAuthFetch(`/meter/${meterNumber}`, {
+                    method: 'PATCH',
+                    body: {
+                        name: trimmedName,
+                        favourite: meter?.favourite ?? 0,
+                        active: meter?.active ?? 1
+                    }
+                });
+                this.$toast({
+                    title: 'Meter updated',
+                    description: 'The meter nickname was updated.'
+                });
+                if (this.selectedMeterForPurchase?.meterNumber === meterNumber) {
+                    this.selectedMeterForPurchase = { ...this.selectedMeterForPurchase, name: trimmedName };
+                }
+                await this.refreshMeters();
+            } catch (error) {
+                console.error('Error updating meter nickname:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to update meter nickname',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.editingMeterNumber = null;
+            }
+        },
+
+        async deleteMeter(meter) {
+            const meterNumber = meter?.meterNumber;
+            if (!meterNumber) return;
+            const confirmed = window.confirm(
+                `Remove ${meter?.name || 'this meter'} from your wallet?`
+            );
+            if (!confirmed) return;
+            this.deletingMeterNumber = meterNumber;
+            try {
+                await useWalletAuthFetch(`/meter/${meterNumber}`, {
+                    method: 'PATCH',
+                    body: {
+                        name: meter?.name || '',
+                        favourite: meter?.favourite ?? 0,
+                        active: 0
+                    }
+                });
+                this.$toast({
+                    title: 'Meter removed',
+                    description: 'The meter was deleted from your wallet.'
+                });
+                if (this.selectedMeterForPurchase?.meterNumber === meterNumber) {
+                    this.selectedMeterForPurchase = null;
+                }
+                if (this.selectedMeterForActions?.meterNumber === meterNumber) {
+                    this.showMeterActionsDialog = false;
+                    this.selectedMeterForActions = null;
+                }
+                await this.refreshMeters();
+            } catch (error) {
+                console.error('Error deleting meter:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to delete meter',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.deletingMeterNumber = null;
+            }
         },
         
         
@@ -873,8 +1254,10 @@ definePageMeta({
             }, 1000);
         }
     },
-        
-        async mounted() {
+
+    async mounted() {
+        this.checkMobile();
+        window.addEventListener('resize', this.checkMobile);
         this.setDateRange('30days');
         // Fetch both transactions and meters data
         await Promise.all([
@@ -885,23 +1268,39 @@ definePageMeta({
 
     watch: {
         '$store.dateRange'(newValue) {
-        this.setDateRange(newValue)
-        this.fetchTransactionsData();
-      },
+            this.setDateRange(newValue)
+            this.fetchTransactionsData();
+        },
         '$store.utilityType'(newValue) {
-        this.activeFilter = newValue;
-        this.fetchTransactionsData();
+            this.activeFilter = newValue;
+            this.fetchTransactionsData();
         }
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('resize', this.checkMobile);
     },
     
     computed: {
+        canSaveMeterName() {
+            const meter = this.selectedMeterForActions;
+            if (!meter) return false;
+            const trimmedName = this.editMeterNameValue.trim();
+            return Boolean(trimmedName) && trimmedName !== meter.name && this.editingMeterNumber !== meter.meterNumber;
+        },
         totalSpent() {
-            return this.transactionTotals.totalAmount.toFixed(2);
+            const { $currency } = useNuxtApp()
+            const num = Number(this.transactionTotals.totalAmount || 0)
+            return $currency ? $currency(num) : `R ${num.toFixed(2)}`
         },
         
         averageTransaction() {
-            if (!this.summary.transactionCount || this.summary.transactionCount === 0) return '0.00';
-            return (this.transactionTotals.totalAmount / this.summary.transactionCount).toFixed(2);
+            const { $currency } = useNuxtApp()
+            if (!this.summary.transactionCount || this.summary.transactionCount === 0) {
+                return $currency ? $currency(0) : `R ${Number(0).toFixed(2)}`
+            }
+            const avg = (this.transactionTotals.totalAmount / this.summary.transactionCount)
+            return $currency ? $currency(avg) : `R ${avg.toFixed(2)}`
         },
         
         electricityTotal() {
@@ -919,7 +1318,7 @@ definePageMeta({
             if (elecTotal > waterTotal) {
                 return {
                     name: 'Electricity',
-                    amount: elecTotal.toFixed(2),
+                    amount: elecTotal,
                     icon: 'lucide:zap',
                     bgClass: 'bg-orange-100',
                     iconClass: 'text-orange-600',
@@ -928,7 +1327,7 @@ definePageMeta({
             } else {
                 return {
                     name: 'Water',
-                    amount: waterTotal.toFixed(2),
+                    amount: waterTotal,
                     icon: 'lucide:droplet',
                     bgClass: 'bg-blue-100',
                     iconClass: 'text-blue-600',
@@ -962,8 +1361,8 @@ definePageMeta({
             }
         }
     }
-  }
-  </script>
+}
+</script>
 
 <style scoped>
 /* Custom scrollbar for transaction table */

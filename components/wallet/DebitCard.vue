@@ -22,7 +22,8 @@
             <!-- balance section -->
             <div class="mb-6">
                 <p class="text-xs text-white/90 mb-1 font-medium">Available balance</p>
-                <p class="text-3xl md:text-4xl font-black tracking-tight">{{ currency }} {{ formattedBalance }}</p>
+                <Skeleton v-if="isWalletLoading" class="w-40 h-8 md:h-10 rounded bg-white/30" />
+                <p v-else class="text-3xl md:text-4xl font-black tracking-tight">{{ formattedBalance }}</p>
                 <div class="mt-2 flex items-center gap-2">
                     <div class="w-1.5 h-1.5 rounded-full bg-white/60"></div>
                     <p class="text-xs text-white/80">Active account</p>
@@ -33,23 +34,16 @@
             <div class="flex items-center justify-between">
                 <div class="space-y-1">
                     <p class="text-xs text-white/90 font-medium">Account</p>
-                    <p class="text-sm tracking-widest font-bold">{{ maskedAccount }}</p>
+                    <Skeleton v-if="isWalletLoading" class="w-48 h-4 rounded bg-white/30" />
+                    <p v-else class="text-sm tracking-widest font-bold">{{ maskedAccount }}</p>
                 </div>
                 <div class="flex flex-col items-end gap-1">
-                    <!-- Loading state - shown while meters are being fetched -->
-                    <button 
-                        v-if="metersLoading"
-                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 opacity-75 transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md cursor-wait"
-                        disabled
-                        title="Loading meters..."
-                    >
-                        <Icon name="lucide:loader-2" class="w-3 h-3 mr-1.5 animate-spin relative z-10"/>
-                        <span class="relative z-10">Loading...</span>
-                    </button>
+                    <!-- Loading state - skeleton only while wallet is loading -->
+                    <Skeleton v-if="isWalletLoading" class="h-9 w-28 rounded-xl bg-white/30" />
                     <!-- Top up button - shown when meters exist -->
                     <button 
-                        v-else-if="hasMeters"
-                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg"
+                        v-else-if="hasMeters || metersLoading"
+                        class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg"
                         @click="handleTopUp"
                         title="Top up your wallet"
                     >
@@ -98,7 +92,6 @@
                         @payment-complete="paymentComplete"
                     />
                 </div>
-                
                 <!-- Payment form -->
                 <div v-if="currentTab === 'payment'" class="space-y-6">
                     <!-- Current Balance Display -->
@@ -110,7 +103,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-600">Current Balance</p>
-                                    <p class="text-xl font-bold text-blue-700">{{ currency }} {{ formattedBalance }}</p>
+                                    <p class="text-xl font-bold text-blue-700">{{ formattedBalance }}</p>
                                 </div>
                             </div>
                         </div>
@@ -149,16 +142,30 @@
                                 {{ currency }} {{ quickAmount }}
                             </Button>
                         </div>
-                        
+                        <div>
+                            <p class="text-sm text-gray-600">
+                                Pay with
+                            </p>
+                        </div>
+                        <div v-if="isLoading">
+                            <p><NuxtLoadingIndicator /></p>
+                        </div>
+                        <div v-else class="flex flex-col gap-2">
+                            <Button 
+                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                                @click="addPayAtFunds" 
+                                :disabled="amount < 30"
+                            >
+                                <span class="font-scandia">pay@</span>
+                            </Button>
                         <Button 
-                            class="w-full py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300" 
+                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
                             @click="addFunds" 
-                            :disabled="amount < 1 || isLoading"
+                                :disabled="amount < 30"
                         >
-                            <Icon name="lucide:plus-circle" class="h-5 w-5 mr-2" v-if="!isLoading"/>
-                            <Icon name="lucide:loader-2" class="h-5 w-5 mr-2 animate-spin" v-else/>
-                            {{ isLoading ? 'Processing...' : 'Top Up Wallet' }}
+                                <span class="font-scandia">paygate</span>
                         </Button>
+                        </div>
                     </div>
                     
                     <!-- Payment Methods Info -->
@@ -238,11 +245,13 @@ export default {
             amount: 0.00,
             payRequestId: null,
             checksum: null,
+                payAtUrl: null,
             cards: [],
             selectedCard: null,
             isLoading: false,
             actualBalance: 0,
-            accountNumber:null
+            accountNumber:null,
+            isWalletLoading: true
         }
     },
     computed: {
@@ -250,12 +259,9 @@ export default {
             return `linear-gradient(135deg, ${this.bgPrimary} 0%, ${this.bgSecondary} 70%)`;
         },
         formattedBalance(){
-            try{
                 const displayBalance = this.actualBalance || this.balance;
-                return displayBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-            }catch(e){
-                return this.actualBalance || this.balance
-            }
+            const { $currency } = useNuxtApp()
+            return $currency ? $currency(displayBalance) : `R ${Number(displayBalance || 0).toFixed(2)}`
         },
         maskedAccount(){
             return `${this.accountNumber}`
@@ -314,9 +320,9 @@ export default {
             this.selectedCard = id;
         },
         async addFunds(){
+            this.isLoading = true;
             if(!this.selectedCard && this.amount < 1) return;
             try{
-                this.isLoading = true;
                 let url = `/pay/addFunds`;
                 if(this.selectedCard){
                     url = `${url}/${this.selectedCard}`
@@ -337,14 +343,39 @@ export default {
                 this.isLoading = false;
             }
         },
+        async addPayAtFunds(){
+            console.log("addPayAtFunds")
+            try{
+                // @Todo: disable button to prevent clicks while waitinf for response
+                const response = await useWalletAuthFetch(`/payat/request`, {
+                method: "POST",
+                body: {
+                    amount: this.amount
+                    }
+                })
+                // Expecting response.payAtUrl
+                console.log(response)
+                this.payAtUrl = response?.payAtUrl || null
+                if (this.payAtUrl) {
+                    // Open Pay@ in a new tab and close the popup
+                    window.open(this.payAtUrl, '_blank', 'noopener,noreferrer')
+                    this.showTopUpDialog = false
+                }
+            }catch(error){
+                console.error('Error adding payat funds:', error)
+            }
+        },
         async getWalletBalance(){
             try {
+                this.isWalletLoading = true
                 const response = await useWalletAuthFetch(`/pay/balance`)
                 this.actualBalance = Number(response.balance);
                 this.accountNumber = response.account
                 this.$emit('balance-updated', this.actualBalance);
             } catch(error) {
                 console.error('Error fetching wallet balance:', error)
+            } finally {
+                this.isWalletLoading = false
             }
         },
         paymentComplete(){

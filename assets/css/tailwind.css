@@ -5,6 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Payment button font (Scandia) */
+@font-face {
+	font-family: "scandia-web";
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: local("scandia-web");
+}
+.font-scandia {
+	font-family: "scandia-web", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+}
 /* Your custom styles can go below */
 @layer base {
   /* Custom base styles */

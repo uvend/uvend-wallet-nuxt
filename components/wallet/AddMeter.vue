@@ -51,20 +51,26 @@ export default{
             meterNumber: null,
             meterName: null,
             dialogOpen: false,
-            meterAddedSuccessfully: false
+            meterAddedSuccessfully: false,
+            shouldRestore: false
         } 
     },
     methods:{
         async validateMeterNumber(){
             this.isLoading = true
             const response = await useWalletAuthFetch(`/meter/valid`,{
-                params: {
-                    meterNumber : this.meterNumber
-                }
+              params: { meterNumber: this.meterNumber.trim() }
             })
+            const status = response?.response?.status
             if(!response){
               this.isValid = true;
+              this.shouldRestore = false;
+            }else if (status === 403 || status === 409) {
+              this.isValid = true;
+              this.shouldRestore = true;
             }else{
+              this.isValid = false;
+              this.shouldRestore = false;
               this.$toast({
                 title: 'Uh oh! Something went wrong.',
                 description: 'There was a problem with your request.',
@@ -75,20 +81,40 @@ export default{
         },
         async addNewMeter(){
           this.isLoading = true
-          const response = await useWalletAuthFetch(`/meter`, {
-            method: "POST",
-            body: {
-              meterNumber : this.meterNumber,
-              name: this.meterName,
-              favourite: 0
+          try {
+            const meterNumber = this.meterNumber.trim()
+            if (this.shouldRestore) {
+              const response = await useWalletAuthFetch(`/meter/${meterNumber}`, {
+                method: "PATCH",
+                body: {
+                  name: this.meterName,
+                  favourite: 0,
+                  active: 1
+                }
+              })
+              if (response) {
+                this.dialogOpen = false;
+                this.meterAddedSuccessfully = true;
+                this.$emit('success')
+              }
+              return;
             }
-          })
-          if(response.id){
-            this.dialogOpen = false;
-            this.meterAddedSuccessfully = true;
-            this.$emit('success')
+            const response = await useWalletAuthFetch(`/meter`, {
+              method: "POST",
+              body: {
+                meterNumber,
+                name: this.meterName,
+                favourite: 0
+              }
+            })
+            if(response?.id){
+              this.dialogOpen = false;
+              this.meterAddedSuccessfully = true;
+              this.$emit('success')
+            }
+          } finally {
+            this.isLoading = false
           }
-          this.isLoading = false
         },
     },
     watch: {
@@ -98,6 +124,7 @@ export default{
         this.meterNumber = null;
         this.meterName = null;
         this.isValid = false;
+        this.shouldRestore = false;
       }
     }
   }
