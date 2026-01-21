@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col p-4 gap-4 overflow-hidden">
+    <div class="flex flex-col p-4 gap-6 overflow-hidden">
         <!-- Filter buttons in a scrollable container on mobile -->
         <!-- <div class="flex justify-between flex-wrap gap-2">
             <WalletUtilitySelector v-model="filterOptions" @update="console.log"/>
@@ -7,28 +7,20 @@
         </div> -->
         
         <!-- Main Dashboard Grid: 2-column layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Left Column: KPI Cards + Debit Card -->
-            <div class="flex flex-col gap-4">
-                <!-- KPI Cards -->
-                <WalletKpiCards />
-                
-                <!-- Debit Card -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            <!-- Column A (Desktop Left): Debit Card -->
+            <div class="order-2 lg:order-1 lg:col-span-1 h-full">
                 <WalletDebitCard @balance-updated="handleBalanceUpdate" />
-                <div class="mt-6">
-                <WalletRecentTransactions />
-                </div>
             </div>
-            
-            <!-- Right Column: Balance History -->
-            <div class="flex flex-col gap-4">
-                <!-- Balance History Chart -->
-                <!-- <WalletBalanceHistoryChart /> -->
+            <!-- Column B (Desktop Right): KPI Cards stacked -->
+            <div class="order-1 lg:order-2 flex flex-col gap-4 lg:col-span-1 h-full">
+                <WalletKpiCards />
             </div>
         </div>
-        
-        <!-- Recent Transactions Table -->
-   
+        <!-- Recent Transactions Table: full width below -->
+        <div>
+            <WalletRecentTransactions />
+        </div>
     </div>
 </template>
 

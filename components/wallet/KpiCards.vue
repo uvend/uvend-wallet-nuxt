@@ -1,63 +1,40 @@
 <template>
-    <div class="grid grid-cols-2 gap-4">
-        <!-- Total Spent KPI -->
-        <Card class="group relative overflow-hidden bg-gradient-to-br from-white to-red-50/30 border border-red-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div class="p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors duration-300">
-                            <Icon name="lucide:trending-down" class="h-4 w-4 text-red-600"/>
-                        </div>
-                        <div>
-                            <p class="text-xs font-medium text-gray-600 uppercase tracking-wide">Total Spent</p>
-                        </div>
+    <div :class="stack ? 'flex flex-col h-full gap-4' : 'grid grid-cols-2 gap-3 items-stretch h-full'">
+        <!-- Total Spent KPI (match payments style) -->
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl h-full">
+            <CardContent class="p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Icon name="lucide:coins" class="w-4 h-4 text-blue-600" />
                     </div>
-                    <div class="w-2 h-2 rounded-full bg-red-500 shadow-sm"></div>
+                    <span class="text-xs font-medium text-gray-600">Total Spent</span>
                 </div>
-                <div class="space-y-1">
-                    <Skeleton class="w-24 h-8" v-if="isLoading"/>
-                    <p class="text-2xl font-bold text-red-700" v-else>{{ formatAmount(totalSpent) }}</p>
-                    <div class="flex items-center gap-1">
-                        <div class="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                        <p class="text-xs text-gray-600">Expenses</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Subtle gradient overlay -->
-            <div class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-red-100/20 pointer-events-none"></div>
+                <Skeleton class="w-24 h-8" v-if="isLoading"/>
+                <p v-else class="text-2xl font-bold text-gray-900">{{ $currency(totalSpent) }}</p>
+                <p class="text-xs text-gray-500 mt-1">All time</p>
+            </CardContent>
         </Card>
 
-        <!-- Total Deposited KPI -->
-        <Card class="group relative overflow-hidden bg-gradient-to-br from-white to-green-50/30 border border-green-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-            <div class="p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors duration-300">
-                            <Icon name="lucide:trending-up" class="h-4 w-4 text-green-600"/>
-                        </div>
-                        <div>
-                            <p class="text-xs font-medium text-gray-600 uppercase tracking-wide">Total Purchases Made</p>
-                        </div>
+        <!-- Total Purchase KPI (match payments style) -->
+        <Card class="bg-white/95 backdrop-blur-sm border border-purple-200 shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl h-full">
+            <CardContent class="p-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Icon name="lucide:trending-up" class="w-4 h-4 text-purple-600" />
                     </div>
-                    <div class="w-2 h-2 rounded-full bg-green-500 shadow-sm"></div>
+                    <span class="text-xs font-medium text-gray-600">Total Purchase</span>
                 </div>
-                <div class="space-y-1">
-                    <Skeleton class="w-24 h-8" v-if="isLoading"/>
-                    <p class="text-2xl font-bold text-green-700" v-else>{{ totalPurchases }}</p>
-                    <div class="flex items-center gap-1">
-                        <div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-                        <p class="text-xs text-gray-600">Purchases</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Subtle gradient overlay -->
-            <div class="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-green-100/20 pointer-events-none"></div>
+                <Skeleton class="w-24 h-8" v-if="isLoading"/>
+                <p v-else class="text-2xl font-bold text-gray-900">{{ totalPurchases }}</p>
+                <p class="text-xs text-gray-500 mt-1">All time</p>
+            </CardContent>
         </Card>
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+const props = defineProps({ stack: { type: Boolean, default: false } })
 
 const totalSpent = ref(0)
 const totalPurchases = ref(0)

@@ -1,5 +1,12 @@
 <template>
-  <div>
+  <div class="relative min-h-[200px]">
+    <!-- Loading overlay only while vending -->
+    <div v-if="vending" class="absolute inset-0 z-20 bg-white/70 backdrop-blur-sm flex items-center justify-center">
+      <div class="flex items-center gap-3 text-blue-700">
+        <Icon name="lucide:loader-2" class="h-6 w-6 animate-spin" />
+        <span class="text-sm font-medium">Processing purchase…</span>
+      </div>
+    </div>
     <div class="p-4 flex flex-col gap-2" v-if="!vendResponse">
       <WalletCardBalance :addMoney="false"/>
       <div v-if="meters.length > 0" class="flex flex-col gap-2">
