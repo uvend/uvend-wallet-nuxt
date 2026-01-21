@@ -1,74 +1,85 @@
 <template>
 <div class="flex flex-col p-4 gap-6">
-    <!-- Wallet Card and Meter Spending Chart -->
-    <div class="grid grid-cols-1 lg:grid-cols-1 gap-6">
-    <!-- Wallet Card -->
-         
-    <WalletDebitCard />
-        
-        <!-- Meter Spending Chart -->
-       
-    </div>
-
-
-
-    <!-- Summary Statistics -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Top grid: Debit card (left) and summary cards (right) on desktop -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <!-- Left column: Debit Card (same as home) -->
+        <div class="lg:col-span-6">
+            <WalletDebitCard />
+        </div>
+        <!-- Right column: Summary cards (2x2 on all breakpoints) -->
+        <div class="grid grid-cols-2 gap-3 items-stretch lg:col-span-6">
         <!-- Total Spent -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <CardContent class="p-4">
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+            <CardContent class="p-3">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                         <Icon name="lucide:coins" class="w-4 h-4 text-purple-600" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Total Spent</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">R {{ totalSpent }}</p>
+                <Skeleton class="w-24 h-8" v-if="isLoading" />
+                <p v-else class="text-2xl font-bold text-gray-900">{{ totalSpent }}</p>
                 <p class="text-xs text-gray-500 mt-1">Lifetime</p>
             </CardContent>
         </Card>
 
         <!-- Average per Transaction -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <CardContent class="p-4">
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+            <CardContent class="p-3">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                         <Icon name="lucide:trending-up" class="w-4 h-4 text-green-600" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Average</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">R {{ averageTransaction }}</p>
+                <Skeleton class="w-24 h-8" v-if="isLoading" />
+                <p v-else class="text-2xl font-bold text-gray-900">{{ averageTransaction }}</p>
                 <p class="text-xs text-gray-500 mt-1">Lifetime average</p>
             </CardContent>
         </Card>
 
         <!-- Highest Utility -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <CardContent class="p-4">
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+            <CardContent class="p-3">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="highestUtility.bgClass">
+                    <Skeleton v-if="isLoading" class="w-8 h-8 rounded-lg" />
+                    <div v-else class="w-8 h-8 rounded-lg flex items-center justify-center" :class="highestUtility.bgClass">
                         <Icon :name="highestUtility.icon" class="w-4 h-4" :class="highestUtility.iconClass" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Highest</span>
                 </div>
-                <p class="text-2xl font-bold" :class="highestUtility.textClass">{{ highestUtility.name }}</p>
-                <p class="text-xs text-gray-500 mt-1">R {{ highestUtility.amount }} lifetime</p>
+                <div v-if="isLoading">
+                    <Skeleton class="w-28 h-6 mb-2" />
+                    <Skeleton class="w-24 h-4" />
+                </div>
+                <template v-else>
+                    <p class="text-2xl font-bold" :class="highestUtility.textClass">{{ highestUtility.name }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ $currency(highestUtility.amount) }} lifetime</p>
+                </template>
             </CardContent>
         </Card>
 
         <!-- Lowest Utility -->
-        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <CardContent class="p-4">
+        <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300 h-full">
+            <CardContent class="p-3">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="lowestUtility.bgClass">
+                    <Skeleton v-if="isLoading" class="w-8 h-8 rounded-lg" />
+                    <div v-else class="w-8 h-8 rounded-lg flex items-center justify-center" :class="lowestUtility.bgClass">
                         <Icon :name="lowestUtility.icon" class="w-4 h-4" :class="lowestUtility.iconClass" />
                     </div>
                     <span class="text-xs font-medium text-gray-600">Lowest</span>
                 </div>
-                <p class="text-2xl font-bold" :class="lowestUtility.textClass">{{ lowestUtility.name }}</p>
-                <p class="text-xs text-gray-500 mt-1">R {{ lowestUtility.amount }} lifetime</p>
+                <div v-if="isLoading">
+                    <Skeleton class="w-28 h-6 mb-2" />
+                    <Skeleton class="w-24 h-4" />
+                </div>
+                <template v-else>
+                    <p class="text-2xl font-bold" :class="lowestUtility.textClass">{{ lowestUtility.name }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ $currency(lowestUtility.amount) }} lifetime</p>
+                </template>
             </CardContent>
         </Card>
+        </div>
     </div>
         <!-- My Meters Section -->
     <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
@@ -102,8 +113,17 @@
             </div>
         </CardHeader>
         <CardContent class="p-0">
-            <div v-if="metersLoading" class="py-8 flex justify-center">
-                <MyLoader />
+            <div v-if="metersLoading" class="p-6 space-y-4">
+                <div v-for="i in 3" :key="i" class="flex items-center justify-between">
+                    <div class="flex items-center gap-4 flex-1">
+                        <Skeleton class="w-12 h-12 rounded-2xl" />
+                        <div class="flex-1 space-y-2">
+                            <Skeleton class="w-40 h-4" />
+                            <Skeleton class="w-24 h-3" />
+                        </div>
+                    </div>
+                    <Skeleton class="w-32 h-8 rounded-xl" />
+                </div>
             </div>
             <div v-else-if="meters && meters.length > 0" class="divide-y divide-gray-100">
                 <div v-for="meter in meters" :key="meter.meterNumber" class="p-6">
@@ -204,8 +224,91 @@
             <CardDescription class="text-sm">{{ summary.transactionCount }} transactions found</CardDescription>
         </CardHeader>
         <CardContent class="p-0">
-            <div v-if="isLoading" class="py-8 flex justify-center">
-                <MyLoader />
+            <div v-if="isLoading" class="p-6 space-y-4">
+                <!-- Desktop: table-like skeleton per column -->
+                <div class="hidden md:block overflow-x-auto">
+                    <div class="inline-block min-w-full align-middle">
+                        <table class="min-w-[1000px] w-full">
+                            <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                                <tr>
+                                    <th class="text-left py-3 px-2">
+                                        <Skeleton class="w-28 h-4" />
+                                    </th>
+                                    <th class="text-left py-3 px-2">
+                                        <Skeleton class="w-20 h-4" />
+                                    </th>
+                                    <th class="text-left py-3 px-2">
+                                        <Skeleton class="w-24 h-4" />
+                                    </th>
+                                    <th class="text-left py-3 px-2">
+                                        <Skeleton class="w-16 h-4" />
+                                    </th>
+                                    <th class="text-center py-3 px-2">
+                                        <Skeleton class="mx-auto w-16 h-4" />
+                                    </th>
+                                    <th class="text-right py-3 px-2">
+                                        <Skeleton class="ml-auto w-16 h-4" />
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                <tr v-for="i in 6" :key="'tx-row-'+i">
+                                    <td class="py-3 px-2">
+                                        <div class="space-y-1">
+                                            <Skeleton class="w-32 h-4" />
+                                            <Skeleton class="w-20 h-3" />
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2">
+                                        <div class="flex items-center gap-2">
+                                            <Skeleton class="w-8 h-8 rounded-lg" />
+                                            <div class="space-y-1">
+                                                <Skeleton class="w-20 h-4" />
+                                                <Skeleton class="w-16 h-3" />
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2">
+                                        <div class="space-y-1">
+                                            <Skeleton class="w-28 h-4" />
+                                            <Skeleton class="w-24 h-3" />
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2">
+                                        <div class="space-y-1">
+                                            <Skeleton class="w-14 h-4" />
+                                            <Skeleton class="w-10 h-3" />
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-2 text-center">
+                                        <Skeleton class="mx-auto w-20 h-6 rounded-md" />
+                                    </td>
+                                    <td class="py-3 px-2 text-right">
+                                        <Skeleton class="ml-auto w-20 h-4" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Mobile: card-like skeletons -->
+                <div class="md:hidden space-y-3">
+                    <div v-for="i in 5" :key="'tx-m-row-'+i" class="p-4 border rounded-lg bg-white">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <Skeleton class="w-12 h-12 rounded-xl" />
+                                <div class="space-y-2">
+                                    <Skeleton class="w-24 h-4" />
+                                    <Skeleton class="w-20 h-3" />
+                                </div>
+                            </div>
+                            <div class="text-right space-y-2">
+                                <Skeleton class="w-20 h-4" />
+                                <Skeleton class="w-16 h-3" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div v-else-if="transactions.length > 0">
                 <!-- Desktop Table - Scrollable -->
@@ -291,7 +394,7 @@
                                       
                                         <td class="py-3 px-2 text-right whitespace-nowrap">
                                             <p class="text-sm font-semibold" :class="getAmountClass(transaction.utilityType)">
-                                                R {{ parseFloat(transaction.amount).toFixed(2) }}
+                                                {{ $currency(transaction.amount) }}
                                             </p>
                                             <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
                                                 {{ transaction.unitsIssued }} units
@@ -330,7 +433,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="text-right">
                                 <p class="text-sm font-bold" :class="getAmountClass(transaction.utilityType)">
-                                    R {{ parseFloat(transaction.amount).toFixed(2) }}
+                                    {{ $currency(transaction.amount) }}
                                 </p>
                                     <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
                                         {{ transaction.unitsIssued }} units
@@ -896,12 +999,18 @@ definePageMeta({
     
     computed: {
         totalSpent() {
-            return this.transactionTotals.totalAmount.toFixed(2);
+            const { $currency } = useNuxtApp()
+            const num = Number(this.transactionTotals.totalAmount || 0)
+            return $currency ? $currency(num) : `R ${num.toFixed(2)}`
         },
         
         averageTransaction() {
-            if (!this.summary.transactionCount || this.summary.transactionCount === 0) return '0.00';
-            return (this.transactionTotals.totalAmount / this.summary.transactionCount).toFixed(2);
+            const { $currency } = useNuxtApp()
+            if (!this.summary.transactionCount || this.summary.transactionCount === 0) {
+                return $currency ? $currency(0) : `R ${Number(0).toFixed(2)}`
+            }
+            const avg = (this.transactionTotals.totalAmount / this.summary.transactionCount)
+            return $currency ? $currency(avg) : `R ${avg.toFixed(2)}`
         },
         
         electricityTotal() {
@@ -919,7 +1028,7 @@ definePageMeta({
             if (elecTotal > waterTotal) {
                 return {
                     name: 'Electricity',
-                    amount: elecTotal.toFixed(2),
+                    amount: elecTotal,
                     icon: 'lucide:zap',
                     bgClass: 'bg-orange-100',
                     iconClass: 'text-orange-600',
@@ -928,7 +1037,7 @@ definePageMeta({
             } else {
                 return {
                     name: 'Water',
-                    amount: waterTotal.toFixed(2),
+                    amount: waterTotal,
                     icon: 'lucide:droplet',
                     bgClass: 'bg-blue-100',
                     iconClass: 'text-blue-600',

@@ -3,17 +3,17 @@
         {{ buttonLabel }}
     </Button>
     <Drawer v-if="isMobile" v-model:open="isOpen">
-        <DrawerContent class="h-[90vh] flex flex-col bg-gradient-to-br from-white via-blue-50/30 to-white">
+        <DrawerContent :noMargin="true" :hideHandle="true" class="h-[90vh] flex flex-col bg-gradient-to-br from-white via-blue-50/30 to-white">
             <!-- Header with gradient - fixed -->
-            <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-2xl">
+            <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-[10px]">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                            <Icon name="lucide:wallet" class="h-4 w-4 text-white"/>
+                            <Icon :name="icon" class="h-4 w-4 text-white"/>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-white">Top Up Wallet</h3>
-                            <p class="text-xs text-white/80">Add funds to your account</p>
+                            <h3 class="text-lg font-bold text-white">{{ title }}</h3>
+                            <p class="text-xs text-white/80">{{ subtitle }}</p>
                         </div>
                     </div>
                     <Button 
@@ -36,28 +36,21 @@
         </DrawerContent>
     </Drawer>
     <Dialog v-else v-model:open="isOpen">
-        <DialogContent class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+        <DialogContent closeClass="text-white hover:text-white hover:bg-white/20" class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl sm:rounded-2xl overflow-hidden">
             <div class="relative overflow-hidden rounded-2xl">
                 <!-- Header with gradient background -->
-                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
+                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white rounded-t-2xl">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                                <Icon name="lucide:wallet" class="h-5 w-5 text-white"/>
+                                <Icon :name="icon" class="h-5 w-5 text-white"/>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-white">Top Up Wallet</h3>
-                                <p class="text-sm text-white/90">Add funds to your account</p>
+                                <h3 class="text-xl font-bold text-white">{{ title }}</h3>
+                                <p class="text-sm text-white/90">{{ subtitle }}</p>
                             </div>
                         </div>
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            @click="isOpen = false"
-                            class="text-white hover:bg-white/20 hover:text-white rounded-xl"
-                        >
-                            <Icon name="lucide:x" class="h-5 w-5"/>
-                        </Button>
+                        <!-- Desktop dialog has its own built-in close icon; no duplicate here -->
                     </div>
                     
                     <!-- Decorative elements -->
@@ -80,6 +73,18 @@ export default{
         buttonClass: "",
         buttonLabel: "",
         buttonVariant: "primary",
+        title: {
+            type: String,
+            default: 'Top Up Wallet'
+        },
+        subtitle: {
+            type: String,
+            default: 'Add funds to your account'
+        },
+        icon: {
+            type: String,
+            default: 'lucide:wallet'
+        },
         hasButton: {
             type: Boolean,
             default: true

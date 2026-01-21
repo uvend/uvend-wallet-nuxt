@@ -1,10 +1,13 @@
 <template>
 <div class="flex flex-col p-4 gap-6">
-    <!-- Wallet Card -->
-    <WalletDebitCard />
-
-    <!-- Summary Statistics -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Top grid: Debit card (left) and summary cards (right) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <!-- Left column: Debit Card -->
+        <div class="lg:col-span-6">
+            <WalletDebitCard />
+        </div>
+        <!-- Right column: Summary cards (2x2 grid) -->
+        <div class="grid grid-cols-2 gap-3 items-stretch lg:col-span-6">
         <!-- Total Deposits -->
         <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-md hover:shadow-lg transition-all duration-300">
             <CardContent class="p-4">
@@ -14,7 +17,8 @@
                     </div>
                     <span class="text-xs font-medium text-gray-600">Total Deposits</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">R {{ totalDeposits }}</p>
+                <Skeleton v-if="isLoading" class="w-24 h-8" />
+                <p v-else class="text-2xl font-bold text-gray-900">{{ formatZar(totalDeposits) }}</p>
                 <p class="text-xs text-gray-500 mt-1">All time</p>
             </CardContent>
         </Card>
@@ -56,24 +60,81 @@
                     </div>
                     <span class="text-xs font-medium text-gray-600">Average</span>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">R {{ averageDeposit }}</p>
+                <Skeleton v-if="isLoading" class="w-24 h-8" />
+                <p v-else class="text-2xl font-bold text-gray-900">{{ formatZar(averageDeposit) }}</p>
                 <p class="text-xs text-gray-500 mt-1">Per deposit</p>
             </CardContent>
             </Card>
         </div>
+    </div>
 
     <!-- Deposit Trends Chart -->
-    <WalletBalanceHistoryChart :transactions="fundingHistory" :isLoading="isLoading" />
+    <!-- <WalletBalanceHistoryChart :transactions="fundingHistory" :isLoading="isLoading" /> -->
 
     <!-- Payments Table -->
     <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
         <CardHeader>
             <CardTitle class="text-lg font-semibold text-gray-800">Payment History</CardTitle>
-            <CardDescription class="text-sm">{{ fundingHistory.length }} payments found</CardDescription>
+            <CardDescription class="text-sm">
+                <template v-if="isLoading">
+                    <Skeleton class="w-32 h-4" />
+                </template>
+                <template v-else>
+                    {{ fundingHistory.length }} payments found
+                </template>
+            </CardDescription>
         </CardHeader>
         <CardContent class="p-0">
-            <div v-if="isLoading" class="py-8 flex justify-center">
-                <MyLoader />
+            <div v-if="isLoading" class="p-6 space-y-4">
+                <!-- Desktop-like skeleton header -->
+                <div class="hidden md:block">
+                    <div class="bg-gray-50 border-b border-gray-200 p-3 rounded-t-xl">
+                        <div class="grid grid-cols-5 gap-3">
+                            <Skeleton class="h-4 w-28" />
+                            <Skeleton class="h-4 w-32" />
+                            <Skeleton class="h-4 w-24" />
+                            <Skeleton class="h-4 w-20 justify-self-end" />
+                            <Skeleton class="h-4 w-16 justify-self-center" />
+                        </div>
+                    </div>
+                    <div class="divide-y">
+                        <div v-for="i in 6" :key="'pay-row-'+i" class="grid grid-cols-5 gap-3 p-3 items-center">
+                            <div class="space-y-1">
+                                <Skeleton class="h-4 w-32" />
+                                <Skeleton class="h-3 w-20" />
+                            </div>
+                            <Skeleton class="h-4 w-40" />
+                            <div class="flex items-center gap-2">
+                                <Skeleton class="w-8 h-8 rounded-lg" />
+                                <Skeleton class="h-4 w-20" />
+                            </div>
+                            <div class="justify-self-end">
+                                <Skeleton class="h-4 w-20" />
+                            </div>
+                            <div class="justify-self-center">
+                                <Skeleton class="h-6 w-20 rounded-full" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Mobile card-like skeletons -->
+                <div class="md:hidden space-y-3">
+                    <div v-for="i in 4" :key="'pay-m-'+i" class="p-4 border rounded-lg bg-white">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <Skeleton class="w-10 h-10 rounded-lg" />
+                                <div class="space-y-2">
+                                    <Skeleton class="w-24 h-4" />
+                                    <Skeleton class="w-20 h-3" />
+                                </div>
+                            </div>
+                            <div class="text-right space-y-2">
+                                <Skeleton class="w-20 h-4" />
+                                <Skeleton class="w-16 h-3" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div v-else-if="fundingHistory.length > 0">
                 <!-- Desktop Table - Scrollable -->
@@ -214,6 +275,18 @@ export default {
     }
   },
   methods: {
+    formatZar(value) {
+      try {
+        const num = Number(value) || 0
+        return `R ${new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(num)}`
+      } catch {
+        const num = Number(value) || 0
+        return `R ${num.toFixed(2)}`
+      }
+    },
     async fetchData() {
         this.isLoading = true;
         try {
