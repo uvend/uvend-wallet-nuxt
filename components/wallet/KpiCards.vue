@@ -9,7 +9,7 @@
                     </div>
                     <span class="text-xs font-medium text-gray-600">Total Spent</span>
                 </div>
-                <Skeleton class="w-24 h-8" v-if="isLoading"/>
+                    <Skeleton class="w-24 h-8" v-if="isLoading"/>
                 <p v-else class="text-2xl font-bold text-gray-900">{{ $currency(totalSpent) }}</p>
                 <p class="text-xs text-gray-500 mt-1">All time</p>
             </CardContent>
@@ -24,7 +24,7 @@
                     </div>
                     <span class="text-xs font-medium text-gray-600">Total Purchase</span>
                 </div>
-                <Skeleton class="w-24 h-8" v-if="isLoading"/>
+                    <Skeleton class="w-24 h-8" v-if="isLoading"/>
                 <p v-else class="text-2xl font-bold text-gray-900">{{ totalPurchases }}</p>
                 <p class="text-xs text-gray-500 mt-1">All time</p>
             </CardContent>

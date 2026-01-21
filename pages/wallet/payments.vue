@@ -4,7 +4,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         <!-- Left column: Debit Card -->
         <div class="lg:col-span-6">
-            <WalletDebitCard />
+    <WalletDebitCard />
         </div>
         <!-- Right column: Summary cards (2x2 grid) -->
         <div class="grid grid-cols-2 gap-3 items-stretch lg:col-span-6">
@@ -66,7 +66,7 @@
             </CardContent>
             </Card>
         </div>
-    </div>
+        </div>
 
     <!-- Deposit Trends Chart -->
     <!-- <WalletBalanceHistoryChart :transactions="fundingHistory" :isLoading="isLoading" /> -->

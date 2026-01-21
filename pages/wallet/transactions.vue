@@ -129,7 +129,12 @@
                 <div v-for="meter in meters" :key="meter.meterNumber" class="p-6">
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <!-- Meter Info -->
-                        <div class="flex items-center gap-4 flex-1">
+                        <div
+                            class="flex items-center gap-4 flex-1 cursor-pointer"
+                            role="button"
+                            tabindex="0"
+                            @click="openMeterActions(meter)"
+                        >
                             <!-- Service Icon -->
                             <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                                  :class="getServiceIconBg(meter.utilityType || 'all')">
@@ -193,6 +198,7 @@
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                             <Button 
                                 @click="openPurchaseDialog(meter)"
+                                @click.stop
                                 size="sm"
                                 class="px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                             >
@@ -212,6 +218,124 @@
             </div>
         </CardContent>
     </Card>
+
+    <!-- Meter Actions Dialog - mobile drawer + desktop modal -->
+    <Drawer v-if="isMobile" v-model:open="showMeterActionsDialog">
+        <DrawerContent :noMargin="true" :hideHandle="true" class="h-[90vh] flex flex-col bg-gradient-to-br from-white via-blue-50/30 to-white">
+            <!-- Header with gradient -->
+            <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-[10px]">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                            <Icon name="lucide:settings" class="h-4 w-4 text-white" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Meter Options</h3>
+                            <p class="text-xs text-white/80">{{ selectedMeterForActions?.name || 'Meter' }}</p>
+                        </div>
+                    </div>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        @click="showMeterActionsDialog = false"
+                        class="text-white hover:bg-white/20 hover:text-white"
+                    >
+                        <Icon name="lucide:x" class="h-4 w-4"/>
+                    </Button>
+                </div>
+            </div>
+
+            <!-- Scrollable content area -->
+            <div class="flex-1 overflow-y-auto bg-gradient-to-b from-white to-blue-50/20">
+                <div class="p-4 pb-8 space-y-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Meter Number</p>
+                        <p class="text-sm font-semibold text-gray-800">{{ selectedMeterForActions?.meterNumber }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Most Recent Token</p>
+                        <p class="text-sm font-semibold text-gray-800">
+                            {{ getLatestTokenNumber(selectedMeterForActions?.meterNumber) || 'Not available' }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label class="text-sm font-semibold text-gray-700">Meter Nickname</Label>
+                        <Input v-model="editMeterNameValue" class="h-11" />
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 pt-2">
+                        <Button
+                            class="flex-1"
+                            @click="saveMeterNickname"
+                            :disabled="!canSaveMeterName"
+                        >
+                            {{ editingMeterNumber === selectedMeterForActions?.meterNumber ? 'Saving...' : 'Save' }}
+                        </Button>
+                        <Button
+                            class="flex-1"
+                            variant="destructive"
+                            @click="deleteMeter(selectedMeterForActions)"
+                            :disabled="deletingMeterNumber === selectedMeterForActions?.meterNumber"
+                        >
+                            {{ deletingMeterNumber === selectedMeterForActions?.meterNumber ? 'Deleting...' : 'Delete' }}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </DrawerContent>
+    </Drawer>
+    <Dialog v-else v-model:open="showMeterActionsDialog">
+        <DialogContent closeClass="text-white hover:text-white hover:bg-white/20" class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl sm:rounded-2xl overflow-hidden">
+            <div class="relative overflow-hidden rounded-2xl">
+                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                            <Icon name="lucide:settings" class="h-5 w-5 text-white"/>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">Meter Options</h3>
+                            <p class="text-sm text-white/90">{{ selectedMeterForActions?.name || 'Meter' }}</p>
+                        </div>
+                    </div>
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-12 translate-x-12"></div>
+                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
+                </div>
+
+                <div class="p-6 bg-gradient-to-b from-white to-blue-50/30 space-y-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Meter Number</p>
+                        <p class="text-sm font-semibold text-gray-800">{{ selectedMeterForActions?.meterNumber }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Most Recent Token</p>
+                        <p class="text-sm font-semibold text-gray-800">
+                            {{ getLatestTokenNumber(selectedMeterForActions?.meterNumber) || 'Not available' }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label class="text-sm font-semibold text-gray-700">Meter Nickname</Label>
+                        <Input v-model="editMeterNameValue" class="h-11" />
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 pt-2">
+                        <Button
+                            class="flex-1"
+                            @click="saveMeterNickname"
+                            :disabled="!canSaveMeterName"
+                        >
+                            {{ editingMeterNumber === selectedMeterForActions?.meterNumber ? 'Saving...' : 'Save' }}
+                        </Button>
+                        <Button
+                            class="flex-1"
+                            variant="destructive"
+                            @click="deleteMeter(selectedMeterForActions)"
+                            :disabled="deletingMeterNumber === selectedMeterForActions?.meterNumber"
+                        >
+                            {{ deletingMeterNumber === selectedMeterForActions?.meterNumber ? 'Deleting...' : 'Delete' }}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </DialogContent>
+    </Dialog>
 
     <!-- Spending Trends Chart -->
     <SpendingTrendsChart :transactions="transactions" :isLoading="isLoading" />
@@ -571,6 +695,7 @@ definePageMeta({
     },
     data() {
       return {
+                isMobile: false,
             isLoading: false,
         activeFilter: null,
             transactions: [],
@@ -587,6 +712,11 @@ definePageMeta({
             metersLoading: false,
             showPurchaseDialog: false,
             selectedMeterForPurchase: null,
+            deletingMeterNumber: null,
+            editingMeterNumber: null,
+            showMeterActionsDialog: false,
+            selectedMeterForActions: null,
+            editMeterNameValue: '',
             // Transaction totals from API
             transactionTotals: {
                 totalAmount: 0,
@@ -601,51 +731,59 @@ definePageMeta({
         }
     },
     methods: {
-      async fetchTransactionsData() {
-        this.isLoading = true;        
-        try {
-                const response = await useWalletAuthFetch(`/meter/token/history`, {
-          })
-          this.transactions = response.transactions;
-          this.summary.totalSpent = Number(response.totalAmount).toFixed(2)
-          this.summary.transactionCount = this.transactions.length;
-         
+        async fetchTransactionsData() {
+            this.isLoading = true;        
+            try {
+                const response = await useWalletAuthFetch(`/meter/token/history`, {})
+                this.transactions = response.transactions;
+                this.summary.totalSpent = Number(response.totalAmount).toFixed(2)
+                this.summary.transactionCount = this.transactions.length;
+            
                 // Store the totals from the response instead of calculating
                 this.transactionTotals = {
                     totalAmount: parseFloat(response.totalAmount || 0),
                     electricityTotal: parseFloat(response.electricityTotal || 0),
                     waterTotal: parseFloat(response.waterTotal || 0)
                 }
-         
+            
                 // Add unitsIssued to each transaction
                 this.transactions = this.transactions.map(transaction => {
-                    const unitsIssued = JSON.parse(transaction.vendResponse).listOfTokenTransactions[0]?.tokens[0]?.units || ""
-                    const delimitedTokenNumber = JSON.parse(transaction.vendResponse).listOfTokenTransactions[0]?.tokens[0]?.delimitedTokenNumber || ""
+                    let vendResponse = transaction.vendResponse
+                    if (typeof vendResponse === 'string') {
+                        try {
+                            vendResponse = JSON.parse(vendResponse)
+                        } catch (error) {
+                            console.warn('Invalid vendResponse JSON', { id: transaction.id, error })
+                            vendResponse = null
+                        }
+                    }
+                    const tokenTransaction = vendResponse?.listOfTokenTransactions?.[0]?.tokens?.[0]
+                    const unitsIssued = tokenTransaction?.units || ""
+                    const delimitedTokenNumber = tokenTransaction?.delimitedTokenNumber || ""
                     return {
                         ...transaction,
-                        unitsIssued: unitsIssued,
-                        delimitedTokenNumber:delimitedTokenNumber
+                        unitsIssued,
+                        delimitedTokenNumber
                     }
                 })
-         
+            
                 // Prepare chart data
                 this.chartData = this.transactions.map(t => ({
                     transactionDate: t.created,
                     managedTenderAmount: parseFloat(t.amount),
                     utilityType: t.utilityType
                 }))
-
-        } catch (error) {
-          console.error('Error fetching transactions data:', error);
-          this.$toast({
-            title: 'Error',
-            description: 'Failed to load transactions data',
-            variant: 'destructive'
-          });
-        } finally {
-          this.isLoading = false;
-        }
-      },
+            } catch (error) {
+                console.error('Error fetching transactions data:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to load transactions data',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
       
         getUtilityIcon(type) {
             return type === 'Electricity' ? 'lucide:zap' : 'lucide:droplet'
@@ -767,7 +905,7 @@ definePageMeta({
                     this.meters = [...metersStore.meters];
                 } else {
                     const response = await useWalletAuthFetch(`/meter`)
-                    const meters = response.meters || [];
+                    const meters = (response.meters || []).filter(meter => meter?.active !== 0 && meter?.active !== '0');
                     // Update store with fetched meters
                     metersStore.setMeters(meters);
                     this.allMeters = [...meters];
@@ -784,13 +922,21 @@ definePageMeta({
                 this.metersLoading = false;
             }
         },
+
+        checkMobile() {
+            this.isMobile =
+                window.innerWidth <= 768 ||
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                    navigator.userAgent
+                );
+        },
         
         async refreshMeters() {
             // Refresh meters from API and update store
             const metersStore = useMetersStore();
             try {
                 const response = await useWalletAuthFetch(`/meter`)
-                const meters = response.meters || [];
+                const meters = (response.meters || []).filter(meter => meter?.active !== 0 && meter?.active !== '0');
                 // Update store with fresh meters
                 metersStore.setMeters(meters);
                 this.allMeters = [...meters];
@@ -804,6 +950,138 @@ definePageMeta({
         openPurchaseDialog(meter) {
             this.selectedMeterForPurchase = meter;
             this.showPurchaseDialog = true;
+        },
+
+        openMeterActions(meter) {
+            this.selectedMeterForActions = meter;
+            this.editMeterNameValue = meter?.name || '';
+            this.showMeterActionsDialog = true;
+        },
+
+        getLatestTokenNumber(meterNumber) {
+            if (!meterNumber || !this.transactions?.length) return '';
+            const latest = this.transactions
+                .filter(t => t.meterNumber === meterNumber)
+                .sort((a, b) => new Date(b.created) - new Date(a.created))[0];
+            return latest?.delimitedTokenNumber || '';
+        },
+
+        async saveMeterNickname() {
+            const meter = this.selectedMeterForActions;
+            const meterNumber = meter?.meterNumber;
+            if (!meterNumber) return;
+            const trimmedName = this.editMeterNameValue.trim();
+            if (!trimmedName || trimmedName === meter?.name) return;
+            this.editingMeterNumber = meterNumber;
+            try {
+                await useWalletAuthFetch(`/meter/${meterNumber}`, {
+                    method: 'PATCH',
+                    body: {
+                        name: trimmedName,
+                        favourite: meter?.favourite ?? 0,
+                        active: meter?.active ?? 1
+                    }
+                });
+                this.$toast({
+                    title: 'Meter updated',
+                    description: 'The meter nickname was updated.'
+                });
+                if (this.selectedMeterForPurchase?.meterNumber === meterNumber) {
+                    this.selectedMeterForPurchase = { ...this.selectedMeterForPurchase, name: trimmedName };
+                }
+                if (this.selectedMeterForActions?.meterNumber === meterNumber) {
+                    this.selectedMeterForActions = { ...this.selectedMeterForActions, name: trimmedName };
+                }
+                await this.refreshMeters();
+            } catch (error) {
+                console.error('Error updating meter nickname:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to update meter nickname',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.editingMeterNumber = null;
+            }
+        },
+
+        async editMeterName(meter) {
+            const meterNumber = meter?.meterNumber;
+            if (!meterNumber) return;
+            const currentName = meter?.name || '';
+            const newName = window.prompt('Update meter nickname', currentName);
+            if (newName === null) return;
+            const trimmedName = newName.trim();
+            if (!trimmedName || trimmedName === currentName) return;
+            this.editingMeterNumber = meterNumber;
+            try {
+                await useWalletAuthFetch(`/meter/${meterNumber}`, {
+                    method: 'PATCH',
+                    body: {
+                        name: trimmedName,
+                        favourite: meter?.favourite ?? 0,
+                        active: meter?.active ?? 1
+                    }
+                });
+                this.$toast({
+                    title: 'Meter updated',
+                    description: 'The meter nickname was updated.'
+                });
+                if (this.selectedMeterForPurchase?.meterNumber === meterNumber) {
+                    this.selectedMeterForPurchase = { ...this.selectedMeterForPurchase, name: trimmedName };
+                }
+                await this.refreshMeters();
+            } catch (error) {
+                console.error('Error updating meter nickname:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to update meter nickname',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.editingMeterNumber = null;
+            }
+        },
+
+        async deleteMeter(meter) {
+            const meterNumber = meter?.meterNumber;
+            if (!meterNumber) return;
+            const confirmed = window.confirm(
+                `Remove ${meter?.name || 'this meter'} from your wallet?`
+            );
+            if (!confirmed) return;
+            this.deletingMeterNumber = meterNumber;
+            try {
+                await useWalletAuthFetch(`/meter/${meterNumber}`, {
+                    method: 'PATCH',
+                    body: {
+                        name: meter?.name || '',
+                        favourite: meter?.favourite ?? 0,
+                        active: 0
+                    }
+                });
+                this.$toast({
+                    title: 'Meter removed',
+                    description: 'The meter was deleted from your wallet.'
+                });
+                if (this.selectedMeterForPurchase?.meterNumber === meterNumber) {
+                    this.selectedMeterForPurchase = null;
+                }
+                if (this.selectedMeterForActions?.meterNumber === meterNumber) {
+                    this.showMeterActionsDialog = false;
+                    this.selectedMeterForActions = null;
+                }
+                await this.refreshMeters();
+            } catch (error) {
+                console.error('Error deleting meter:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to delete meter',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.deletingMeterNumber = null;
+            }
         },
         
         
@@ -976,8 +1254,10 @@ definePageMeta({
             }, 1000);
         }
     },
-        
-        async mounted() {
+
+    async mounted() {
+        this.checkMobile();
+        window.addEventListener('resize', this.checkMobile);
         this.setDateRange('30days');
         // Fetch both transactions and meters data
         await Promise.all([
@@ -988,16 +1268,26 @@ definePageMeta({
 
     watch: {
         '$store.dateRange'(newValue) {
-        this.setDateRange(newValue)
-        this.fetchTransactionsData();
-      },
+            this.setDateRange(newValue)
+            this.fetchTransactionsData();
+        },
         '$store.utilityType'(newValue) {
-        this.activeFilter = newValue;
-        this.fetchTransactionsData();
+            this.activeFilter = newValue;
+            this.fetchTransactionsData();
         }
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('resize', this.checkMobile);
     },
     
     computed: {
+        canSaveMeterName() {
+            const meter = this.selectedMeterForActions;
+            if (!meter) return false;
+            const trimmedName = this.editMeterNameValue.trim();
+            return Boolean(trimmedName) && trimmedName !== meter.name && this.editingMeterNumber !== meter.meterNumber;
+        },
         totalSpent() {
             const { $currency } = useNuxtApp()
             const num = Number(this.transactionTotals.totalAmount || 0)
@@ -1071,8 +1361,8 @@ definePageMeta({
             }
         }
     }
-  }
-  </script>
+}
+</script>
 
 <style scoped>
 /* Custom scrollbar for transaction table */

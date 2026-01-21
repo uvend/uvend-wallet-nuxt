@@ -159,7 +159,7 @@
         subtitle="Buy tokens for your meters"
         icon="lucide:zap"
     >
-        <WalletBuyNow />
+                    <WalletBuyNow />
     </WalletPopup>
     </div>
 </div>
