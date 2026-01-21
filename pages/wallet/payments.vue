@@ -80,7 +80,7 @@
                     <Skeleton class="w-32 h-4" />
                 </template>
                 <template v-else>
-                    {{ fundingHistory.length }} payments found
+                    {{ totalCount }} payments found
                 </template>
             </CardDescription>
         </CardHeader>
@@ -165,23 +165,23 @@
                                         </td>
                                         <td class="py-3 px-4 whitespace-nowrap">
                                             <div class="flex items-center gap-2">
-                                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                    <Icon name="lucide:credit-card" class="w-4 h-4 text-blue-600" />
+                                                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" :class="getPaymentMethodBg(payment.paymentMethod)">
+                                                    <Icon :name="getPaymentMethodIcon(payment.paymentMethod)" class="w-4 h-4" :class="getPaymentMethodIconColor(payment.paymentMethod)" />
                                                 </div>
-                                                <span class="text-sm font-medium text-gray-900">Card</span>
+                                                <span class="text-sm font-medium text-gray-900">{{ getPaymentMethodLabel(payment.paymentMethod) }}</span>
                                             </div>
                                         </td>
                                         <td class="py-3 px-4 text-right whitespace-nowrap">
                                             <p class="text-sm font-semibold text-blue-600">
-                                                R {{ formatAmount(payment.amount) }}
+                                                {{ formatZar(payment.amount) }}
                                             </p>
                                         </td>
                                         <td class="py-3 px-4 text-center whitespace-nowrap">
                                             <span 
                                                 class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
-                                                :class="getStatusClass(payment.result_desc)"
+                                                :class="getStatusClass(payment.status)"
                                             >
-                                                {{ getStatusText(payment.result_desc) }}
+                                                {{ getStatusText(payment.status) }}
                                             </span>
                                         </td>
                                     </tr>
@@ -203,17 +203,17 @@
                             @click="toggleExpand(payment.id)"
                         >
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100">
-                                    <Icon name="lucide:credit-card" class="w-5 h-5 text-blue-600" />
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="getPaymentMethodBg(payment.paymentMethod)">
+                                    <Icon :name="getPaymentMethodIcon(payment.paymentMethod)" class="w-5 h-5" :class="getPaymentMethodIconColor(payment.paymentMethod)" />
                                 </div>
                                 <div>
-                                    <p class="text-sm font-semibold text-gray-900">Deposit</p>
+                                    <p class="text-sm font-semibold text-gray-900">{{ getPaymentMethodLabel(payment.paymentMethod) }}</p>
                                     <p class="text-xs text-gray-500">{{ formatDate(payment.created) }}</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 <p class="text-sm font-bold text-blue-600">
-                                    R {{ formatAmount(payment.amount) }}
+                                    {{ formatZar(payment.amount) }}
                                 </p>
                                 <Icon 
                                     :name="expandedRows.includes(payment.id) ? 'lucide:chevron-up' : 'lucide:chevron-down'" 
@@ -226,7 +226,11 @@
                         <div v-if="expandedRows.includes(payment.id)" class="mt-4 space-y-3 bg-gray-50 p-3 rounded-lg">
                             <div class="flex justify-between">
                                 <span class="text-xs text-gray-600">Reference</span>
-                                <span class="text-xs font-medium text-gray-900 font-mono">{{ payment.payvault_data_1 || 'N/A' }}</span>
+                                <span class="text-xs font-medium text-gray-900 font-mono">{{ payment.reference || 'N/A' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-xs text-gray-600">Provider</span>
+                                <span class="text-xs font-medium text-gray-900">{{ payment.provider || 'N/A' }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-xs text-gray-600">Time</span>
@@ -234,15 +238,15 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-xs text-gray-600">Method</span>
-                                <span class="text-xs font-medium text-gray-900">Card Payment</span>
+                                <span class="text-xs font-medium text-gray-900">{{ getPaymentMethodLabel(payment.paymentMethod) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-xs text-gray-600">Status</span>
                                 <span 
                                     class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                                    :class="getStatusClass(payment.result_desc)"
+                                    :class="getStatusClass(payment.status)"
                                 >
-                                    {{ getStatusText(payment.result_desc) }}
+                                    {{ getStatusText(payment.status) }}
                                 </span>
                             </div>
                         </div>
@@ -271,7 +275,9 @@ export default {
     return {
       isLoading: false,
       fundingHistory: [],
-      expandedRows: []
+      expandedRows: [],
+      totalAmount: 0,
+      totalCount: 0
     }
   },
   methods: {
@@ -291,7 +297,9 @@ export default {
         this.isLoading = true;
         try {
           const response = await useWalletAuthFetch(`/pay/history`)
-          this.fundingHistory = response.payments.reverse();
+          this.fundingHistory = response.payments || [];
+          this.totalAmount = response.totalAmount || 0;
+          this.totalCount = response.totalCount || 0;
         } catch (error) {
           console.error('Error fetching payments:', error);
           this.$toast({
@@ -304,8 +312,56 @@ export default {
         }
       },
     
-    formatAmount(amount) {
-        return (parseFloat(amount) / 100).toFixed(2);
+    getPaymentMethodIcon(method) {
+        const methodLower = method?.toLowerCase() || '';
+        if (methodLower.includes('card') || methodLower.includes('debit') || methodLower.includes('credit')) {
+            return 'lucide:credit-card';
+        }
+        if (methodLower.includes('wallet')) {
+            return 'lucide:wallet';
+        }
+        if (methodLower.includes('cash')) {
+            return 'lucide:banknote';
+        }
+        return 'lucide:credit-card';
+    },
+
+    getPaymentMethodBg(method) {
+        const methodLower = method?.toLowerCase() || '';
+        if (methodLower.includes('card') || methodLower.includes('debit') || methodLower.includes('credit')) {
+            return 'bg-blue-100';
+        }
+        if (methodLower.includes('wallet')) {
+            return 'bg-purple-100';
+        }
+        if (methodLower.includes('cash')) {
+            return 'bg-green-100';
+        }
+        return 'bg-gray-100';
+    },
+
+    getPaymentMethodIconColor(method) {
+        const methodLower = method?.toLowerCase() || '';
+        if (methodLower.includes('card') || methodLower.includes('debit') || methodLower.includes('credit')) {
+            return 'text-blue-600';
+        }
+        if (methodLower.includes('wallet')) {
+            return 'text-purple-600';
+        }
+        if (methodLower.includes('cash')) {
+            return 'text-green-600';
+        }
+        return 'text-gray-600';
+    },
+
+    getPaymentMethodLabel(method) {
+        if (!method) return 'N/A';
+        // Format payment method labels
+        if (method.includes(',')) {
+            // Handle multiple methods like "DEBIT_CARD, Cash"
+            return method.split(',').map(m => m.trim().replace(/_/g, ' ')).join(', ');
+        }
+        return method.replace(/_/g, ' ');
     },
 
     formatDate(dateString) {
@@ -328,18 +384,33 @@ export default {
 
     getStatusClass(status) {
         const statusLower = status?.toLowerCase() || '';
-        if (statusLower === 'auth done') {
+        if (statusLower === 'completed') {
             return 'bg-green-100 text-green-700';
         }
-        return 'bg-red-100 text-red-700';
+        if (statusLower === 'pending') {
+            return 'bg-yellow-100 text-yellow-700';
+        }
+        if (statusLower === 'failed' || statusLower === 'cancelled') {
+            return 'bg-red-100 text-red-700';
+        }
+        return 'bg-gray-100 text-gray-700';
     },
 
     getStatusText(status) {
         const statusLower = status?.toLowerCase() || '';
-        if (statusLower === 'auth done') {
-            return 'Successful';
+        if (statusLower === 'completed') {
+            return 'Completed';
         }
-        return status || 'Failed';
+        if (statusLower === 'pending') {
+            return 'Pending';
+        }
+        if (statusLower === 'failed') {
+            return 'Failed';
+        }
+        if (statusLower === 'cancelled') {
+            return 'Cancelled';
+        }
+        return status || 'Unknown';
     },
 
     toggleExpand(paymentId) {
@@ -359,41 +430,13 @@ export default {
   
   computed: {
     totalDeposits() {
-        return this.fundingHistory.reduce((sum, p) => sum + parseFloat(p.amount), 0) / 100;
-    },
-
-    successfulPayments() {
-        return this.fundingHistory.filter(p => p.result_desc?.toLowerCase() === 'auth done');
-    },
-
-    failedPayments() {
-        return this.fundingHistory.filter(p => p.result_desc?.toLowerCase() !== 'auth done');
-    },
-
-    successfulCount() {
-        return this.successfulPayments.length;
-    },
-
-    failedCount() {
-        return this.failedPayments.length;
-    },
-
-    successRate() {
-        if (this.fundingHistory.length === 0) return 0;
-        return ((this.successfulCount / this.fundingHistory.length) * 100).toFixed(1);
-    },
-
-    failedAmount() {
-        return (this.failedPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0) / 100).toFixed(2);
+        return this.totalAmount || 0;
     },
 
     averageDeposit() {
-        if (this.successfulPayments.length === 0) return '0.00';
-        const total = this.successfulPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-        return (total / this.successfulPayments.length / 100).toFixed(2);
-    },
-
-    
+        if (!this.totalCount || this.totalCount === 0) return 0;
+        return this.totalAmount / this.totalCount;
+    }
   }
 }
 </script>
