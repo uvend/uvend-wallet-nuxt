@@ -327,7 +327,7 @@ async function fetchRecentTransactions() {
             .map(transaction => {
                 let vendResponse
                 try {
-                    vendResponse = JSON.parse(transaction.vendResponse || '{}')
+                    vendResponse = transaction.vendResponse || '{}'
                 } catch (error) {
                     console.warn('Failed to parse vendResponse for transaction:', transaction.id, error)
                     vendResponse = {}

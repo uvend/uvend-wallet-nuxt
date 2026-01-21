@@ -119,6 +119,7 @@ export default{
             if(!this.valid()) return
             this.isLoading = true;
             try{
+                console.info('[SignIn] Attempting sign-in', { email: this.email })
                 const response = await useWalletAuthFetch(`/auth/sign-in`,{
                     method: "POST",
                     body : {
@@ -126,7 +127,14 @@ export default{
                         "password" : this.password
                     }
                 });
+                console.info('[SignIn] Response received', {
+                    hasAccessToken: Boolean(response?.access_token),
+                    hasRefreshToken: Boolean(response?.refresh_token),
+                    status: response?.response?.status,
+                    message: response?.message
+                })
                 if(!response.access_token){
+                    console.warn('[SignIn] Missing access token', response)
                     throw new Error(response)
                 }
                 const access_token = response.access_token;
@@ -147,6 +155,11 @@ export default{
                 
                 return navigateTo('/');
             }catch(e){
+                console.error('[SignIn] Sign-in failed', {
+                    message: e?.message,
+                    status: e?.response?.status,
+                    data: e?.response?._data
+                })
                 this.$toast({
                     title: 'Uh oh! Something went wrong.',
                     description: 'There was a problem with your request.',

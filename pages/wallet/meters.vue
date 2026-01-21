@@ -214,6 +214,36 @@
                   <span class="hidden sm:inline">Purchase Token</span>
                   <span class="sm:hidden">Buy</span>
                 </Button>
+                <Button
+                  @click="editMeterName(meter)"
+                  size="sm"
+                  variant="outline"
+                  :disabled="editingMeterNumber === meter.meterNumber"
+                  class="px-3 py-2 text-xs sm:text-sm border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-colors duration-200"
+                >
+                  <Icon name="lucide:pencil" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"/>
+                  <span class="hidden sm:inline">
+                    {{ editingMeterNumber === meter.meterNumber ? 'Saving...' : 'Edit' }}
+                  </span>
+                  <span class="sm:hidden">
+                    {{ editingMeterNumber === meter.meterNumber ? '...' : 'Edit' }}
+                  </span>
+                </Button>
+                <Button
+                  @click="deleteMeter(meter)"
+                  size="sm"
+                  variant="destructive"
+                  :disabled="deletingMeterNumber === meter.meterNumber"
+                  class="px-3 py-2 text-xs sm:text-sm"
+                >
+                  <Icon name="lucide:trash-2" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"/>
+                  <span class="hidden sm:inline">
+                    {{ deletingMeterNumber === meter.meterNumber ? 'Deleting...' : 'Delete' }}
+                  </span>
+                  <span class="sm:hidden">
+                    {{ deletingMeterNumber === meter.meterNumber ? '...' : 'Del' }}
+                  </span>
+                </Button>
               </div>
             </div>
           </div>
@@ -287,7 +317,9 @@
         meterInfo: null,
         selectedServiceType: null,
         showPurchaseDialog: false,
-        selectedMeterForPurchase: null
+        selectedMeterForPurchase: null,
+        deletingMeterNumber: null,
+        editingMeterNumber: null
       }
     },
     computed: {
@@ -442,6 +474,79 @@
         this.selectedMeterForPurchase = meter;
         this.showPurchaseDialog = true;
       },
+      async editMeterName(meter) {
+        const meterNumber = meter?.meterNumber;
+        if (!meterNumber) return;
+        const currentName = meter?.name || '';
+        const newName = window.prompt('Update meter nickname', currentName);
+        if (newName === null) return;
+        const trimmedName = newName.trim();
+        if (!trimmedName || trimmedName === currentName) return;
+        this.editingMeterNumber = meterNumber;
+        try {
+          await useWalletAuthFetch(`/meter/${meterNumber}`, {
+            method: 'PATCH',
+            body: {
+              name: trimmedName,
+              favourite: meter?.favourite ?? 0,
+              active: meter?.active ?? 1
+            }
+          });
+          this.$toast({
+            title: 'Meter updated',
+            description: 'The meter nickname was updated.'
+          });
+          if (this.selectedMeter?.meterNumber === meterNumber) {
+            this.selectedMeter = { ...this.selectedMeter, name: trimmedName };
+          }
+          await this.fetchMeters();
+        } catch (error) {
+          console.error('Error updating meter nickname:', error);
+          this.$toast({
+            title: 'Error',
+            description: 'Failed to update meter nickname',
+            variant: 'destructive'
+          });
+        } finally {
+          this.editingMeterNumber = null;
+        }
+      },
+      async deleteMeter(meter) {
+        const meterNumber = meter?.meterNumber;
+        if (!meterNumber) return;
+        const confirmed = window.confirm(
+          `Remove ${meter?.name || 'this meter'} from your wallet?`
+        );
+        if (!confirmed) return;
+        this.deletingMeterNumber = meterNumber;
+        try {
+          await useWalletAuthFetch(`/meter/${meterNumber}`, {
+            method: 'PATCH',
+            body: {
+              name: meter?.name || '',
+              favourite: meter?.favourite ?? 0,
+              active: 0
+            }
+          });
+          this.$toast({
+            title: 'Meter removed',
+            description: 'The meter was deleted from your wallet.'
+          });
+          if (this.selectedMeter?.meterNumber === meterNumber) {
+            this.selectedMeter = null;
+          }
+          await this.fetchMeters();
+        } catch (error) {
+          console.error('Error deleting meter:', error);
+          this.$toast({
+            title: 'Error',
+            description: 'Failed to delete meter',
+            variant: 'destructive'
+          });
+        } finally {
+          this.deletingMeterNumber = null;
+        }
+      },
       
       // Validation methods
       hasValidBattery(meter) {
@@ -475,7 +580,9 @@
           //console.log(response)
           
           // Reset when API integrations are ready
-          this.meters = response.meters; // Will be populated by API in the future
+          const meters = response.meters || [];
+          // Hide soft-deleted meters (active = 0)
+          this.meters = meters.filter(meter => meter?.active !== 0 && meter?.active !== '0');
           
         } catch (error) {
           console.error('Error fetching meters:', error);
