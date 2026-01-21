@@ -219,11 +219,74 @@
         </CardContent>
     </Card>
 
-    <!-- Meter Actions Dialog -->
-    <Dialog v-model:open="showMeterActionsDialog">
-        <DialogContent class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+    <!-- Meter Actions Dialog - mobile drawer + desktop modal -->
+    <Drawer v-if="isMobile" v-model:open="showMeterActionsDialog">
+        <DrawerContent :noMargin="true" :hideHandle="true" class="h-[90vh] flex flex-col bg-gradient-to-br from-white via-blue-50/30 to-white">
+            <!-- Header with gradient -->
+            <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-t-[10px]">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                            <Icon name="lucide:settings" class="h-4 w-4 text-white" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Meter Options</h3>
+                            <p class="text-xs text-white/80">{{ selectedMeterForActions?.name || 'Meter' }}</p>
+                        </div>
+                    </div>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        @click="showMeterActionsDialog = false"
+                        class="text-white hover:bg-white/20 hover:text-white"
+                    >
+                        <Icon name="lucide:x" class="h-4 w-4"/>
+                    </Button>
+                </div>
+            </div>
+
+            <!-- Scrollable content area -->
+            <div class="flex-1 overflow-y-auto bg-gradient-to-b from-white to-blue-50/20">
+                <div class="p-4 pb-8 space-y-4">
+                    <div>
+                        <p class="text-xs text-gray-500">Meter Number</p>
+                        <p class="text-sm font-semibold text-gray-800">{{ selectedMeterForActions?.meterNumber }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Most Recent Token</p>
+                        <p class="text-sm font-semibold text-gray-800">
+                            {{ getLatestTokenNumber(selectedMeterForActions?.meterNumber) || 'Not available' }}
+                        </p>
+                    </div>
+                    <div class="space-y-2">
+                        <Label class="text-sm font-semibold text-gray-700">Meter Nickname</Label>
+                        <Input v-model="editMeterNameValue" class="h-11" />
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2 pt-2">
+                        <Button
+                            class="flex-1"
+                            @click="saveMeterNickname"
+                            :disabled="!canSaveMeterName"
+                        >
+                            {{ editingMeterNumber === selectedMeterForActions?.meterNumber ? 'Saving...' : 'Save' }}
+                        </Button>
+                        <Button
+                            class="flex-1"
+                            variant="destructive"
+                            @click="deleteMeter(selectedMeterForActions)"
+                            :disabled="deletingMeterNumber === selectedMeterForActions?.meterNumber"
+                        >
+                            {{ deletingMeterNumber === selectedMeterForActions?.meterNumber ? 'Deleting...' : 'Delete' }}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </DrawerContent>
+    </Drawer>
+    <Dialog v-else v-model:open="showMeterActionsDialog">
+        <DialogContent closeClass="text-white hover:text-white hover:bg-white/20" class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl rounded-2xl sm:rounded-2xl overflow-hidden">
             <div class="relative overflow-hidden rounded-2xl">
-                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
+                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white rounded-t-2xl">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                             <Icon name="lucide:settings" class="h-5 w-5 text-white"/>
@@ -632,6 +695,7 @@ definePageMeta({
     },
     data() {
       return {
+                isMobile: false,
             isLoading: false,
         activeFilter: null,
             transactions: [],
@@ -667,22 +731,21 @@ definePageMeta({
         }
     },
     methods: {
-      async fetchTransactionsData() {
-        this.isLoading = true;        
-        try {
-                const response = await useWalletAuthFetch(`/meter/token/history`, {
-          })
-          this.transactions = response.transactions;
-          this.summary.totalSpent = Number(response.totalAmount).toFixed(2)
-          this.summary.transactionCount = this.transactions.length;
-         
+        async fetchTransactionsData() {
+            this.isLoading = true;        
+            try {
+                const response = await useWalletAuthFetch(`/meter/token/history`, {})
+                this.transactions = response.transactions;
+                this.summary.totalSpent = Number(response.totalAmount).toFixed(2)
+                this.summary.transactionCount = this.transactions.length;
+            
                 // Store the totals from the response instead of calculating
                 this.transactionTotals = {
                     totalAmount: parseFloat(response.totalAmount || 0),
                     electricityTotal: parseFloat(response.electricityTotal || 0),
                     waterTotal: parseFloat(response.waterTotal || 0)
                 }
-         
+            
                 // Add unitsIssued to each transaction
                 this.transactions = this.transactions.map(transaction => {
                     let vendResponse = transaction.vendResponse
@@ -699,29 +762,28 @@ definePageMeta({
                     const delimitedTokenNumber = tokenTransaction?.delimitedTokenNumber || ""
                     return {
                         ...transaction,
-                        unitsIssued: unitsIssued,
-                        delimitedTokenNumber: delimitedTokenNumber
+                        unitsIssued,
+                        delimitedTokenNumber
                     }
                 })
-         
+            
                 // Prepare chart data
                 this.chartData = this.transactions.map(t => ({
                     transactionDate: t.created,
                     managedTenderAmount: parseFloat(t.amount),
                     utilityType: t.utilityType
                 }))
-
-        } catch (error) {
-          console.error('Error fetching transactions data:', error);
-          this.$toast({
-            title: 'Error',
-            description: 'Failed to load transactions data',
-            variant: 'destructive'
-          });
-        } finally {
-          this.isLoading = false;
-        }
-      },
+            } catch (error) {
+                console.error('Error fetching transactions data:', error);
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to load transactions data',
+                    variant: 'destructive'
+                });
+            } finally {
+                this.isLoading = false;
+            }
+        },
       
         getUtilityIcon(type) {
             return type === 'Electricity' ? 'lucide:zap' : 'lucide:droplet'
@@ -859,6 +921,14 @@ definePageMeta({
             } finally {
                 this.metersLoading = false;
             }
+        },
+
+        checkMobile() {
+            this.isMobile =
+                window.innerWidth <= 768 ||
+                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                    navigator.userAgent
+                );
         },
         
         async refreshMeters() {
@@ -1184,8 +1254,10 @@ definePageMeta({
             }, 1000);
         }
     },
-        
-        async mounted() {
+
+    async mounted() {
+        this.checkMobile();
+        window.addEventListener('resize', this.checkMobile);
         this.setDateRange('30days');
         // Fetch both transactions and meters data
         await Promise.all([
@@ -1196,13 +1268,17 @@ definePageMeta({
 
     watch: {
         '$store.dateRange'(newValue) {
-        this.setDateRange(newValue)
-        this.fetchTransactionsData();
-      },
+            this.setDateRange(newValue)
+            this.fetchTransactionsData();
+        },
         '$store.utilityType'(newValue) {
-        this.activeFilter = newValue;
-        this.fetchTransactionsData();
+            this.activeFilter = newValue;
+            this.fetchTransactionsData();
         }
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('resize', this.checkMobile);
     },
     
     computed: {
@@ -1285,8 +1361,8 @@ definePageMeta({
             }
         }
     }
-  }
-  </script>
+}
+</script>
 
 <style scoped>
 /* Custom scrollbar for transaction table */

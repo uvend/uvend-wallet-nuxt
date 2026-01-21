@@ -158,13 +158,13 @@
                             >
                                 <span class="font-scandia">pay@</span>
                             </Button>
-                            <Button 
+                        <Button 
                                 class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
-                                @click="addFunds"
+                            @click="addFunds" 
                                 :disabled="amount < 30"
-                            >
+                        >
                                 <span class="font-scandia">paygate</span>
-                            </Button>
+                        </Button>
                         </div>
                     </div>
                     
@@ -259,7 +259,7 @@ export default {
             return `linear-gradient(135deg, ${this.bgPrimary} 0%, ${this.bgSecondary} 70%)`;
         },
         formattedBalance(){
-            const displayBalance = this.actualBalance || this.balance;
+                const displayBalance = this.actualBalance || this.balance;
             const { $currency } = useNuxtApp()
             return $currency ? $currency(displayBalance) : `R ${Number(displayBalance || 0).toFixed(2)}`
         },
