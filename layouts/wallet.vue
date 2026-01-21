@@ -152,15 +152,9 @@
     </nav>
     
     <!-- Purchase Token Popup uses Drawer on mobile -->
-    <WalletPopup 
+    <WalletPurchaseTokenDialog 
         v-model="showPurchaseDialog" 
-        :hasButton="false"
-        title="Purchase Token"
-        subtitle="Buy tokens for your meters"
-        icon="lucide:zap"
-    >
-                    <WalletBuyNow />
-    </WalletPopup>
+    />
     </div>
 </div>
 </template>

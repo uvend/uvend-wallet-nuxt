@@ -268,35 +268,10 @@
     </div>
     
     <!-- Purchase Token Dialog -->
-    <Dialog v-model:open="showPurchaseDialog">
-        <DialogContent class="p-0 max-w-md mx-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
-            <div class="relative overflow-hidden rounded-2xl">
-                <!-- Header with gradient background -->
-                <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                                <Icon name="lucide:zap" class="h-5 w-5 text-white"/>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-white">Purchase Token</h3>
-                                <p class="text-sm text-white/90">Buy tokens for your meters</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Decorative elements -->
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-12 translate-x-12"></div>
-                    <div class="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
-                </div>
-                
-                <!-- Content area -->
-                <div class="p-6 bg-gradient-to-b from-white to-blue-50/30">
-                    <WalletBuyNow :selectedMeter="selectedMeterForPurchase" />
-                </div>
-            </div>
-        </DialogContent>
-    </Dialog>
+    <WalletPurchaseTokenDialog 
+        v-model="showPurchaseDialog" 
+        :selectedMeter="selectedMeterForPurchase" 
+    />
     
 </div>    
 </template>
