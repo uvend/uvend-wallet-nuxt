@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   wallet-nuxt-postpaid:
-    image: jaredleechristians/uvend-wallet-nuxt:ross/postpaid
+    image: uvend/uvend-wallet-nuxt:ross/postpaid
     platform: linux/amd64
     ports:
       - ${PORT:-3000}:${PORT:-3000}
