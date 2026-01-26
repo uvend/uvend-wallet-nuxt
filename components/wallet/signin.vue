@@ -100,6 +100,7 @@
 </template>
 <script>
 import _ from 'lodash';
+import { uatvendSignIn } from '~/composables/useUatvendAuthFetch'
 export default{
     data(){
         return {
@@ -174,6 +175,13 @@ export default{
                 } catch (error) {
                     console.error('Error fetching meters on login:', error);
                     // Don't block navigation if meters fetch fails
+                }
+
+                // Also sign in to UVEND2 analytics (non-blocking)
+                try {
+                    await uatvendSignIn(email, password)
+                } catch (error) {
+                    console.warn('UVEND2 sign-in failed:', error)
                 }
                 
                 return navigateTo('/');

@@ -51,12 +51,14 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     // Private keys are only available on the server
-    hexingApiUrl: process.env.HEXING_API || 'https://api.m2m.co.za',
+    uatvendApiUrl: process.env.UVEND2_API || 'https://api-uatvend.co.za',
+    uatvendApiToken: process.env.UVEND2_TOKEN || '',
     // Public keys that are exposed to the client (runtime-configurable)
     public: {
       walletApiUrl: process.env.NUXT_PUBLIC_WALLET_API_URL || process.env.WALLET_API_URL || '',
       clientId: process.env.NUXT_PUBLIC_CLIENT_ID || process.env.CLIENT_ID || '',
       clientSecret: process.env.NUXT_PUBLIC_CLIENT_SECRET || process.env.CLIENT_SECRET || '',
+      uatvendApiUrl: process.env.UVEND2_API || 'https://api-uatvend.co.za',
     }
   },
   routeRules: {

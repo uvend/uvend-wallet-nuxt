@@ -14,17 +14,17 @@
 
     <!-- Summary Statistics -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Total Spent -->
+        <!-- Total Cost -->
         <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-md hover:shadow-lg transition-all duration-300">
             <CardContent class="p-4">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                         <Icon name="lucide:coins" class="w-4 h-4 text-purple-600" />
                     </div>
-                    <span class="text-xs font-medium text-gray-600">Total Spent</span>
+                    <span class="text-xs font-medium text-gray-600">Total Cost</span>
                 </div>
                 <p class="text-2xl font-bold text-gray-900">R {{ totalSpent }}</p>
-                <p class="text-xs text-gray-500 mt-1">Lifetime</p>
+                <p class="text-xs text-gray-500 mt-1">From analytics</p>
             </CardContent>
         </Card>
 
@@ -107,7 +107,7 @@
             </div>
             <div v-else-if="meters && meters.length > 0" class="divide-y divide-gray-100">
                 <div v-for="meter in meters" :key="meter.meterNumber" class="p-6">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <!-- Meter Info -->
                         <div class="flex items-center gap-4 flex-1">
                             <!-- Service Icon -->
@@ -168,6 +168,17 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="flex flex-wrap gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                class="border-gray-200 hover:border-orange-300 hover:bg-orange-50"
+                                @click="openMeterAnalytics(meter)"
+                            >
+                                <Icon name="lucide:bar-chart-3" class="w-3 h-3 mr-2" />
+                                Analytics
+                            </Button>
+                        </div>
                         
                     </div>
                 </div>
@@ -182,8 +193,64 @@
         </CardContent>
     </Card>
 
+    <!-- Analytics Popup -->
+    <Dialog v-model:open="showAnalyticsDialog">
+        <DialogContent class="max-w-2xl w-[95vw] sm:w-full max-h-[85vh] overflow-y-auto bg-white/95 backdrop-blur-sm">
+            <DialogHeader class="sticky top-0 z-10 bg-white/95 backdrop-blur-sm pb-3">
+                <DialogTitle class="text-lg font-semibold text-gray-900">Meter Analytics</DialogTitle>
+                <DialogDescription class="text-sm text-gray-600">
+                    {{ selectedAnalyticsMeter?.name || selectedAnalyticsMeter?.meterNumber || 'Selected meter' }}
+                </DialogDescription>
+            </DialogHeader>
+            <div class="space-y-4 pt-2">
+                <div v-if="analyticsLoading" class="py-6 flex items-center justify-center text-sm text-gray-600">
+                    <Icon name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
+                    Loading analytics...
+                </div>
+                <div v-else class="space-y-4">
+                    <div v-if="analyticsError" class="text-xs text-red-600">
+                        {{ analyticsError }}
+                    </div>
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-2">Daily Stats (sample)</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-700">
+                            <div class="flex justify-between">
+                                <span>Date</span>
+                                <span class="font-medium">{{ analyticsData?.dailyStatsSample?.date ? formatDate(analyticsData.dailyStatsSample.date) : 'No data' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Baseline Reading</span>
+                                <span class="font-medium">{{ analyticsData?.dailyStatsSample?.baseline_reading ?? 'No data' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total kWh</span>
+                                <span class="font-medium">{{ formatNumber(analyticsData?.dailyStatsSample?.total_kwh) }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total Cost</span>
+                                <span class="font-medium">{{ formatCurrency(analyticsData?.dailyStatsSample?.total_cost) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                        <div class="flex justify-between text-xs text-gray-700">
+                            <span>Readings Count</span>
+                            <span class="font-medium">{{ analyticsData?.readingsCount ?? 'No data' }}</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </DialogContent>
+    </Dialog>
+
     <!-- Usage Trends Chart -->
-    <UsageTrendsChart :meters="meters || []" :isLoading="isLoading || metersLoading" />
+    <UsageTrendsChart
+        :meters="meters || []"
+        :dailyStats="analyticsData?.dailyStats || []"
+        :isLoading="isLoading || metersLoading || analyticsLoading"
+    />
         
 
     <!-- Transactions Table -->
@@ -416,6 +483,7 @@
 
 <script>
 import UsageTrendsChart from '~/components/wallet/SpendingTrendsChart.vue'
+import { refreshUatvendTokenDirect } from '~/composables/useUatvendAuthFetch'
 
 definePageMeta({
     layout: 'wallet'
@@ -451,7 +519,12 @@ definePageMeta({
             selectedMeterFilter: 'all',
             allMeters: [],
             // Add meter dialog
-            showAddMeterDialog: false
+            showAddMeterDialog: false,
+            showAnalyticsDialog: false,
+            analyticsLoading: false,
+            analyticsError: '',
+            analyticsData: null,
+            selectedAnalyticsMeter: null
         }
     },
     methods: {
@@ -585,6 +658,20 @@ definePageMeta({
             }
         },
 
+        formatNumber(value, decimals = 2) {
+            if (value === null || value === undefined || value === '') return 'No data'
+            const num = Number(value)
+            if (Number.isNaN(num)) return 'No data'
+            return num.toFixed(decimals)
+        },
+
+        formatCurrency(value) {
+            if (value === null || value === undefined || value === '') return 'No data'
+            const num = Number(value)
+            if (Number.isNaN(num)) return 'No data'
+            return `R ${num.toFixed(2)}`
+        },
+
         formatDateForAPI(rawDate) {
         return rawDate.toISOString();
       },
@@ -607,6 +694,128 @@ definePageMeta({
             } else {
                 this.expandedRows.push(transactionId)
             }
+        },
+
+        async fetchAnalyticsForMeter(meter) {
+            this.selectedAnalyticsMeter = meter || null
+            this.analyticsLoading = true
+            this.analyticsError = ''
+            this.analyticsData = null
+
+            try {
+                const meterNumber = meter?.meterNumber || meter?.meter_number || null
+                const target = meterNumber
+
+                if (!target) {
+                    this.analyticsError = 'No meter identifier found for analytics.'
+                    return
+                }
+
+                const config = useRuntimeConfig()
+                const baseUrl = String(config.public?.uatvendApiUrl || 'https://api-uatvend.co.za').replace(/\/+$/, '')
+                const token =
+                    typeof window !== 'undefined'
+                        ? localStorage.getItem('uatvend-access-token')
+                        : null
+                const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+                let response
+                try {
+                    response = await $fetch(
+                        `${baseUrl}/meters/${encodeURIComponent(String(target))}?includeReadings=true`,
+                        { headers },
+                    )
+                } catch (error) {
+                    const status = error?.response?.status || error?.statusCode
+                    if (status === 401) {
+                        const refreshed = await refreshUatvendTokenDirect(baseUrl)
+                        if (refreshed) {
+                            const nextToken =
+                                typeof window !== 'undefined'
+                                    ? localStorage.getItem('uatvend-access-token')
+                                    : null
+                            const nextHeaders = nextToken ? { Authorization: `Bearer ${nextToken}` } : {}
+                            response = await $fetch(
+                                `${baseUrl}/meters/${encodeURIComponent(String(target))}?includeReadings=true`,
+                                { headers: nextHeaders },
+                            )
+                        } else {
+                            throw error
+                        }
+                    } else {
+                        throw error
+                    }
+                }
+
+                const payload = response?.data || response || {}
+                const readings = Array.isArray(payload.readings) ? payload.readings : []
+                const dailyStats = Array.isArray(payload.dailyStats) ? payload.dailyStats : []
+
+                const totalCostSum = dailyStats.reduce((sum, stat) => {
+                    const value = Number(stat?.total_cost || 0)
+                    return sum + (Number.isNaN(value) ? 0 : value)
+                }, 0)
+
+                this.analyticsData = {
+                    dailyStatsSample: dailyStats[0] || null,
+                    dailyStats,
+                    readingsCount: readings.length,
+                    firstReading: readings[0] || null,
+                    totalCostSum,
+                }
+
+                this.applyAnalyticsDailyStats(dailyStats, meterNumber)
+            } catch (error) {
+                console.error('Error fetching meter analytics:', error)
+                this.analyticsError = 'Failed to load meter analytics.'
+            } finally {
+                this.analyticsLoading = false
+            }
+        },
+
+        async openMeterAnalytics(meter) {
+            this.showAnalyticsDialog = true
+            await this.fetchAnalyticsForMeter(meter)
+        },
+
+        applyAnalyticsDailyStats(dailyStats, meterNumber) {
+            if (!Array.isArray(dailyStats) || dailyStats.length === 0) return
+
+            const utilityType =
+                this.selectedAnalyticsMeter?.utilityType ||
+                this.analyticsData?.firstReading?.type ||
+                'Electricity'
+
+            const mappedTransactions = dailyStats.map((stat) => {
+                const amount = Number(stat?.total_cost || 0)
+                return {
+                    id: `analytics-${stat?.id || stat?.date || Math.random().toString(36).slice(2)}`,
+                    meterNumber: meterNumber || this.selectedAnalyticsMeter?.meterNumber || 'No data',
+                    utilityType,
+                    amount: Number.isNaN(amount) ? '0.00' : amount.toFixed(2),
+                    created: stat?.date || new Date().toISOString(),
+                    unitsIssued: stat?.total_kwh ?? '',
+                    latestReading: null,
+                }
+            })
+
+            // Replace transaction history with analytics-derived rows
+            this.transactions = mappedTransactions
+            this.summary.transactionCount = mappedTransactions.length
+
+            const totalAmount = mappedTransactions.reduce((sum, t) => sum + Number(t.amount || 0), 0)
+            this.transactionTotals = {
+                totalAmount,
+                electricityTotal: utilityType === 'Electricity' ? totalAmount : 0,
+                waterTotal: utilityType === 'Water' ? totalAmount : 0,
+            }
+
+            // Build chart data from daily stats
+            this.chartData = dailyStats.map((stat) => ({
+                transactionDate: stat?.date || new Date().toISOString(),
+                managedTenderAmount: Number(stat?.total_cost || 0),
+                utilityType,
+            }))
         },
         
 
@@ -834,6 +1043,9 @@ definePageMeta({
             this.fetchTransactionsData(),
             this.fetchMeters()
         ]);
+        if (this.meters && this.meters.length > 0) {
+            await this.fetchAnalyticsForMeter(this.meters[0])
+        }
     },
 
     watch: {
@@ -849,7 +1061,11 @@ definePageMeta({
     
     computed: {
         totalSpent() {
-            return this.transactionTotals.totalAmount.toFixed(2);
+            const totalCost = this.analyticsData?.totalCostSum
+            if (totalCost === null || totalCost === undefined) return '0.00'
+            const num = Number(totalCost)
+            if (Number.isNaN(num)) return '0.00'
+            return num.toFixed(2)
         },
         
         averageTransaction() {

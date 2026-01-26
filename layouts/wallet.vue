@@ -95,6 +95,7 @@
                     <UserMenuDropdown />
                 </div>
                 <div>
+                    <p class="text-[11px] uppercase tracking-wide text-orange-600 font-semibold">Post Paid Wallet</p>
                     <h1 class="text-base sm:text-lg font-semibold text-gray-800">Welcome back</h1>
                     <p class="text-xs sm:text-sm text-gray-600">{{ currentPageQuip }}</p>
                 </div>

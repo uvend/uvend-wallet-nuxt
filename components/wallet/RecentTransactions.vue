@@ -188,9 +188,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useMetersStore } from '~/stores/meters'
+import { refreshUatvendTokenDirect } from '~/composables/useUatvendAuthFetch'
 
 const isLoading = ref(true)
 const recentTransactions = ref([])
+const metersStore = useMetersStore()
 
 function formatAmount(amount) {
     return new Intl.NumberFormat('en-ZA', {
@@ -311,48 +314,66 @@ function hasValidBatteryOrState(transaction) {
 async function fetchRecentTransactions() {
     isLoading.value = true
     try {
-        // Fetch transactions data
-        const transactionsResponse = await useWalletAuthFetch(`/meter/token/history`)
-        
-        // Store the totals from the response for potential future use
-        const transactionTotals = {
-            totalAmount: parseFloat(transactionsResponse.totalAmount || 0),
-            electricityTotal: parseFloat(transactionsResponse.electricityTotal || 0),
-            waterTotal: parseFloat(transactionsResponse.waterTotal || 0)
+        if (!metersStore.isLoaded) {
+            await metersStore.fetchMeters()
         }
-        
-        // Process and format recent transactions (last 4)
-        recentTransactions.value = transactionsResponse.transactions
-            .slice(0, 4)
-            .map(transaction => {
-                let vendResponse
-                try {
-                    vendResponse = JSON.parse(transaction.vendResponse || '{}')
-                } catch (error) {
-                    console.warn('Failed to parse vendResponse for transaction:', transaction.id, error)
-                    vendResponse = {}
-                }
 
-                const firstToken = vendResponse?.listOfTokenTransactions?.[0]?.tokens?.[0] || {}
-                const totalUnitsPaid = firstToken?.units || ''
-                const tokenNumber = firstToken?.delimitedTokenNumber || ''
+        const meter = metersStore.meters?.[0]
+        const meterNumber = meter?.meterNumber || meter?.meter_number || null
+        const utilityType = (meter?.utilityType || 'Electricity').toLowerCase()
 
-                return {
-                    id: transaction.id || transaction.meterNumber + transaction.created,
-                    type: transaction.utilityType === 'Electricity' ? 'electricity' : 'water',
-                    date: transaction.created,
-                    meterNumber: transaction.meterNumber,
-                    totalUnits: totalUnitsPaid,
-                    token: tokenNumber,
-                    amount: parseFloat(transaction.amount),
-                    latestReading: transaction.latestReading
-                }
+        if (!meterNumber) {
+            recentTransactions.value = []
+            return
+        }
+
+        const config = useRuntimeConfig()
+        const baseUrl = String(config.public?.uatvendApiUrl || 'https://api-uatvend.co.za').replace(/\/+$/, '')
+
+        const getHeaders = () => {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('uatvend-access-token') : null
+            return token ? { Authorization: `Bearer ${token}` } : {}
+        }
+
+        let response
+        try {
+            response = await $fetch(`${baseUrl}/meters/${encodeURIComponent(String(meterNumber))}?includeReadings=true`, {
+                headers: getHeaders(),
             })
-            // console.log(recentTransactions.value)
+        } catch (error) {
+            const status = error?.response?.status || error?.statusCode
+            if (status === 401) {
+                const refreshed = await refreshUatvendTokenDirect(baseUrl)
+                if (refreshed) {
+                    response = await $fetch(`${baseUrl}/meters/${encodeURIComponent(String(meterNumber))}?includeReadings=true`, {
+                        headers: getHeaders(),
+                    })
+                } else {
+                    throw error
+                }
+            } else {
+                throw error
+            }
+        }
+
+        const payload = response?.data || response || {}
+        const dailyStats = Array.isArray(payload.dailyStats) ? payload.dailyStats : []
+
+        recentTransactions.value = dailyStats
+            .slice(0, 5)
+            .map((stat) => ({
+                id: `daily-${stat?.id || stat?.date || Math.random().toString(36).slice(2)}`,
+                type: utilityType === 'water' ? 'water' : 'electricity',
+                date: stat?.date || new Date().toISOString(),
+                meterNumber,
+                totalUnits: stat?.total_kwh ?? '',
+                token: '',
+                amount: parseFloat(stat?.total_cost || 0),
+                latestReading: null,
+            }))
     } catch (error) {
         console.error('Error fetching recent deductions:', error)
-        // Show sample data if API fails
-       
+        recentTransactions.value = []
     } finally {
         isLoading.value = false
     }

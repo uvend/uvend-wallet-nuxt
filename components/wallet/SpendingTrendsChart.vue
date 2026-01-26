@@ -42,11 +42,13 @@
 </template>
 
 <script>
-import { useM2MApi } from '~/composables/useM2MApi'
-
 export default {
     name: 'UsageTrendsChart',
     props: {
+        dailyStats: {
+            type: Array,
+            default: () => []
+        },
         meters: {
             type: Array,
             default: () => []
@@ -266,89 +268,25 @@ export default {
         }
     },
     watch: {
-        meters: {
-            handler(newMeters) {
-                this.loadUsageTrends(newMeters);
+        dailyStats: {
+            handler(newStats) {
+                if (!Array.isArray(newStats) || newStats.length === 0) {
+                    this.usageData = [];
+                    this.isUsageLoading = false;
+                    return;
+                }
+                this.isUsageLoading = true;
+                this.usageData = newStats
+                    .map(stat => ({
+                        x: stat?.date || new Date().toISOString(),
+                        electricity: Number(stat?.total_kwh || 0),
+                        water: 0
+                    }))
+                    .sort((a, b) => new Date(a.x).getTime() - new Date(b.x).getTime());
+                this.isUsageLoading = false;
             },
             deep: true,
             immediate: true
-        }
-    },
-    methods: {
-        async loadUsageTrends(meters = []) {
-            if (!Array.isArray(meters) || meters.length === 0) {
-                this.usageData = [];
-                this.isUsageLoading = false;
-                return;
-            }
-            
-            this.isUsageLoading = true;
-            const usageByDate = {};
-            const m2mApi = useM2MApi();
-            
-            await Promise.all(
-                meters.map(async (meter) => {
-                    const serial = this.getDeviceSerial(meter);
-                    if (!serial) return;
-                    const utilityType = (meter?.utilityType || 'electricity').toLowerCase();
-                    try {
-                        const logs = await m2mApi.getDeviceLogsBySerial(serial, { utilityType });
-                        this.processLogs(logs, utilityType, usageByDate);
-                    } catch (error) {
-                        console.error(`Error fetching usage logs for meter ${meter?.meterNumber || serial}:`, error);
-                    }
-                })
-            );
-            
-            this.usageData = Object.values(usageByDate)
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                .map(day => ({
-                    x: day.date,
-                    electricity: parseFloat(day.electricity.toFixed(2)),
-                    water: parseFloat(day.water.toFixed(2))
-                }));
-            this.isUsageLoading = false;
-        },
-        getDeviceSerial(meter) {
-            return meter?.deviceSerial || meter?.serial || meter?.meterNumber || null;
-        },
-        processLogs(logs, utilityType, usageByDate) {
-            if (!Array.isArray(logs)) return;
-            logs.forEach((log) => {
-                const entries = log?.entries || log?.readings || [];
-                entries.forEach((entry) => {
-                    const date = this.safeDate(entry?.timestamp || entry?.time || entry?.created || log?.timestamp || log?.created);
-                    if (!date) return;
-                    const dateKey = date.toISOString().split('T')[0];
-                    const value = parseFloat(
-                        entry?.value ??
-                        entry?.Value ??
-                        entry?.reading ??
-                        entry?.Reading ??
-                        log?.value ??
-                        log?.reading ??
-                        0
-                    );
-                    if (isNaN(value)) return;
-                    
-                    if (!usageByDate[dateKey]) {
-                        usageByDate[dateKey] = { date: dateKey, electricity: 0, water: 0 };
-                    }
-                    if (utilityType === 'water') {
-                        usageByDate[dateKey].water += value;
-                    } else {
-                        usageByDate[dateKey].electricity += value;
-                    }
-                });
-            });
-        },
-        safeDate(value) {
-            if (!value) return null;
-            const date = new Date(value);
-            if (isNaN(date.getTime())) {
-                return null;
-            }
-            return date;
         }
     }
 }

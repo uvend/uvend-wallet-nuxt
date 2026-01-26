@@ -98,41 +98,7 @@
             </div>
 
             <div class="border-t pt-4">
-              <label class="text-sm font-semibold text-gray-700">Fetch Log Report</label>
-              <p class="text-xs text-gray-500 mb-2">Enter a device serial to retrieve the latest usage logs from the M2M service.</p>
-              <div class="flex gap-2 mb-3">
-                <input
-                  v-model="settingsSerial"
-                  type="text"
-                  class="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="Device serial e.g. 14537551856"
-                />
-                <button
-                  @click="fetchLogReport"
-                  class="px-4 py-2 text-sm font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-60"
-                  :disabled="isLoadingLogs"
-                >
-                  {{ isLoadingLogs ? 'Fetching...' : 'Fetch' }}
-                </button>
-              </div>
-
-              <div class="bg-gray-50 rounded-xl border border-gray-100 max-h-56 overflow-y-auto p-3 space-y-3">
-                <div v-if="logError" class="text-sm text-red-600">{{ logError }}</div>
-                <div v-else-if="logReport.length === 0" class="text-sm text-gray-500">
-                  No log entries yet. Fetch a report to view usage logs.
-                </div>
-                <div
-                  v-for="entry in logReport"
-                  :key="entry.timestamp + entry.value"
-                  class="text-sm text-gray-700 flex items-center justify-between"
-                >
-                  <div>
-                    <p class="font-semibold">{{ formatLogDate(entry.timestamp) }}</p>
-                    <p class="text-xs text-gray-500">{{ formatLogTime(entry.timestamp) }}</p>
-                  </div>
-                  <p class="text-orange-600 font-bold">{{ Number(entry.value).toFixed(2) }} kWh</p>
-                </div>
-              </div>
+              <p class="text-xs text-gray-500">Usage log reports are now provided by UVEND2 analytics.</p>
             </div>
           </div>
           <div class="px-5 py-3 bg-gray-50 border-t flex justify-end">
@@ -156,8 +122,6 @@
 </template>
 
 <script>
-import { useM2MApi } from '~/composables/useM2MApi'
-
 export default {
   data() {
     return {
@@ -166,11 +130,7 @@ export default {
       showFaq: false,
       showSettings: false,
       usageLimit: localStorage.getItem('usage-limit') || '',
-      settingsSerial: '',
-      isSavingLimit: false,
-      isLoadingLogs: false,
-      logError: null,
-      logReport: []
+      isSavingLimit: false
     }
   },
   
@@ -210,10 +170,6 @@ export default {
 
     closeSettings() {
       this.showSettings = false
-      this.settingsSerial = ''
-      this.logReport = []
-      this.logError = null
-      this.isLoadingLogs = false
     },
 
     async saveUsageLimit() {
@@ -244,69 +200,6 @@ export default {
       }
     },
 
-    async fetchLogReport() {
-      this.logError = null
-      this.logReport = []
-      if (!this.settingsSerial || !this.settingsSerial.trim()) {
-        this.$toast({
-          title: 'Serial required',
-          description: 'Enter a device serial to fetch logs.',
-          variant: 'destructive'
-        })
-        return
-      }
-      this.isLoadingLogs = true
-      try {
-        const m2mApi = useM2MApi()
-        const logs = await m2mApi.getDeviceLogsBySerial(this.settingsSerial.trim())
-        const usageLog = Array.isArray(logs)
-          ? logs.find(log => log.name?.toLowerCase().includes('usage') || log.name?.toLowerCase().includes('period'))
-          : null
-        const entries = usageLog?.entries || usageLog?.readings || []
-        if (!entries.length) {
-          this.logError = 'No log entries returned for this serial.'
-        } else {
-          this.logReport = entries
-            .map(entry => ({
-              timestamp: entry.timestamp || entry.time || entry.created || new Date().toISOString(),
-              value: entry.value || entry.Value || entry.reading || entry.Reading || 0
-            }))
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, 10)
-        }
-      } catch (error) {
-        console.error('Log report error:', error)
-        this.logError = error?.statusMessage || error?.message || 'Failed to fetch log report.'
-      } finally {
-        this.isLoadingLogs = false
-      }
-    },
-
-    formatLogDate(timestamp) {
-      if (!timestamp) return 'Unknown date'
-      try {
-        return new Date(timestamp).toLocaleDateString('en-ZA', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        })
-      } catch {
-        return timestamp
-      }
-    },
-
-    formatLogTime(timestamp) {
-      if (!timestamp) return ''
-      try {
-        return new Date(timestamp).toLocaleTimeString('en-ZA', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        })
-      } catch {
-        return ''
-      }
-    },
     
     async handleLogout() {
       try {
