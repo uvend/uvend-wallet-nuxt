@@ -34,7 +34,7 @@ jobs:
           tags: |
             type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
             type=raw,value=development,enable=${{ github.ref_name == 'development' }}
-            type=raw,value=development,enable=${{ github.ref_name == 'ross/postpaid' }}
+            type=raw,value=ross/postpaid,enable=${{ github.ref_name == 'ross/postpaid' }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
