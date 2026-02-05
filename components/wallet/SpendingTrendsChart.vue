@@ -45,6 +45,14 @@
 export default {
     name: 'UsageTrendsChart',
     props: {
+        utilityType: {
+            type: String,
+            default: 'Electricity'
+        },
+        readings: {
+            type: Array,
+            default: () => []
+        },
         dailyStats: {
             type: Array,
             default: () => []
@@ -268,6 +276,54 @@ export default {
         }
     },
     watch: {
+        readings: {
+            handler(newReadings) {
+                if (!Array.isArray(newReadings) || newReadings.length === 0) {
+                    this.usageData = [];
+                    this.isUsageLoading = false;
+                    return;
+                }
+                this.isUsageLoading = true;
+
+                const normalized = newReadings
+                    .map((reading) => {
+                        const timestamp = reading?.createdAt || reading?.timestamp || reading?.readings?.time;
+                        const date = timestamp ? new Date(timestamp) : null;
+                        const cumulative = Number(reading?.cumulative_reading || 0);
+                        if (!date || Number.isNaN(cumulative)) return null;
+                        const dateKey = date.toISOString().split('T')[0];
+                        return { dateKey, cumulative };
+                    })
+                    .filter(Boolean)
+                    .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+
+                const byDate = new Map();
+                normalized.forEach((entry) => {
+                    const current = byDate.get(entry.dateKey) || 0;
+                    if (entry.cumulative > current) {
+                        byDate.set(entry.dateKey, entry.cumulative);
+                    }
+                });
+
+                const sortedDates = Array.from(byDate.keys()).sort();
+                let lastCumulative = 0;
+                const isWater = String(this.utilityType || '').toLowerCase() === 'water';
+                this.usageData = sortedDates.map((dateKey) => {
+                    const cumulative = byDate.get(dateKey) || 0;
+                    const usage = Math.max(0, cumulative - lastCumulative);
+                    lastCumulative = cumulative;
+                    return {
+                        x: dateKey,
+                        electricity: isWater ? 0 : usage,
+                        water: isWater ? usage : 0
+                    };
+                });
+
+                this.isUsageLoading = false;
+            },
+            deep: true,
+            immediate: true
+        },
         dailyStats: {
             handler(newStats) {
                 if (!Array.isArray(newStats) || newStats.length === 0) {
@@ -276,11 +332,12 @@ export default {
                     return;
                 }
                 this.isUsageLoading = true;
+                const isWater = String(this.utilityType || '').toLowerCase() === 'water';
                 this.usageData = newStats
                     .map(stat => ({
                         x: stat?.date || new Date().toISOString(),
-                        electricity: Number(stat?.total_kwh || 0),
-                        water: 0
+                        electricity: isWater ? 0 : Number(stat?.total_kwh || 0),
+                        water: isWater ? Number(stat?.total_kwh || 0) : 0
                     }))
                     .sort((a, b) => new Date(a.x).getTime() - new Date(b.x).getTime());
                 this.isUsageLoading = false;

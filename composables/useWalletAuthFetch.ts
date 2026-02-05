@@ -133,6 +133,13 @@ export default async function fetch<T>(url: string, options: any = {}, retry = t
         if (error?.data) {
           console.error('Error data:', error.data);
         }
+        if (!error?.response?._data?.message && !error?.data?.message) {
+          console.error('Unknown wallet error', {
+            status: error?.response?.status,
+            statusText: error?.response?.statusText,
+            url,
+          });
+        }
         if (error?.response) {
           console.error('Full error response:', {
             status: error.response.status,

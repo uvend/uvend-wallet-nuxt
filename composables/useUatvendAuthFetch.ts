@@ -57,6 +57,9 @@ async function refreshUatvendToken(): Promise<boolean> {
           headers: {
             'X-Stack-Refresh-Token': refreshToken,
           },
+          body: {
+            refresh_token: refreshToken,
+          },
           credentials: 'include',
         })
         const payload = refreshed?.data || refreshed
@@ -85,15 +88,17 @@ export async function refreshUatvendTokenDirect(baseUrl: string): Promise<boolea
     const refreshToken = getUatvendRefreshToken()
     if (!refreshToken) return false
 
-    const cleanBase = String(baseUrl || 'https://api.uatvend.co.za').replace(/\/+$/, '')
-    const refreshEndpoints = ['/auth/refresh', '/refresh']
+    const refreshEndpoints = ['/api/uatvend/auth/refresh', '/api/uatvend/refresh']
 
     for (const endpoint of refreshEndpoints) {
       try {
-        const refreshed: any = await $fetch(`${cleanBase}${endpoint}`, {
+        const refreshed: any = await $fetch(endpoint, {
           method: 'POST',
           headers: {
             'X-Stack-Refresh-Token': refreshToken,
+          },
+          body: {
+            refresh_token: refreshToken,
           },
         })
         const payload = refreshed?.data || refreshed
