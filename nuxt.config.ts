@@ -59,7 +59,15 @@ export default defineNuxtConfig({
   routeRules: {
     '/registration/**': { 
       headers: {
-        'x-middleware-cache': 'no-cache'
+        'x-middleware-cache': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+
+      }
+    },
+    '/wallet/**': {
+      headers: {
+        'x-middleware-cache': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
       }
     }
   },
