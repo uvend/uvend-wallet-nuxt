@@ -73,7 +73,7 @@
         <!-- My Meters Section -->
     <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
         <CardHeader>
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
             <CardTitle class="text-lg font-semibold text-gray-800">My Meters</CardTitle>
             <CardDescription class="text-sm">Manage and purchase tokens for your utility meters</CardDescription>
@@ -91,12 +91,6 @@
                                 <SelectItem value="Water">Water Only</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <label class="text-xs font-medium text-gray-700">Actions</label>
-                        <WalletPopup buttonLabel="Add Meter" v-model="showAddMeterDialog">
-                            <WalletAddMeter @success="onMeterAdded()"/>
-                        </WalletPopup>
                     </div>
                 </div>
             </div>
@@ -189,49 +183,6 @@
                 </div>
                 <p class="text-gray-600 font-medium">No meters found</p>
                 <p class="text-gray-400 text-sm mt-1">Add your first meter to get started</p>
-            </div>
-        </CardContent>
-    </Card>
-
-    <!-- Manual Deduction (Test) -->
-    <Card class="bg-white/95 backdrop-blur-sm border border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
-        <CardHeader>
-            <CardTitle class="text-lg font-semibold text-gray-800">Manual Deduction (Test)</CardTitle>
-            <CardDescription class="text-sm">Run a wallet deduction to verify frontend behavior</CardDescription>
-        </CardHeader>
-        <CardContent class="p-4 sm:p-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="space-y-2">
-                    <label class="text-xs font-medium text-gray-700">Account Number</label>
-                    <Input v-model="deductionAccountNumber" placeholder="10000001428" />
-                </div>
-                <div class="space-y-2">
-                    <label class="text-xs font-medium text-gray-700">Deduction Amount</label>
-                    <Input v-model.number="deductionAmount" type="number" step="0.01" placeholder="100.50" />
-                </div>
-                <div class="flex items-end">
-                    <Button
-                        class="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                        :disabled="isDeducting"
-                        @click="runManualDeduction"
-                    >
-                        <Icon v-if="isDeducting" name="lucide:loader-2" class="w-4 h-4 mr-2 animate-spin" />
-                        {{ isDeducting ? 'Processing...' : 'Run Deduction' }}
-                    </Button>
-                </div>
-            </div>
-            <div v-if="deductionResult" class="mt-4 text-sm text-gray-700 bg-orange-50 border border-orange-200 rounded-lg p-3">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                        <p class="font-semibold text-gray-900">Deduction Result</p>
-                        <p class="text-xs text-gray-600">{{ deductionResult.message || 'Deduction completed' }}</p>
-                    </div>
-                    <div class="text-xs text-gray-700">
-                        <p><span class="font-semibold">Account:</span> {{ deductionResult.account || '—' }}</p>
-                        <p><span class="font-semibold">Deducted:</span> {{ formatCurrency(deductionResult.deduction_amount) }}</p>
-                        <p><span class="font-semibold">Balance:</span> {{ formatCurrency(deductionResult.wallet_balance) }}</p>
-                    </div>
-                </div>
             </div>
         </CardContent>
     </Card>
@@ -563,21 +514,11 @@ definePageMeta({
             // Meter filter
             selectedMeterFilter: 'all',
             allMeters: [],
-            // Add meter dialog
-            showAddMeterDialog: false,
             showAnalyticsDialog: false,
             analyticsLoading: false,
             analyticsError: '',
             analyticsData: null,
-            selectedAnalyticsMeter: null,
-            deductionAccountNumber: '',
-            deductionAmount: null,
-            isDeducting: false,
-            deductionResult: null,
-            walletAccountNumber: '',
-            isWalletAccountLoading: false,
-            deductionIntervalId: null,
-            isDeductionCheckRunning: false
+            selectedAnalyticsMeter: null
         }
     },
     methods: {
@@ -797,7 +738,6 @@ definePageMeta({
                 }
 
                 this.applyAnalyticsDailyStats(dailyStats, meterNumber)
-                await this.runDailyDeduction(dailyStats)
             } catch (error) {
                 console.error('Error fetching meter analytics:', error)
                 this.analyticsError = 'Failed to load meter analytics.'
@@ -809,112 +749,6 @@ definePageMeta({
         async openMeterAnalytics(meter) {
             this.showAnalyticsDialog = true
             await this.fetchAnalyticsForMeter(meter)
-        },
-
-        async fetchWalletAccount() {
-            this.isWalletAccountLoading = true
-            try {
-                const response = await useWalletAuthFetch(`/pay/balance`)
-                this.walletAccountNumber = response?.account || ''
-            } catch (error) {
-                console.error('Error fetching wallet account:', error)
-            } finally {
-                this.isWalletAccountLoading = false
-            }
-        },
-
-        async runDailyDeduction(dailyStats) {
-            if (!Array.isArray(dailyStats) || dailyStats.length === 0) return
-
-            if (!this.walletAccountNumber) {
-                await this.fetchWalletAccount()
-            }
-            if (!this.walletAccountNumber) return
-
-            const todayKey = new Date().toISOString().split('T')[0]
-            const latestStat = dailyStats[0]
-            const statDate = (latestStat?.date || '').split('T')[0]
-            if (!statDate || statDate !== todayKey) return
-
-            const localKey = `last-wallet-deduction:${this.walletAccountNumber}`
-            const lastDeductionDate = localStorage.getItem(localKey)
-            if (lastDeductionDate === statDate) return
-
-            const deductionAmount = Number(latestStat?.total_cost || 0)
-            if (Number.isNaN(deductionAmount) || deductionAmount <= 0) return
-
-            try {
-                const { deductFromWallet } = useWalletDeductions()
-                await deductFromWallet(this.walletAccountNumber, deductionAmount)
-                localStorage.setItem(localKey, statDate)
-            } catch (error) {
-                console.error('Daily deduction error:', error)
-            }
-        },
-
-        startDeductionPolling() {
-            if (this.deductionIntervalId) return
-            this.deductionIntervalId = setInterval(async () => {
-                if (this.isDeductionCheckRunning) return
-                this.isDeductionCheckRunning = true
-                try {
-                    if (this.meters && this.meters.length > 0) {
-                        await this.fetchAnalyticsForMeter(this.meters[0])
-                    }
-                } finally {
-                    this.isDeductionCheckRunning = false
-                }
-            }, 5 * 60 * 1000)
-        },
-
-        async runManualDeduction() {
-            if (!this.deductionAccountNumber || !this.deductionAccountNumber.trim()) {
-                this.$toast({
-                    title: 'Account required',
-                    description: 'Enter an account number to run the deduction.',
-                    variant: 'destructive'
-                })
-                return
-            }
-            const amount = Number(this.deductionAmount)
-            if (Number.isNaN(amount) || amount <= 0) {
-                this.$toast({
-                    title: 'Amount required',
-                    description: 'Enter a valid deduction amount.',
-                    variant: 'destructive'
-                })
-                return
-            }
-
-            this.isDeducting = true
-            this.deductionResult = null
-            try {
-                const { deductAndBlockIfNeeded } = useWalletDeductions()
-                const meterNumbers = (this.meters || [])
-                    .map((meter) => meter?.meterNumber || meter?.meter_number)
-                    .filter(Boolean)
-                    .map(String)
-                const response = await deductAndBlockIfNeeded(
-                    this.deductionAccountNumber.trim(),
-                    amount,
-                    meterNumbers,
-                )
-                this.deductionResult = response || null
-                this.$toast({
-                    title: 'Deduction successful',
-                    description: response?.message || 'Wallet balance updated.',
-                    variant: 'default'
-                })
-            } catch (error) {
-                console.error('Manual deduction error:', error)
-                this.$toast({
-                    title: 'Deduction failed',
-                    description: error?.response?._data?.message || error?.message || 'Unable to complete deduction.',
-                    variant: 'destructive'
-                })
-            } finally {
-                this.isDeducting = false
-            }
         },
 
         applyAnalyticsDailyStats(dailyStats, meterNumber) {
@@ -1154,25 +988,6 @@ definePageMeta({
                    (transaction.latestReading.meterState.State === 0 || transaction.latestReading.meterState.State === 1);
         },
         
-        onMeterAdded() {
-            console.log('onMeterAdded called - refreshing page');
-            
-            // Close the dialog first
-            this.showAddMeterDialog = false;
-            
-            // Show success toast
-            this.$toast({
-                title: 'Meter Added Successfully',
-                description: 'Refreshing page to load updated meters...',
-                variant: 'default'
-            });
-            
-            // Refresh the page after a brief delay to show the toast
-            setTimeout(() => {
-                console.log('Executing page refresh');
-                location.reload();
-            }, 1000);
-        }
     },
         
         async mounted() {
@@ -1182,16 +997,8 @@ definePageMeta({
             this.fetchTransactionsData(),
             this.fetchMeters()
         ]);
-        await this.fetchWalletAccount();
         if (this.meters && this.meters.length > 0) {
             await this.fetchAnalyticsForMeter(this.meters[0])
-        }
-        this.startDeductionPolling()
-    },
-    beforeUnmount() {
-        if (this.deductionIntervalId) {
-            clearInterval(this.deductionIntervalId)
-            this.deductionIntervalId = null
         }
     },
 

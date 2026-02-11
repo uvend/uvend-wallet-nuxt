@@ -35,10 +35,6 @@
             </p>
           </div>
           
-          <!-- Add Meter Button -->
-          <WalletPopup buttonLabel="Add Meter">
-            <WalletAddMeter @success="fetchMeters()"/>
-          </WalletPopup>
         </div>
         
         <!-- Service Type Filter Display -->
@@ -221,9 +217,6 @@
           <p class="text-sm text-gray-500 mb-6">
             {{ selectedServiceType ? `No ${selectedServiceType} meters found.` : 'You don\'t have any meters set up yet.' }}
           </p>
-          <WalletPopup buttonLabel="Add Your First Meter">
-            <WalletAddMeter @success="fetchMeters()"/>
-          </WalletPopup>
         </div>
       </div>
     </div>
