@@ -528,7 +528,7 @@
 
 <script>
 import UsageTrendsChart from '~/components/wallet/SpendingTrendsChart.vue'
-import { refreshUatvendTokenDirect } from '~/composables/useUatvendAuthFetch'
+import { fetchUatvendMeterAnalytics } from '~/composables/useUatvendMeterAnalytics'
 
 definePageMeta({
     layout: 'wallet'
@@ -756,50 +756,28 @@ definePageMeta({
             this.analyticsData = null
 
             try {
-                const meterNumber = meter?.meterNumber || meter?.meter_number || null
-                const target = meterNumber
+                const identifiers = [
+                    meter?.meterNumber,
+                    meter?.meter_number,
+                    meter?.meterId,
+                    meter?.meter_id,
+                    meter?.id,
+                    meter?.meterNo,
+                    meter?.meter_no,
+                    meter?.serialNumber,
+                    meter?.serial_number,
+                ]
 
-                if (!target) {
+                if (!identifiers.some((value) => value !== null && value !== undefined && String(value).trim())) {
                     this.analyticsError = 'No meter identifier found for analytics.'
                     return
                 }
 
-                const config = useRuntimeConfig()
-                const baseUrl = String(config.public?.uatvendApiUrl || 'https://api-uatvend.co.za').replace(/\/+$/, '')
-                const token =
-                    typeof window !== 'undefined'
-                        ? localStorage.getItem('uatvend-access-token')
-                        : null
-                const headers = token ? { Authorization: `Bearer ${token}` } : {}
-
-                let response
-                try {
-                    response = await $fetch(
-                        `${baseUrl}/meters/${encodeURIComponent(String(target))}?includeReadings=true`,
-                        { headers },
-                    )
-                } catch (error) {
-                    const status = error?.response?.status || error?.statusCode
-                    if (status === 401) {
-                        const refreshed = await refreshUatvendTokenDirect(baseUrl)
-                        if (refreshed) {
-                            const nextToken =
-                                typeof window !== 'undefined'
-                                    ? localStorage.getItem('uatvend-access-token')
-                                    : null
-                            const nextHeaders = nextToken ? { Authorization: `Bearer ${nextToken}` } : {}
-                            response = await $fetch(
-                                `${baseUrl}/meters/${encodeURIComponent(String(target))}?includeReadings=true`,
-                                { headers: nextHeaders },
-                            )
-                        } else {
-                            throw error
-                        }
-                    } else {
-                        throw error
-                    }
+                const response = await fetchUatvendMeterAnalytics(identifiers)
+                if (!response) {
+                    this.analyticsError = 'No analytics found for this meter.'
+                    return
                 }
-
                 const payload = response?.data || response || {}
                 const readings = Array.isArray(payload.readings) ? payload.readings : []
                 const dailyStats = Array.isArray(payload.dailyStats) ? payload.dailyStats : []

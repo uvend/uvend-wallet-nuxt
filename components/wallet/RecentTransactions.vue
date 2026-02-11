@@ -189,7 +189,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useMetersStore } from '~/stores/meters'
-import { refreshUatvendTokenDirect } from '~/composables/useUatvendAuthFetch'
+import { fetchUatvendMeterAnalytics } from '~/composables/useUatvendMeterAnalytics'
 
 const isLoading = ref(true)
 const recentTransactions = ref([])
@@ -319,43 +319,29 @@ async function fetchRecentTransactions() {
         }
 
         const meter = metersStore.meters?.[0]
-        const meterNumber = meter?.meterNumber || meter?.meter_number || null
+        const identifiers = [
+            meter?.meterNumber,
+            meter?.meter_number,
+            meter?.meterId,
+            meter?.meter_id,
+            meter?.id,
+            meter?.meterNo,
+            meter?.meter_no,
+            meter?.serialNumber,
+            meter?.serial_number,
+        ]
         const utilityType = (meter?.utilityType || 'Electricity').toLowerCase()
 
-        if (!meterNumber) {
+        if (!identifiers.some((value) => value !== null && value !== undefined && String(value).trim())) {
             recentTransactions.value = []
             return
         }
 
-        const config = useRuntimeConfig()
-        const baseUrl = String(config.public?.uatvendApiUrl || 'https://api-uatvend.co.za').replace(/\/+$/, '')
-
-        const getHeaders = () => {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('uatvend-access-token') : null
-            return token ? { Authorization: `Bearer ${token}` } : {}
+        const response = await fetchUatvendMeterAnalytics(identifiers)
+        if (!response) {
+            recentTransactions.value = []
+            return
         }
-
-        let response
-        try {
-            response = await $fetch(`${baseUrl}/meters/${encodeURIComponent(String(meterNumber))}?includeReadings=true`, {
-                headers: getHeaders(),
-            })
-        } catch (error) {
-            const status = error?.response?.status || error?.statusCode
-            if (status === 401) {
-                const refreshed = await refreshUatvendTokenDirect(baseUrl)
-                if (refreshed) {
-                    response = await $fetch(`${baseUrl}/meters/${encodeURIComponent(String(meterNumber))}?includeReadings=true`, {
-                        headers: getHeaders(),
-                    })
-                } else {
-                    throw error
-                }
-            } else {
-                throw error
-            }
-        }
-
         const payload = response?.data || response || {}
         const dailyStats = Array.isArray(payload.dailyStats) ? payload.dailyStats : []
 
@@ -365,7 +351,7 @@ async function fetchRecentTransactions() {
                 id: `daily-${stat?.id || stat?.date || Math.random().toString(36).slice(2)}`,
                 type: utilityType === 'water' ? 'water' : 'electricity',
                 date: stat?.date || new Date().toISOString(),
-                meterNumber,
+                meterNumber: identifiers.find((value) => value !== null && value !== undefined && String(value).trim()) || '',
                 totalUnits: stat?.total_kwh ?? '',
                 token: '',
                 amount: parseFloat(stat?.total_cost || 0),

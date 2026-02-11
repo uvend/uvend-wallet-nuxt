@@ -51,7 +51,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useMetersStore } from '~/stores/meters'
-import { refreshUatvendTokenDirect } from '~/composables/useUatvendAuthFetch'
+import { fetchUatvendMeterAnalytics } from '~/composables/useUatvendMeterAnalytics'
 
 const metersStore = useMetersStore()
 
@@ -81,9 +81,19 @@ async function fetchKpiData() {
     }
 
     const meter = metersStore.meters?.[0]
-    const meterNumber = meter?.meterNumber || meter?.meter_number || null
+    const identifiers = [
+        meter?.meterNumber,
+        meter?.meter_number,
+        meter?.meterId,
+        meter?.meter_id,
+        meter?.id,
+        meter?.meterNo,
+        meter?.meter_no,
+        meter?.serialNumber,
+        meter?.serial_number,
+    ]
 
-    if (!meterNumber) {
+    if (!identifiers.some((value) => value !== null && value !== undefined && String(value).trim())) {
         dailyUsage.value = 0
         periodConsumption.value = 0
         isLoadingDailyUsage.value = false
@@ -91,19 +101,13 @@ async function fetchKpiData() {
         return
     }
 
-    const config = useRuntimeConfig()
-    const baseUrl = String(config.public?.uatvendApiUrl || 'https://api-uatvend.co.za').replace(/\/+$/, '')
-
-    const getHeaders = () => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('uatvend-access-token') : null
-        return token ? { Authorization: `Bearer ${token}` } : {}
-    }
-
     try {
-        const response = await $fetch(`${baseUrl}/meters/${encodeURIComponent(String(meterNumber))}?includeReadings=true`, {
-            headers: getHeaders(),
-        })
-
+        const response = await fetchUatvendMeterAnalytics(identifiers)
+        if (!response) {
+            dailyUsage.value = 0
+            periodConsumption.value = 0
+            return
+        }
         const payload = response?.data || response || {}
         const dailyStats = Array.isArray(payload.dailyStats) ? payload.dailyStats : []
         const readings = Array.isArray(payload.readings) ? payload.readings : []
@@ -119,13 +123,6 @@ async function fetchKpiData() {
         }, 0)
         periodConsumption.value = maxCumulative
     } catch (error) {
-        const status = error?.response?.status || error?.statusCode
-        if (status === 401) {
-            const refreshed = await refreshUatvendTokenDirect(baseUrl)
-            if (refreshed) {
-                return await fetchKpiData()
-            }
-        }
         console.error('KPI analytics error:', error)
         dailyUsage.value = 0
         periodConsumption.value = 0
