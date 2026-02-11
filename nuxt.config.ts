@@ -59,6 +59,7 @@ export default defineNuxtConfig({
       clientId: process.env.NUXT_PUBLIC_CLIENT_ID || process.env.CLIENT_ID || '',
       clientSecret: process.env.NUXT_PUBLIC_CLIENT_SECRET || process.env.CLIENT_SECRET || '',
       uatvendApiUrl: process.env.UVEND2_API || 'https://api-uatvend.co.za',
+      uatvendAutoSignIn: process.env.UVEND2_AUTO_SIGNIN === 'true',
       vendUrl: process.env.VEND_URL || '',
       vendTerminalId: process.env.VEND_TerminalID || '',
       vendOperatorId: process.env.VEND_OperatorID || '',

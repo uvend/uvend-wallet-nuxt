@@ -34,8 +34,10 @@
         <!-- Content area -->
         <CardContent class="p-6 space-y-4">
             <div class="space-y-2">
-                <Label class="text-sm font-semibold text-gray-700">Email Address</Label>
+                <Label for="signin-email" class="text-sm font-semibold text-gray-700">Email Address</Label>
                 <Input 
+                    id="signin-email"
+                    name="email"
                     type="email" 
                     v-model="email"
                     placeholder="you@example.com"
@@ -44,9 +46,11 @@
             </div>
             
             <div class="space-y-2">
-                <Label class="text-sm font-semibold text-gray-700">Password</Label>
+                <Label for="signin-password" class="text-sm font-semibold text-gray-700">Password</Label>
                 <div class="relative">
                     <Input 
+                        id="signin-password"
+                        name="password"
                         :type="showPassword ? 'text' : 'password'" 
                         v-model="password"
                         placeholder="••••••••"
@@ -177,25 +181,27 @@ export default{
                     // Don't block navigation if meters fetch fails
                 }
 
-                // Also sign in to UVEND2 analytics (blocking)
-                try {
-                    const uvendRes = await uatvendSignIn(email, password)
-                    const payload = uvendRes?.data || uvendRes || {}
-                    const accessToken = payload?.access_token || payload?.accessToken || payload?.token || payload?.jwt || null
-                    const refreshToken = payload?.refresh_token || payload?.refreshToken || null
-                    if (accessToken) {
-                        setUatvendTokens({
-                            access_token: String(accessToken),
-                            ...(refreshToken ? { refresh_token: String(refreshToken) } : {})
+                const config = useRuntimeConfig()
+                if (config.public?.uatvendAutoSignIn) {
+                    try {
+                        const uvendRes = await uatvendSignIn(email, password)
+                        const payload = uvendRes?.data || uvendRes || {}
+                        const accessToken = payload?.access_token || payload?.accessToken || payload?.token || payload?.jwt || null
+                        const refreshToken = payload?.refresh_token || payload?.refreshToken || null
+                        if (accessToken) {
+                            setUatvendTokens({
+                                access_token: String(accessToken),
+                                ...(refreshToken ? { refresh_token: String(refreshToken) } : {})
+                            })
+                        }
+                    } catch (error) {
+                        console.error('UVEND2 sign-in failed:', error)
+                        this.$toast({
+                            title: 'Analytics Sign In Failed',
+                            description: 'Unable to sign in to analytics. Please try again.',
+                            variant: 'destructive'
                         })
                     }
-                } catch (error) {
-                    console.error('UVEND2 sign-in failed:', error)
-                    this.$toast({
-                        title: 'Analytics Sign In Failed',
-                        description: 'Unable to sign in to analytics. Please try again.',
-                        variant: 'destructive'
-                    })
                 }
                 
                 return navigateTo('/');

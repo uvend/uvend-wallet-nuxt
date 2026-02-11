@@ -1,4 +1,4 @@
-import useUatvendAuthFetch from '~/composables/useUatvendAuthFetch'
+import useUatvendAuthFetch, { getUatvendAccessToken, getUatvendRefreshToken } from '~/composables/useUatvendAuthFetch'
 
 export async function fetchUatvendMeterAnalytics(identifiers: Array<string | number>) {
   const candidates = Array.from(
@@ -9,6 +9,7 @@ export async function fetchUatvendMeterAnalytics(identifiers: Array<string | num
     ),
   )
   if (candidates.length === 0) return null
+  if (!getUatvendAccessToken() && !getUatvendRefreshToken()) return null
 
   const endpoints = ['/meters', '/meter']
 
