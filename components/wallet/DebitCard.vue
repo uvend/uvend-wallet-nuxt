@@ -170,32 +170,12 @@
                             <Button 
                                 v-if="paymentMethods.mpesa"
                                 class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
-                                @click="showMpesaInstructions = !showMpesaInstructions" 
+                                @click="openMpesa" 
                                 :disabled="amount < 30"
                             >
                                 <Icon name="lucide:smartphone" class="h-5 w-5 mr-2" />
                                 <span class="font-semibold">M‑Pesa</span>
                             </Button>
-                        </div>
-                        <div 
-                            v-if="paymentMethods.mpesa && showMpesaInstructions" 
-                            class="mt-3 bg-green-50 border border-green-100 rounded-xl p-4 space-y-2"
-                        >
-                            <div class="flex items-center gap-2 mb-1">
-                                <Icon name="lucide:info" class="h-4 w-4 text-green-700" />
-                                <p class="text-sm font-semibold text-green-800">
-                                    How to complete your M‑Pesa payment
-                                </p>
-                            </div>
-                            <ol class="list-decimal list-inside space-y-1 text-sm text-gray-700">
-                                <li>Open the M‑Pesa application on your mobile device.</li>
-                                <li>Select <span class="font-semibold">Uvend</span> as the biller or payment recipient.</li>
-                                <li>Enter your Uvend wallet account number as the payment reference.</li>
-                                <li>Enter the amount you wish to add to your wallet and confirm the payment.</li>
-                            </ol>
-                            <p class="text-xs text-gray-500 mt-1">
-                                Once the payment is processed, your Uvend wallet balance will be updated automatically. This may take a few moments to reflect.
-                            </p>
                         </div>
                     </div>
                     
@@ -222,6 +202,16 @@
                     <div v-if="cards.length > 0" class="hidden">
                         <!-- Cards UI would go here when payvault is enabled -->
                     </div>
+                </div>
+                
+                <!-- M-Pesa payment instructions / capture -->
+                <div v-if="currentTab === 'mpesa'" class="space-y-4">
+                    <WalletMpesaPay
+                        :amount="amount"
+                        :currency="currency"
+                        :accountNumber="accountNumber"
+                        @close="currentTab = 'payment'"
+                    />
                 </div>
                 
                 <!-- Cards management -->
@@ -260,6 +250,8 @@
 </template>
 
 <script>
+import WalletMpesaPay from '~/components/wallet/MpesaPay.vue'
+
 export default {
     name: 'WalletDebitCard',
     props: {
@@ -268,6 +260,9 @@ export default {
         // accountLast4: { type: String, default: '3456' },
         bgPrimary: { type: String, default: () => `#${APP_BG_2?.replace('#','') || '1287c9'}` },
         bgSecondary: { type: String, default: () => '#3b5bdb' }
+    },
+    components: {
+        WalletMpesaPay
     },
     data() {
         return {
@@ -287,8 +282,7 @@ export default {
                 payat: true,
                 paygate: true,
                 mpesa: false
-            },
-            showMpesaInstructions: false
+            }
         }
     },
     computed: {
@@ -315,11 +309,13 @@ export default {
         }
     },
     methods: {
+        openMpesa(){
+            this.currentTab = 'mpesa';
+        },
         handleTopUp(){
             this.showTopUpDialog = true;
             this.currentTab = 'payment';
             this.amount = 0.00;
-            this.showMpesaInstructions = false;
             this.getCards();
             this.fetchPaymentMethods();
         },
