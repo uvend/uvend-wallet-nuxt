@@ -158,18 +158,44 @@ export default{
                 
                 console.log('Sign-in request body:', requestBody);
                 
-                const response = await useWalletAuthFetch(`/auth/sign-in`,{
-                    method: "POST",
-                    body: requestBody
-                });
-                if(!response.access_token){
-                    throw new Error(response)
+                const [walletResult, uatvendResult] = await Promise.allSettled([
+                    useWalletAuthFetch(`/auth/sign-in`, {
+                        method: "POST",
+                        body: requestBody
+                    }),
+                    uatvendSignIn(email, password),
+                ])
+
+                if (walletResult.status !== 'fulfilled' || !walletResult.value?.access_token) {
+                    throw walletResult.status === 'rejected'
+                        ? walletResult.reason
+                        : new Error('Wallet sign-in failed')
                 }
-                const access_token = response.access_token;
-                const refresh_token = response.refresh_token;
-                localStorage.setItem('wallet-access-token',access_token);
-                localStorage.setItem('wallet-refresh-token',refresh_token);
-                
+
+                const access_token = walletResult.value.access_token
+                const refresh_token = walletResult.value.refresh_token
+                localStorage.setItem('wallet-access-token', access_token)
+                localStorage.setItem('wallet-refresh-token', refresh_token)
+
+                if (uatvendResult.status === 'fulfilled') {
+                    const payload = uatvendResult.value?.data || uatvendResult.value || {}
+                    const accessToken = payload?.access_token || payload?.accessToken || payload?.token || payload?.jwt || null
+                    const refreshToken = payload?.refresh_token || payload?.refreshToken || null
+                    if (accessToken) {
+                        setUatvendTokens({
+                            access_token: String(accessToken),
+                            ...(refreshToken ? { refresh_token: String(refreshToken) } : {})
+                        })
+                    }
+                } else {
+                    console.error('UVEND2 sign-in failed:', uatvendResult.reason)
+                    this.$toast({
+                        title: 'Analytics Sign In Failed',
+                        description: 'Unable to sign in to analytics. Please try again.',
+                        variant: 'destructive'
+                    })
+                }
+
                 // Fetch meters immediately after successful login
                 try {
                     const metersStore = useMetersStore();
@@ -179,29 +205,6 @@ export default{
                 } catch (error) {
                     console.error('Error fetching meters on login:', error);
                     // Don't block navigation if meters fetch fails
-                }
-
-                const config = useRuntimeConfig()
-                if (config.public?.uatvendAutoSignIn) {
-                    try {
-                        const uvendRes = await uatvendSignIn(email, password)
-                        const payload = uvendRes?.data || uvendRes || {}
-                        const accessToken = payload?.access_token || payload?.accessToken || payload?.token || payload?.jwt || null
-                        const refreshToken = payload?.refresh_token || payload?.refreshToken || null
-                        if (accessToken) {
-                            setUatvendTokens({
-                                access_token: String(accessToken),
-                                ...(refreshToken ? { refresh_token: String(refreshToken) } : {})
-                            })
-                        }
-                    } catch (error) {
-                        console.error('UVEND2 sign-in failed:', error)
-                        this.$toast({
-                            title: 'Analytics Sign In Failed',
-                            description: 'Unable to sign in to analytics. Please try again.',
-                            variant: 'destructive'
-                        })
-                    }
                 }
                 
                 return navigateTo('/');

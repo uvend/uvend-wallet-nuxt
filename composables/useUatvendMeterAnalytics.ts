@@ -1,4 +1,8 @@
-import useUatvendAuthFetch, { getUatvendAccessToken, getUatvendRefreshToken } from '~/composables/useUatvendAuthFetch'
+import useUatvendAuthFetch, {
+  clearUatvendTokens,
+  getUatvendAccessToken,
+  getUatvendRefreshToken,
+} from '~/composables/useUatvendAuthFetch'
 
 export async function fetchUatvendMeterAnalytics(identifiers: Array<string | number>) {
   const candidates = Array.from(
@@ -25,6 +29,10 @@ export async function fetchUatvendMeterAnalytics(identifiers: Array<string | num
         const status = error?.response?.status || error?.statusCode
         if (status === 404) {
           continue
+        }
+        if (status === 401) {
+          clearUatvendTokens()
+          return null
         }
         throw error
       }

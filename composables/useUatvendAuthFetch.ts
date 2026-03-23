@@ -33,6 +33,12 @@ export function setUatvendTokens(tokens: { access_token?: string; refresh_token?
   }
 }
 
+export function clearUatvendTokens() {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(ACCESS_TOKEN_KEY)
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+}
+
 function extractTokens(payload: any) {
   const access =
     payload?.access_token ||
@@ -173,6 +179,7 @@ export default async function useUatvendAuthFetch<T>(
       if (refreshed) {
         return await useUatvendAuthFetch<T>(url, options, false)
       }
+      clearUatvendTokens()
     }
     throw error
   }
