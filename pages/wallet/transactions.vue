@@ -761,19 +761,27 @@ definePageMeta({
         },
       
         getUtilityIcon(type) {
-            return type === 'Electricity' ? 'lucide:zap' : 'lucide:droplet'
+            if (type === 'Electricity') return 'lucide:zap'
+            if (type === 'Gas') return 'lucide:flame'
+            return 'lucide:droplet'
         },
 
         getUtilityBg(type) {
-            return type === 'Electricity' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'
+            if (type === 'Electricity') return 'bg-orange-50 border-orange-200'
+            if (type === 'Gas') return 'bg-red-50 border-red-200'
+            return 'bg-blue-50 border-blue-200'
         },
 
         getUtilityIconClass(type) {
-            return type === 'Electricity' ? 'text-orange-600' : 'text-blue-600'
+            if (type === 'Electricity') return 'text-orange-600'
+            if (type === 'Gas') return 'text-red-600'
+            return 'text-blue-600'
         },
 
         getAmountClass(type) {
-            return type === 'Electricity' ? 'text-orange-600' : 'text-blue-600'
+            if (type === 'Electricity') return 'text-orange-600'
+            if (type === 'Gas') return 'text-red-600'
+            return 'text-blue-600'
         },
         
         // Battery and voltage methods
