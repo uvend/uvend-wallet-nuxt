@@ -150,21 +150,32 @@
                         <div v-if="isLoading">
                             <p><NuxtLoadingIndicator /></p>
                         </div>
-                        <div v-else class="flex flex-col gap-2">
+                        <div v-else class="grid grid-cols-3 gap-2">
                             <Button 
+                                v-if="paymentMethods.payat"
                                 class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
                                 @click="addPayAtFunds" 
                                 :disabled="amount < 30"
                             >
                                 <span class="font-scandia">pay@</span>
                             </Button>
-                        <Button 
+                            <Button 
+                                v-if="paymentMethods.paygate"
                                 class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
-                            @click="addFunds" 
+                                @click="addFunds" 
                                 :disabled="amount < 30"
-                        >
+                            >
                                 <span class="font-scandia">paygate</span>
-                        </Button>
+                            </Button>
+                            <Button 
+                                v-if="paymentMethods.mpesa"
+                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                                @click="openMpesa" 
+                                :disabled="amount < 30"
+                            >
+                                <Icon name="lucide:smartphone" class="h-5 w-5 mr-2" />
+                                <span class="font-semibold">M‑Pesa</span>
+                            </Button>
                         </div>
                     </div>
                     
@@ -191,6 +202,16 @@
                     <div v-if="cards.length > 0" class="hidden">
                         <!-- Cards UI would go here when payvault is enabled -->
                     </div>
+                </div>
+                
+                <!-- M-Pesa payment instructions / capture -->
+                <div v-if="currentTab === 'mpesa'" class="space-y-4">
+                    <WalletMpesaPay
+                        :amount="amount"
+                        :currency="currency"
+                        :accountNumber="accountNumber"
+                        @close="currentTab = 'payment'"
+                    />
                 </div>
                 
                 <!-- Cards management -->
@@ -229,6 +250,8 @@
 </template>
 
 <script>
+import WalletMpesaPay from '~/components/wallet/MpesaPay.vue'
+
 export default {
     name: 'WalletDebitCard',
     props: {
@@ -238,6 +261,9 @@ export default {
         bgPrimary: { type: String, default: () => `#${APP_BG_2?.replace('#','') || '1287c9'}` },
         bgSecondary: { type: String, default: () => '#3b5bdb' }
     },
+    components: {
+        WalletMpesaPay
+    },
     data() {
         return {
             showTopUpDialog: false,
@@ -245,13 +271,18 @@ export default {
             amount: 0.00,
             payRequestId: null,
             checksum: null,
-                payAtUrl: null,
+            payAtUrl: null,
             cards: [],
             selectedCard: null,
             isLoading: false,
             actualBalance: 0,
             accountNumber:null,
-            isWalletLoading: true
+            isWalletLoading: true,
+            paymentMethods: {
+                payat: true,
+                paygate: true,
+                mpesa: false
+            }
         }
     },
     computed: {
@@ -278,11 +309,15 @@ export default {
         }
     },
     methods: {
+        openMpesa(){
+            this.currentTab = 'mpesa';
+        },
         handleTopUp(){
             this.showTopUpDialog = true;
             this.currentTab = 'payment';
             this.amount = 0.00;
             this.getCards();
+            this.fetchPaymentMethods();
         },
         navigateToTransactions(){
             this.$router.push('/transactions');
@@ -363,6 +398,23 @@ export default {
                 }
             }catch(error){
                 console.error('Error adding payat funds:', error)
+            }
+        },
+        async fetchPaymentMethods() {
+            this.isLoading = true;
+            try {
+                const response = await useWalletAuthFetch(`/pay/paymentmethods`);
+                if (response && typeof response === 'object') {
+                    this.paymentMethods = {
+                        payat: Boolean(response.payat),
+                        paygate: Boolean(response.paygate),
+                        mpesa: Boolean(response.mpesa),
+                    };
+                }
+            } catch (error) {
+                console.error('Error fetching payment methods:', error);
+            } finally {
+                this.isLoading = false;
             }
         },
         async getWalletBalance(){
