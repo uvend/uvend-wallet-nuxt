@@ -229,6 +229,8 @@ export default{
 		}
 	},
 	async mounted() {
+		const currencyStore = useWalletCurrencyStore();
+		void currencyStore.fetchCurrency();
 		// Load meters once when wallet layout is mounted
 		const metersStore = useMetersStore();
 		if (!metersStore.isLoaded && !metersStore.isLoading) {

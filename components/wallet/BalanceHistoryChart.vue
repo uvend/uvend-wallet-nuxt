@@ -35,6 +35,9 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, computed } from 'vue'
 import ApexCharts from 'apexcharts'
+import { useWalletCurrencyStore } from '~/stores/walletCurrency'
+
+const walletCurrency = useWalletCurrencyStore()
 
 const props = defineProps({
     transactions: {
@@ -95,6 +98,19 @@ const chartData = computed(() => {
     return finalData
 })
 
+function formatAxisValue(value, fractionDigits) {
+    try {
+        return new Intl.NumberFormat('en-ZA', {
+            style: 'currency',
+            currency: walletCurrency.currencyCode,
+            minimumFractionDigits: fractionDigits,
+            maximumFractionDigits: fractionDigits,
+        }).format(value)
+    } catch {
+        return `${walletCurrency.currencyCode} ${value.toFixed(fractionDigits)}`
+    }
+}
+
 const initializeChart = () => {
     if (chartData.value.length === 0) return
     
@@ -142,9 +158,7 @@ const initializeChart = () => {
                     colors: '#6b7280',
                     fontSize: '12px'
                 },
-                formatter: function (value) {
-                    return 'R' + value.toFixed(0)
-                }
+                formatter: (value) => formatAxisValue(value, 0),
             }
         },
         grid: {
@@ -190,9 +204,7 @@ const initializeChart = () => {
                 fontSize: '12px'
             },
             y: {
-                formatter: function (value, { seriesIndex }) {
-                    return 'R' + value.toFixed(2)
-                }
+                formatter: (value) => formatAxisValue(value, 2),
             }
         },
         legend: {
@@ -227,4 +239,11 @@ watch(chartData, () => {
         initializeChart()
     })
 }, { deep: true })
+
+watch(
+    () => walletCurrency.currencyCode,
+    () => {
+        nextTick(() => initializeChart())
+    },
+)
 </script>

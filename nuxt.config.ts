@@ -110,6 +110,8 @@ vitePWA: {
     // Public keys that are exposed to the client (runtime-configurable)
     public: {
       walletApiUrl: process.env.NUXT_PUBLIC_WALLET_API_URL || '',
+      /** ISO 4217 code (e.g. ZAR, KES). Used until /account/currency succeeds. */
+      walletCurrencyCode: process.env.NUXT_PUBLIC_WALLET_CURRENCY_CODE || 'ZAR',
     }
     
   },

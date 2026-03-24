@@ -282,16 +282,9 @@ export default {
   },
   methods: {
     formatZar(value) {
-      try {
-        const num = Number(value) || 0
-        return `R ${new Intl.NumberFormat('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }).format(num)}`
-      } catch {
-        const num = Number(value) || 0
-        return `R ${num.toFixed(2)}`
-      }
+      const { $currency } = useNuxtApp()
+      if ($currency) return $currency(value)
+      return useWalletCurrencyStore().formatValue(value)
     },
     async fetchData() {
         this.isLoading = true;

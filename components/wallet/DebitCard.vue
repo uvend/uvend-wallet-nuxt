@@ -139,7 +139,7 @@
                                 @click="amount = quickAmount"
                                 class="py-2 px-3 text-sm font-medium border-gray-200 hover:border-blue-300 hover:bg-blue-50"
                             >
-                                {{ currency }} {{ quickAmount }}
+                                {{ $currency(quickAmount) }}
                             </Button>
                         </div>
                         <div>
@@ -208,7 +208,6 @@
                 <div v-if="currentTab === 'mpesa'" class="space-y-4">
                     <WalletMpesaPay
                         :amount="amount"
-                        :currency="currency"
                         :accountNumber="accountNumber"
                         @close="currentTab = 'payment'"
                     />
@@ -256,7 +255,6 @@ export default {
     name: 'WalletDebitCard',
     props: {
         balance: { type: Number, default: 0 },
-        currency: { type: String, default: 'R' },
         // accountLast4: { type: String, default: '3456' },
         bgPrimary: { type: String, default: () => `#${APP_BG_2?.replace('#','') || '1287c9'}` },
         bgSecondary: { type: String, default: () => '#3b5bdb' }
@@ -292,7 +290,8 @@ export default {
         formattedBalance(){
                 const displayBalance = this.actualBalance || this.balance;
             const { $currency } = useNuxtApp()
-            return $currency ? $currency(displayBalance) : `R ${Number(displayBalance || 0).toFixed(2)}`
+            if ($currency) return $currency(displayBalance)
+            return useWalletCurrencyStore().formatValue(displayBalance)
         },
         maskedAccount(){
             return `${this.accountNumber}`

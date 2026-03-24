@@ -1274,16 +1274,19 @@ definePageMeta({
         totalSpent() {
             const { $currency } = useNuxtApp()
             const num = Number(this.transactionTotals.totalAmount || 0)
-            return $currency ? $currency(num) : `R ${num.toFixed(2)}`
+            if ($currency) return $currency(num)
+            return useWalletCurrencyStore().formatValue(num)
         },
         
         averageTransaction() {
             const { $currency } = useNuxtApp()
             if (!this.summary.transactionCount || this.summary.transactionCount === 0) {
-                return $currency ? $currency(0) : `R ${Number(0).toFixed(2)}`
+                if ($currency) return $currency(0)
+                return useWalletCurrencyStore().formatValue(0)
             }
             const avg = (this.transactionTotals.totalAmount / this.summary.transactionCount)
-            return $currency ? $currency(avg) : `R ${avg.toFixed(2)}`
+            if ($currency) return $currency(avg)
+            return useWalletCurrencyStore().formatValue(avg)
         },
         
         electricityTotal() {

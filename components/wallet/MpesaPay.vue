@@ -118,7 +118,6 @@ export default {
   name: 'WalletMpesaPay',
   props: {
     amount: { type: Number, required: true },
-    currency: { type: String, default: 'R' },
     accountNumber: { type: String, default: '' }
   },
   data() {
@@ -144,7 +143,8 @@ export default {
     formattedAmount() {
       const { $currency } = useNuxtApp()
       const numericAmount = Number(this.amount || 0)
-      return $currency ? $currency(numericAmount) : `${this.currency} ${numericAmount.toFixed(2)}`
+      if ($currency) return $currency(numericAmount)
+      return useWalletCurrencyStore().formatValue(numericAmount)
     },
     canContinue() {
       return Boolean(this.selectedCode && this.phoneNumber && this.phoneNumber.trim().length >= 5)

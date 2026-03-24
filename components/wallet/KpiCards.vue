@@ -42,13 +42,12 @@ const totalDeposited = ref(0)
 const isLoading = ref(true)
 
 function formatAmount(amount) {
-    return new Intl.NumberFormat('en-ZA', {
-        style: 'currency',
-        currency: 'ZAR',
+    const store = useWalletCurrencyStore()
+    return store.formatValue(amount, {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-        notation: amount > 999999 ? 'compact' : 'standard'
-    }).format(amount)
+        notation: amount > 999999 ? 'compact' : 'standard',
+    })
 }
 
 async function fetchKpiData() {
