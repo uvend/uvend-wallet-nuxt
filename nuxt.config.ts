@@ -4,7 +4,7 @@ const pagesDir = 'pages/wallet'
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/tailwindcss', 'shadcn-nuxt', '@nuxt/icon','@pinia/nuxt','@vite-pwa/nuxt'],
+  modules: ['@nuxtjs/tailwindcss', 'shadcn-nuxt', '@nuxt/icon','@pinia/nuxt'],
   
   build: {
     transpile: ['vue3-apexcharts']

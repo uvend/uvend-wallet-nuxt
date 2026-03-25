@@ -46,13 +46,13 @@
                     <div class="hidden sm:flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl flex items-center justify-center group-hover/item:scale-110 transition-transform duration-300"
-                                 :class="transaction.type === 'electricity' ? 'bg-gradient-to-br from-yellow-100 to-orange-100' : 'bg-gradient-to-br from-blue-100 to-cyan-100'">
-                                <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'" 
-                                      :class="transaction.type === 'electricity' ? 'h-5 w-5 text-yellow-600' : 'h-5 w-5 text-blue-600'"/>
+                                 :class="getTypeBg(transaction.type)">
+                                <Icon :name="getTypeIcon(transaction.type)" 
+                                      :class="getTypeIconClass(transaction.type)"/>
                             </div>
                             <div class="space-y-2">
                                 <p class="text-sm font-bold text-gray-900">
-                                    {{ transaction.type === 'electricity' ? 'Electricity prepaid purchase' : 'Water prepaid purchase' }}
+                                    {{ getTypeLabel(transaction.type) }}
                                 </p>
                                 <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 font-medium">
                                     <span>{{ formatDate(transaction.date) }}</span>
@@ -101,7 +101,7 @@
                             </div>
                         <div class="text-right">
                             <p class="text-lg font-bold"
-                               :class="transaction.type === 'electricity' ? 'text-orange-600' : 'text-blue-600'">
+                               :class="getTypeAmountClass(transaction.type)">
                                 -{{ $currency(transaction.amount) }}
                             </p>
                             <p v-if="transaction.totalUnits" class="text-xs text-gray-600 font-medium mt-1">
@@ -120,9 +120,9 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-start gap-2">
                                 <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-                                     :class="transaction.type === 'electricity' ? 'bg-orange-100' : 'bg-blue-100'">
-                                    <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'" 
-                                          :class="transaction.type === 'electricity' ? 'h-4 w-4 text-orange-600' : 'h-4 w-4 text-blue-600'"/>
+                                     :class="getTypeMobileBg(transaction.type)">
+                                    <Icon :name="getTypeIcon(transaction.type)" 
+                                          :class="getTypeMobileIconClass(transaction.type)"/>
                                 </div>
                                 <div class="space-y-1">
                                     <p class="text-xs font-mono text-gray-700 font-medium">{{ transaction.meterNumber }}</p>
@@ -134,7 +134,7 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-sm font-bold"
-                                   :class="transaction.type === 'electricity' ? 'text-orange-600' : 'text-blue-600'">
+                                   :class="getTypeAmountClass(transaction.type)">
                                     -{{ $currency(transaction.amount) }}
                                 </p>
                                 <p v-if="transaction.totalUnits" class="text-xs text-gray-600 font-medium mt-1">
@@ -153,8 +153,8 @@
                             <!-- Battery Status -->
                             <div v-if="hasValidBattery(transaction)" class="flex items-center gap-2">
                                 <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-md">
-                                    <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'"
-                                          :class="transaction.type === 'electricity' ? 'w-3 h-3 text-orange-500' : 'w-3 h-3 text-blue-500'"/>
+                                    <Icon :name="getTypeIcon(transaction.type)"
+                                          :class="getTypeRemainingIconClass(transaction.type)"/>
                                     <span class="text-[11px] font-medium text-gray-600">{{ getRemainingUnits(transaction) }}</span>
                                 </div>
                                 <Icon name="lucide:battery" 
@@ -202,6 +202,70 @@ import { ref, onMounted } from 'vue'
 
 const isLoading = ref(true)
 const recentTransactions = ref([])
+
+function normalizeType(value) {
+    const raw = String(value || '').toLowerCase()
+    if (raw === 'electricity' || raw === 'electric') return 'electricity'
+    if (raw === 'water') return 'water'
+    if (raw === 'gas') return 'gas'
+    return 'water'
+}
+
+function getTypeLabel(type) {
+    const normalized = normalizeType(type)
+    if (normalized === 'electricity') return 'Electricity prepaid purchase'
+    if (normalized === 'gas') return 'Gas prepaid purchase'
+    return 'Water prepaid purchase'
+}
+
+function getTypeIcon(type) {
+    const normalized = normalizeType(type)
+    if (normalized === 'electricity') return 'lucide:zap'
+    if (normalized === 'gas') return 'lucide:flame'
+    return 'lucide:droplet'
+}
+
+function getTypeBg(type) {
+    const normalized = normalizeType(type)
+    if (normalized === 'electricity') return 'bg-gradient-to-br from-yellow-100 to-orange-100'
+    if (normalized === 'gas') return 'bg-gradient-to-br from-red-100 to-red-200'
+    return 'bg-gradient-to-br from-blue-100 to-cyan-100'
+}
+
+function getTypeIconClass(type) {
+    const normalized = normalizeType(type)
+    if (normalized === 'electricity') return 'h-5 w-5 text-yellow-600'
+    if (normalized === 'gas') return 'h-5 w-5 text-red-600'
+    return 'h-5 w-5 text-blue-600'
+}
+
+function getTypeMobileBg(type) {
+    const normalized = normalizeType(type)
+    if (normalized === 'electricity') return 'bg-orange-100'
+    if (normalized === 'gas') return 'bg-red-100'
+    return 'bg-blue-100'
+}
+
+function getTypeMobileIconClass(type) {
+    const normalized = normalizeType(type)
+    if (normalized === 'electricity') return 'h-4 w-4 text-orange-600'
+    if (normalized === 'gas') return 'h-4 w-4 text-red-600'
+    return 'h-4 w-4 text-blue-600'
+}
+
+function getTypeAmountClass(type) {
+    const normalized = normalizeType(type)
+    if (normalized === 'electricity') return 'text-orange-600'
+    if (normalized === 'gas') return 'text-red-600'
+    return 'text-blue-600'
+}
+
+function getTypeRemainingIconClass(type) {
+    const normalized = normalizeType(type)
+    if (normalized === 'electricity') return 'w-3 h-3 text-orange-500'
+    if (normalized === 'gas') return 'w-3 h-3 text-red-500'
+    return 'w-3 h-3 text-blue-500'
+}
 
 function formatAmount(amount) {
     return new Intl.NumberFormat('en-ZA', {
@@ -255,12 +319,12 @@ function getRemainingUnits(transaction) {
         return '';
     }
     
-    if (transaction.type === 'electricity') {
+    if (normalizeType(transaction.type) === 'electricity') {
         const credit = transaction.latestReading.remainingTokens["Remaining Credit"];
         if (credit !== null && credit !== undefined && credit >= 0) {
             return `${(parseFloat(credit) / 1000).toFixed(2)} KWh`;
         }
-    } else if (transaction.type === 'water') {
+    } else if (normalizeType(transaction.type) === 'water') {
         const litres = transaction.latestReading.remainingTokens["Remaining Litres"];
         if (litres !== null && litres !== undefined && litres >= 0) {
             return `${(parseFloat(litres) ).toFixed(2)} L`;
@@ -350,7 +414,7 @@ async function fetchRecentTransactions() {
 
                 return {
                     id: transaction.id || transaction.meterNumber + transaction.created,
-                    type: transaction.utilityType === 'Electricity' ? 'electricity' : 'water',
+                    type: normalizeType(transaction.utilityType),
                     date: transaction.created,
                     meterNumber: transaction.meterNumber,
                     totalUnits: totalUnitsPaid,
