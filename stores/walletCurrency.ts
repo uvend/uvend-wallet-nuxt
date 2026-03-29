@@ -1,10 +1,21 @@
 import { defineStore } from 'pinia'
 
 const ISO_CODE = /^[A-Za-z]{3}$/
+const CURRENCY_ALIASES: Record<string, string> = {
+  KSHS: 'Kshs',
+  KSH: 'Kshs',
+  KES: 'Kshs',
+  RAND: 'R',
+  R: 'R',
+  ZAR: 'R',
+}
 
 function normalizeCode(raw: unknown): string | null {
   if (raw == null || typeof raw !== 'string') return null
   const c = raw.trim().toUpperCase()
+  if (CURRENCY_ALIASES[c]) return CURRENCY_ALIASES[c]
+  const compact = c.replace(/[^A-Z]/g, '')
+  if (CURRENCY_ALIASES[compact]) return CURRENCY_ALIASES[compact]
   return ISO_CODE.test(c) ? c : null
 }
 

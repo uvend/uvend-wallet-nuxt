@@ -108,9 +108,15 @@ export default {
         // TODO: emit success to reload parent
       } catch (error) {
         console.error('Error fetching vend response:', error);
+        const backendMessage =
+          error?.error?.message ||
+          error?.response?._data?.error?.message ||
+          error?.response?._data?.message ||
+          error?.message;
+
         this.$toast({
           title: 'Error',
-          description: 'Invalid meter number entered',
+          description: backendMessage || 'Unable to process token purchase. Please try again.',
           variant: 'destructive'
         });
       } finally{

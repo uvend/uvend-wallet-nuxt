@@ -288,10 +288,14 @@ export default {
             return `linear-gradient(135deg, ${this.bgPrimary} 0%, ${this.bgSecondary} 70%)`;
         },
         formattedBalance(){
-                const displayBalance = this.actualBalance || this.balance;
+            const displayBalance = Number(this.actualBalance || this.balance || 0)
+            const fractionOpts =
+                displayBalance > 9994
+                    ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                    : { minimumFractionDigits: 0, maximumFractionDigits: 2 }
             const { $currency } = useNuxtApp()
-            if ($currency) return $currency(displayBalance)
-            return useWalletCurrencyStore().formatValue(displayBalance)
+            if ($currency) return $currency(displayBalance, fractionOpts)
+            return useWalletCurrencyStore().formatValue(displayBalance, fractionOpts)
         },
         maskedAccount(){
             return `${this.accountNumber}`
