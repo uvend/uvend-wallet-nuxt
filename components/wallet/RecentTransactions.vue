@@ -99,10 +99,10 @@
                                 </div>
                                 </div>
                             </div>
-                        <div class="text-right">
-                            <p class="text-lg font-bold"
+                        <div class="text-right shrink-0">
+                            <p class="text-base lg:text-lg font-bold whitespace-nowrap leading-none"
                                :class="transaction.type === 'electricity' ? 'text-orange-600' : 'text-blue-600'">
-                                -{{ formatDisplayCurrency(transaction.amount) }}
+                                -{{ $currency(transaction.amount) }}
                             </p>
                             <p v-if="transaction.totalUnits" class="text-xs text-gray-600 font-medium mt-1">
                                 {{ transaction.totalUnits }} units
@@ -132,10 +132,10 @@
                                     </p>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-sm font-bold"
+                            <div class="text-right shrink-0">
+                                <p class="text-sm font-bold whitespace-nowrap leading-none"
                                    :class="transaction.type === 'electricity' ? 'text-orange-600' : 'text-blue-600'">
-                                    -{{ formatDisplayCurrency(transaction.amount) }}
+                                    -{{ $currency(transaction.amount) }}
                                 </p>
                                 <p v-if="transaction.totalUnits" class="text-xs text-gray-600 font-medium mt-1">
                                     {{ transaction.totalUnits }} units
@@ -205,15 +205,6 @@ const recentTransactions = ref([])
 
 function formatAmount(amount) {
     return useWalletCurrencyStore().formatValue(amount)
-}
-
-function formatDisplayCurrency(amount) {
-    const value = Number(amount || 0)
-    const fractionOpts =
-        value > 9994
-            ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-            : { minimumFractionDigits: 0, maximumFractionDigits: 2 }
-    return useWalletCurrencyStore().formatValue(value, fractionOpts)
 }
 
 function formatDate(dateString) {

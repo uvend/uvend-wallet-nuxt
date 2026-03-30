@@ -99,16 +99,10 @@ const chartData = computed(() => {
 })
 
 function formatAxisValue(value, fractionDigits) {
-    try {
-        return new Intl.NumberFormat('en-ZA', {
-            style: 'currency',
-            currency: walletCurrency.currencyCode,
-            minimumFractionDigits: fractionDigits,
-            maximumFractionDigits: fractionDigits,
-        }).format(value)
-    } catch {
-        return `${walletCurrency.currencyCode} ${value.toFixed(fractionDigits)}`
-    }
+    return walletCurrency.formatValue(value, {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits,
+    })
 }
 
 const initializeChart = () => {

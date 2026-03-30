@@ -18,7 +18,7 @@
                     <span class="text-xs font-medium text-gray-600">Total Deposits</span>
                 </div>
                 <Skeleton v-if="isLoading" class="w-24 h-8" />
-                <p v-else class="text-2xl font-bold text-gray-900">{{ formatKpiCurrency(totalDeposits) }}</p>
+                <p v-else class="text-xl sm:text-2xl font-bold text-gray-900 whitespace-nowrap leading-none">{{ formatZar(totalDeposits) }}</p>
                 <p class="text-xs text-gray-500 mt-1">All time</p>
             </CardContent>
         </Card>
@@ -61,7 +61,7 @@
                     <span class="text-xs font-medium text-gray-600">Average</span>
                 </div>
                 <Skeleton v-if="isLoading" class="w-24 h-8" />
-                <p v-else class="text-2xl font-bold text-gray-900">{{ formatKpiCurrency(averageDeposit) }}</p>
+                <p v-else class="text-xl sm:text-2xl font-bold text-gray-900 whitespace-nowrap leading-none">{{ formatZar(averageDeposit) }}</p>
                 <p class="text-xs text-gray-500 mt-1">Per deposit</p>
             </CardContent>
             </Card>
@@ -173,7 +173,7 @@
                                         </td>
                                         <td class="py-3 px-4 text-right whitespace-nowrap">
                                             <p class="text-sm font-semibold text-blue-600">
-                                                {{ formatDisplayCurrency(payment.amount) }}
+                                                {{ formatZar(payment.amount) }}
                                             </p>
                                         </td>
                                         <td class="py-3 px-4 text-center whitespace-nowrap">
@@ -213,7 +213,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <p class="text-sm font-bold text-blue-600">
-                                    {{ formatDisplayCurrency(payment.amount) }}
+                                    {{ formatZar(payment.amount) }}
                                 </p>
                                 <Icon 
                                     :name="expandedRows.includes(payment.id) ? 'lucide:chevron-up' : 'lucide:chevron-down'" 
@@ -281,30 +281,10 @@ export default {
     }
   },
   methods: {
-    formatKpiCurrency(value) {
-      const amount = Number(value || 0)
-      const fractionOpts =
-        amount > 9994
-          ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-          : { minimumFractionDigits: 0, maximumFractionDigits: 2 }
-      const { $currency } = useNuxtApp()
-      if ($currency) return $currency(amount, fractionOpts)
-      return useWalletCurrencyStore().formatValue(amount, fractionOpts)
-    },
     formatZar(value) {
       const { $currency } = useNuxtApp()
       if ($currency) return $currency(value)
       return useWalletCurrencyStore().formatValue(value)
-    },
-    formatDisplayCurrency(value) {
-      const amount = Number(value || 0)
-      const fractionOpts =
-        amount > 9994
-          ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-          : { minimumFractionDigits: 0, maximumFractionDigits: 2 }
-      const { $currency } = useNuxtApp()
-      if ($currency) return $currency(amount, fractionOpts)
-      return useWalletCurrencyStore().formatValue(amount, fractionOpts)
     },
     async fetchData() {
         this.isLoading = true;

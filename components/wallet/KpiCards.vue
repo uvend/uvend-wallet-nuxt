@@ -10,7 +10,7 @@
                     <span class="text-xs font-medium text-gray-600">Total Spent</span>
                 </div>
                     <Skeleton class="w-24 h-8" v-if="isLoading"/>
-                <p v-else class="text-2xl font-bold text-gray-900">{{ formatDashboardCurrency(totalSpent) }}</p>
+                <p v-else class="text-xl sm:text-2xl font-bold text-gray-900 whitespace-nowrap leading-none">{{ $currency(totalSpent) }}</p>
                 <p class="text-xs text-gray-500 mt-1">All time</p>
             </CardContent>
         </Card>
@@ -25,7 +25,7 @@
                     <span class="text-xs font-medium text-gray-600">Total Purchase</span>
                 </div>
                     <Skeleton class="w-24 h-8" v-if="isLoading"/>
-                <p v-else class="text-2xl font-bold text-gray-900">{{ totalPurchases }}</p>
+                <p v-else class="text-xl sm:text-2xl font-bold text-gray-900 whitespace-nowrap leading-none">{{ totalPurchases }}</p>
                 <p class="text-xs text-gray-500 mt-1">All time</p>
             </CardContent>
         </Card>
@@ -81,13 +81,4 @@ async function fetchKpiData() {
 onMounted(() => {
     fetchKpiData()
 })
-
-function formatDashboardCurrency(amount) {
-    const value = Number(amount || 0)
-    const fractionOpts =
-        value > 9994
-            ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-            : { minimumFractionDigits: 0, maximumFractionDigits: 2 }
-    return useWalletCurrencyStore().formatValue(value, fractionOpts)
-}
 </script>

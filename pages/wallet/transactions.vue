@@ -18,7 +18,7 @@
                     <span class="text-xs font-medium text-gray-600">Total Spent</span>
                 </div>
                 <Skeleton class="w-24 h-8" v-if="isLoading" />
-                <p v-else class="text-2xl font-bold text-gray-900">{{ totalSpent }}</p>
+                <p v-else class="text-xl sm:text-2xl font-bold text-gray-900 whitespace-nowrap leading-none">{{ totalSpent }}</p>
                 <p class="text-xs text-gray-500 mt-1">Lifetime</p>
             </CardContent>
         </Card>
@@ -33,7 +33,7 @@
                     <span class="text-xs font-medium text-gray-600">Average</span>
                 </div>
                 <Skeleton class="w-24 h-8" v-if="isLoading" />
-                <p v-else class="text-2xl font-bold text-gray-900">{{ averageTransaction }}</p>
+                <p v-else class="text-xl sm:text-2xl font-bold text-gray-900 whitespace-nowrap leading-none">{{ averageTransaction }}</p>
                 <p class="text-xs text-gray-500 mt-1">Lifetime average</p>
             </CardContent>
         </Card>
@@ -53,8 +53,8 @@
                     <Skeleton class="w-24 h-4" />
                 </div>
                 <template v-else>
-                    <p class="text-2xl font-bold" :class="highestUtility.textClass">{{ highestUtility.name }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ formatKpiCurrency(highestUtility.amount) }} lifetime</p>
+                    <p class="text-xl sm:text-2xl font-bold whitespace-nowrap leading-none" :class="highestUtility.textClass">{{ highestUtility.name }}</p>
+                    <p class="text-xs text-gray-500 mt-1 whitespace-nowrap">{{ $currency(highestUtility.amount) }} lifetime</p>
                 </template>
             </CardContent>
         </Card>
@@ -74,8 +74,8 @@
                     <Skeleton class="w-24 h-4" />
                 </div>
                 <template v-else>
-                    <p class="text-2xl font-bold" :class="lowestUtility.textClass">{{ lowestUtility.name }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ formatKpiCurrency(lowestUtility.amount) }} lifetime</p>
+                    <p class="text-xl sm:text-2xl font-bold whitespace-nowrap leading-none" :class="lowestUtility.textClass">{{ lowestUtility.name }}</p>
+                    <p class="text-xs text-gray-500 mt-1 whitespace-nowrap">{{ $currency(lowestUtility.amount) }} lifetime</p>
                 </template>
             </CardContent>
         </Card>
@@ -518,7 +518,7 @@
                                       
                                         <td class="py-3 px-2 text-right whitespace-nowrap">
                                             <p class="text-sm font-semibold" :class="getAmountClass(transaction.utilityType)">
-                                                {{ formatDisplayCurrency(transaction.amount) }}
+                                                {{ $currency(transaction.amount) }}
                                             </p>
                                             <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
                                                 {{ transaction.unitsIssued }} units
@@ -557,7 +557,7 @@
                             <div class="flex items-center gap-2">
                                 <div class="text-right">
                                 <p class="text-sm font-bold" :class="getAmountClass(transaction.utilityType)">
-                                    {{ formatDisplayCurrency(transaction.amount) }}
+                                    {{ $currency(transaction.amount) }}
                                 </p>
                                     <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
                                         {{ transaction.unitsIssued }} units
@@ -782,26 +782,6 @@ definePageMeta({
             if (type === 'Electricity') return 'text-orange-600'
             if (type === 'Gas') return 'text-red-600'
             return 'text-blue-600'
-        },
-        formatKpiCurrency(value) {
-            const amount = Number(value || 0)
-            const fractionOpts =
-                amount > 9994
-                    ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                    : { minimumFractionDigits: 0, maximumFractionDigits: 2 }
-            const { $currency } = useNuxtApp()
-            if ($currency) return $currency(amount, fractionOpts)
-            return useWalletCurrencyStore().formatValue(amount, fractionOpts)
-        },
-        formatDisplayCurrency(value) {
-            const amount = Number(value || 0)
-            const fractionOpts =
-                amount > 9994
-                    ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                    : { minimumFractionDigits: 0, maximumFractionDigits: 2 }
-            const { $currency } = useNuxtApp()
-            if ($currency) return $currency(amount, fractionOpts)
-            return useWalletCurrencyStore().formatValue(amount, fractionOpts)
         },
         
         // Battery and voltage methods
@@ -1292,16 +1272,21 @@ definePageMeta({
             return Boolean(trimmedName) && trimmedName !== meter.name && this.editingMeterNumber !== meter.meterNumber;
         },
         totalSpent() {
+            const { $currency } = useNuxtApp()
             const num = Number(this.transactionTotals.totalAmount || 0)
-            return this.formatKpiCurrency(num)
+            if ($currency) return $currency(num)
+            return useWalletCurrencyStore().formatValue(num)
         },
         
         averageTransaction() {
+            const { $currency } = useNuxtApp()
             if (!this.summary.transactionCount || this.summary.transactionCount === 0) {
-                return this.formatKpiCurrency(0)
+                if ($currency) return $currency(0)
+                return useWalletCurrencyStore().formatValue(0)
             }
             const avg = (this.transactionTotals.totalAmount / this.summary.transactionCount)
-            return this.formatKpiCurrency(avg)
+            if ($currency) return $currency(avg)
+            return useWalletCurrencyStore().formatValue(avg)
         },
         
         electricityTotal() {
