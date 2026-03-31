@@ -20,7 +20,7 @@ export const useWalletCurrencyStore = defineStore('walletCurrency', {
     ): string {
       const num = Number(value ?? 0)
       try {
-        const formatted = new Intl.NumberFormat('en-ZA', {
+        const formatted = new Intl.NumberFormat('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
           ...options,

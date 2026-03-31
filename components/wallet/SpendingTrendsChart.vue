@@ -162,8 +162,8 @@ export default {
                         shadeIntensity: 0.5,
                         gradientToColors: ['#fbbf24', '#60a5fa'],
                         inverseColors: false,
-                        opacityFrom: 0.3,
-                        opacityTo: 0.1,
+                        opacityFrom: 0.65,
+                        opacityTo: 0.25,
                         stops: [0, 100]
                     }
                 },
