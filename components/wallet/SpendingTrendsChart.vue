@@ -195,7 +195,7 @@ export default {
                 },
                 yaxis: {
                     labels: {
-                        formatter: (value) => `R${value.toFixed(0)}`,
+                        formatter: (value) => useWalletCurrencyStore().formatValue(value, { maximumFractionDigits: 0 }),
                         style: {
                             fontSize: '12px',
                             colors: '#6b7280'
@@ -231,7 +231,7 @@ export default {
                     y: {
                         formatter: (value, { seriesIndex }) => {
                             const seriesName = seriesIndex === 0 ? 'Electricity' : 'Water';
-                            return `R${value.toFixed(2)}`;
+                            return useWalletCurrencyStore().formatValue(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         }
                     },
                     style: {
