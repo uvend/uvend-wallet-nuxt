@@ -70,34 +70,54 @@
     </div>
     <div v-else class="p-4 space-y-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
           <Icon name="lucide:check-circle-2" class="w-5 h-5 text-green-700" />
         </div>
-        <div>
+        <div class="min-w-0">
           <p class="text-sm font-semibold text-green-800">Token purchase successful</p>
           <p class="text-xs text-green-700">Your token is ready to use and can be copied or shared.</p>
         </div>
       </div>
 
+      <div v-if="isKeyChangeOnNextVend" class="rounded-xl border border-amber-200 bg-amber-50 p-3">
+        <p class="text-xs font-semibold text-amber-800">Meter State</p>
+        <p class="text-sm font-medium text-amber-900">KEY CHANGE ON NEXT VEND</p>
+      </div>
+
       <div class="space-y-2">
-        <p class="text-xs text-gray-600 font-medium">Purchased Token</p>
-        <div
-          class="rounded-xl border border-gray-200 bg-white p-3 font-mono text-sm text-gray-900 break-words"
-        >
-          {{ purchasedTokenText }}
+        <p class="text-xs text-gray-600 font-medium">
+          {{ isKeyChangeOnNextVend ? 'Issued Tokens' : 'Purchased Token' }}
+        </p>
+        <div class="rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-900 break-words space-y-2">
+          <template v-if="displayTokens.length > 0">
+            <p
+              v-for="(token, index) in displayTokens"
+              :key="`${token.label}-${token.value}-${index}`"
+              class="font-mono"
+            >
+              <span class="font-semibold text-gray-700">{{ token.label }}:</span>
+              {{ token.value }}
+            </p>
+          </template>
+          <p v-else class="font-mono">{{ purchasedTokenText }}</p>
         </div>
       </div>
 
-      <div class="flex flex-col sm:flex-row gap-2">
-        <Button variant="outline" class="flex-1" @click="copyToken">
+      <div v-if="purchasedUnitsText" class="rounded-xl border border-blue-200 bg-blue-50 p-3">
+        <p class="text-xs font-semibold text-blue-800">Utility Amount</p>
+        <p class="text-sm font-medium text-blue-900">{{ purchasedUnitsText }}</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <Button variant="outline" class="w-full" @click="copyToken">
           <Icon name="lucide:copy" class="w-4 h-4 mr-2" />
           Copy Token
         </Button>
-        <Button variant="outline" class="flex-1" @click="shareToken">
+        <Button variant="outline" class="w-full" @click="shareToken">
           <Icon name="lucide:share-2" class="w-4 h-4 mr-2" />
           Share Token
         </Button>
-        <Button class="flex-1" @click="resetPurchase">
+        <Button class="w-full" @click="resetPurchase">
           Buy Another
         </Button>
       </div>
@@ -123,6 +143,42 @@ export default {
     }
   },
   methods: {
+    getDisplayTokens() {
+      const tokenTransactions = this.vendResponse?.listOfTokenTransactions?.[0]
+      const tokens = Array.isArray(tokenTransactions?.tokens) ? tokenTransactions.tokens : []
+      const tokenCount = Number(tokenTransactions?.tokenCount || tokens.length || 0)
+
+      if (!tokenCount) return []
+
+      if (tokenCount <= 1) {
+        const token = tokens[0] || {}
+        const tokenValue =
+          (Array.isArray(token.tokenKeys) && token.tokenKeys.length > 0 && token.tokenKeys.join(' ')) ||
+          token.delimitedTokenNumber ||
+          token.tokenNumber ||
+          ''
+        return tokenValue ? [{ label: 'Credit token', value: tokenValue }] : []
+      }
+
+      return tokens
+        .map((token, index) => {
+          const tokenValue =
+            (Array.isArray(token.tokenKeys) && token.tokenKeys.length > 0 && token.tokenKeys.join(' ')) ||
+            token.delimitedTokenNumber ||
+            token.tokenNumber ||
+            ''
+          if (!tokenValue) return null
+
+          let label = `${index + 1}thDecoderKey`
+          if (index === 0) label = '1stDecoderKey'
+          if (index === 1) label = '2ndDecoderKey'
+          if (index === tokens.length - 1) label = 'Credit token'
+
+          return { label, value: tokenValue }
+        })
+        .filter(Boolean)
+    },
+
     extractTokenText() {
       const text = []
       const tx = this.vendResponse?.listOfTokenTransactions || []
@@ -234,6 +290,29 @@ export default {
     },
   },
   computed: {
+    purchasedUnitsText() {
+      const tokenTransactions = this.vendResponse?.listOfTokenTransactions?.[0]
+      const tokens = Array.isArray(tokenTransactions?.tokens) ? tokenTransactions.tokens : []
+      if (tokens.length === 0) return ''
+
+      const tokenCount = Number(tokenTransactions?.tokenCount || tokens.length || 0)
+      const creditToken = tokenCount > 1 ? tokens[tokens.length - 1] : tokens[0]
+      if (!creditToken) return ''
+
+      const units = creditToken.units
+      if (units === null || units === undefined || units === '') return ''
+
+      const unitName = creditToken.unitName || 'units'
+      return `${units} ${unitName}`
+    },
+    displayTokens() {
+      return this.getDisplayTokens()
+    },
+    isKeyChangeOnNextVend() {
+      const tokenTransactions = this.vendResponse?.listOfTokenTransactions?.[0]
+      const tokenCount = Number(tokenTransactions?.tokenCount || tokenTransactions?.tokens?.length || 0)
+      return tokenCount > 1
+    },
     purchasedTokenText() {
       return this.extractTokenText() || 'No token available'
     }

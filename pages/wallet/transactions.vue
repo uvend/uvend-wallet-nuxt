@@ -523,8 +523,13 @@
                                             <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
                                                 {{ transaction.unitsIssued }} units
                                             </p>
-                                            <p v-if="transaction.delimitedTokenNumber" class="text-xs text-gray-500 font-mono mt-1">
-                                                {{ transaction.delimitedTokenNumber }}
+                                            <p
+                                                v-for="token in getDisplayTokens(transaction)"
+                                                :key="`${transaction.id}-${token.label}-${token.value}`"
+                                                class="text-xs text-gray-500 font-mono mt-1"
+                                            >
+                                                <span class="font-semibold text-gray-600">{{ token.label }}:</span>
+                                                {{ token.value }}
                                             </p>
                                         </td>
                                     </tr>
@@ -562,8 +567,13 @@
                                     <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
                                         {{ transaction.unitsIssued }} units
                                     </p>
-                                    <p v-if="transaction.delimitedTokenNumber" class="text-xs text-gray-500 font-mono mt-1">
-                                        {{ transaction.delimitedTokenNumber }}
+                                    <p
+                                        v-for="token in getDisplayTokens(transaction)"
+                                        :key="`${transaction.id}-mobile-${token.label}-${token.value}`"
+                                        class="text-xs text-gray-500 font-mono mt-1"
+                                    >
+                                        <span class="font-semibold text-gray-600">{{ token.label }}:</span>
+                                        {{ token.value }}
                                     </p>
                                 </div>
                                 <Icon 
@@ -732,11 +742,20 @@ definePageMeta({
                             vendResponse = null
                         }
                     }
-                    const tokenTransaction = vendResponse?.listOfTokenTransactions?.[0]?.tokens?.[0]
-                    const unitsIssued = tokenTransaction?.units || ""
-                    const delimitedTokenNumber = tokenTransaction?.delimitedTokenNumber || ""
+                    const tokenTransactions = vendResponse?.listOfTokenTransactions?.[0]?.tokens || []
+                    const tokenCount = Number(vendResponse?.listOfTokenTransactions?.[0]?.tokenCount || tokenTransactions.length || 0)
+                    const creditTokenIndex = tokenCount > 1 ? tokenTransactions.length - 1 : 0
+                    const creditToken = tokenTransactions[creditTokenIndex] || tokenTransactions[0] || null
+                    const unitsIssued = creditToken?.units || ""
+                    const delimitedTokenNumber = creditToken?.delimitedTokenNumber || creditToken?.tokenNumber || ""
+                    const tokenDetails = tokenTransactions.map(token => ({
+                        delimitedTokenNumber: token?.delimitedTokenNumber || token?.tokenNumber || "",
+                        tokenNumber: token?.tokenNumber || ""
+                    }))
                     return {
                         ...transaction,
+                        tokenCount,
+                        tokenDetails,
                         unitsIssued,
                         delimitedTokenNumber
                     }
@@ -877,6 +896,33 @@ definePageMeta({
             } else {
                 this.expandedRows.push(transactionId)
             }
+        },
+
+        getDisplayTokens(transaction) {
+            const tokenDetails = Array.isArray(transaction?.tokenDetails) ? transaction.tokenDetails : []
+            const fallbackToken = transaction?.delimitedTokenNumber || ''
+            const tokenCount = Number(transaction?.tokenCount || tokenDetails.length || (fallbackToken ? 1 : 0))
+
+            if (!tokenCount) return []
+
+            if (tokenCount <= 1) {
+                const singleToken = tokenDetails[0]?.delimitedTokenNumber || tokenDetails[0]?.tokenNumber || fallbackToken
+                return singleToken ? [{ label: 'Credit token', value: singleToken }] : []
+            }
+
+            return tokenDetails
+                .map((token, index) => {
+                    const tokenValue = token?.delimitedTokenNumber || token?.tokenNumber || ''
+                    if (!tokenValue) return null
+
+                    let label = `${index + 1}thDecoderKey`
+                    if (index === 0) label = '1stDecoderKey'
+                    if (index === 1) label = '2ndDecoderKey'
+                    if (index === tokenDetails.length - 1) label = 'Credit token'
+
+                    return { label, value: tokenValue }
+                })
+                .filter(Boolean)
         },
         
 
