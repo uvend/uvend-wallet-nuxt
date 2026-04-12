@@ -56,6 +56,8 @@ export default defineNuxtConfig({
     // Public keys that are exposed to the client (runtime-configurable)
     public: {
       walletApiUrl: process.env.NUXT_PUBLIC_WALLET_API_URL || process.env.WALLET_API_URL || '',
+      uatvendEmail: process.env.UVEND2_EMAIL || '',
+      uatvendPassword: process.env.UVEND2_PASSWORD || '',
       clientId: process.env.NUXT_PUBLIC_CLIENT_ID || process.env.CLIENT_ID || '',
       clientSecret: process.env.NUXT_PUBLIC_CLIENT_SECRET || process.env.CLIENT_SECRET || '',
       uatvendApiUrl: process.env.UVEND2_API || 'https://api-uatvend.co.za',

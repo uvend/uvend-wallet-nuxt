@@ -13,6 +13,9 @@ type UatvendAuthResponse = {
 
 const ACCESS_TOKEN_KEY = 'uatvend-access-token'
 const REFRESH_TOKEN_KEY = 'uatvend-refresh-token'
+const config = useRuntimeConfig()
+const uatvendEmail = config.public.uatvendEmail
+const uatvendPassword = config.public.uatvendPassword
 
 export function getUatvendAccessToken(): string | null {
   if (typeof window === 'undefined') return null
@@ -165,7 +168,7 @@ export default async function useUatvendAuthFetch<T>(
   const body = options.body
 
   try {
-    return await $fetch<T>(`/api/uatvend${url}`, {
+    return await $fetch<T>(`${url}`, {
       method,
       headers,
       credentials: 'include',
@@ -185,12 +188,12 @@ export default async function useUatvendAuthFetch<T>(
   }
 }
 
-export async function uatvendSignIn(email: string, password: string): Promise<UatvendAuthResponse> {
+export async function uatvendSignIn(): Promise<UatvendAuthResponse> {
   const config = useRuntimeConfig()
   const baseUrl = String((config.public as any)?.uatvendApiUrl || 'https://api.uatvend.co.za').replace(/\/+$/, '')
   const res = await $fetch<UatvendAuthResponse>(`${baseUrl}/auth/sign-in`, {
     method: 'POST',
-    body: { email, password },
+    body: { email: uatvendEmail, password: uatvendPassword },
   })
 
   const payload: any = (res as any)?.data || res
@@ -205,7 +208,7 @@ export async function uatvendSignIn(email: string, password: string): Promise<Ua
   return res
 }
 
-export async function uatvendSignUp(email: string, password: string): Promise<UatvendAuthResponse> {
+export async function uatvendSignUp(): Promise<UatvendAuthResponse> {
   const config = useRuntimeConfig()
   const baseUrl = String((config.public as any)?.uatvendApiUrl || 'https://api.uatvend.co.za').replace(/\/+$/, '')
   const endpoints = ['/auth/sign-up', '/sign-up']
@@ -215,7 +218,7 @@ export async function uatvendSignUp(email: string, password: string): Promise<Ua
     try {
       const res = await $fetch<UatvendAuthResponse>(`${baseUrl}${endpoint}`, {
         method: 'POST',
-        body: { email, password },
+        body: { email: uatvendEmail, password: uatvendPassword },
       })
 
       const payload: any = (res as any)?.data || res
