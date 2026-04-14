@@ -448,6 +448,7 @@
                                         <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[90px]">Battery</th>
                                         <th class="text-center py-3 px-2 text-xs font-semibold text-gray-700 w-[90px]">State</th>
                                         <th class="text-right py-3 px-2 text-xs font-semibold text-gray-700 w-[110px]">Amount</th>
+                                        <th class="text-center py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Receipt</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
@@ -526,6 +527,21 @@
                                             <p v-if="transaction.delimitedTokenNumber" class="text-xs text-gray-500 font-mono mt-1">
                                                 {{ transaction.delimitedTokenNumber }}
                                             </p>
+                                        </td>
+                                        <td class="py-3 px-2 text-center whitespace-nowrap">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                class="text-xs"
+                                                @click="downloadReceipt(transaction.id)"
+                                                :disabled="downloadingReceiptId === transaction.id"
+                                            >
+                                                <Icon
+                                                    :name="downloadingReceiptId === transaction.id ? 'lucide:loader-2' : 'lucide:download'"
+                                                    :class="downloadingReceiptId === transaction.id ? 'w-3 h-3 mr-1 animate-spin' : 'w-3 h-3 mr-1'"
+                                                />
+                                                {{ downloadingReceiptId === transaction.id ? 'Downloading...' : 'Download' }}
+                                            </Button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -629,6 +645,21 @@
                                 <span class="text-xs text-gray-600">Time</span>
                                 <span class="text-xs font-medium text-gray-900">{{ formatTime(transaction.created) }}</span>
                             </div>
+                            <div class="pt-1">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    class="w-full text-xs"
+                                    @click="downloadReceipt(transaction.id)"
+                                    :disabled="downloadingReceiptId === transaction.id"
+                                >
+                                    <Icon
+                                        :name="downloadingReceiptId === transaction.id ? 'lucide:loader-2' : 'lucide:download'"
+                                        :class="downloadingReceiptId === transaction.id ? 'w-3 h-3 mr-1 animate-spin' : 'w-3 h-3 mr-1'"
+                                    />
+                                    {{ downloadingReceiptId === transaction.id ? 'Downloading receipt...' : 'Download Receipt' }}
+                                </Button>
+                            </div>
                             
                             <div v-if="transaction.token" class="pt-2 border-t border-gray-200">
                                 <span class="text-xs text-gray-600">Token</span>
@@ -687,6 +718,7 @@ definePageMeta({
             metersLoading: false,
             showPurchaseDialog: false,
             selectedMeterForPurchase: null,
+            downloadingReceiptId: null,
             deletingMeterNumber: null,
             editingMeterNumber: null,
             showMeterActionsDialog: false,
@@ -876,6 +908,58 @@ definePageMeta({
                 this.expandedRows.splice(index, 1)
             } else {
                 this.expandedRows.push(transactionId)
+            }
+        },
+        async downloadReceipt(transactionId) {
+            if (!transactionId) return
+            this.downloadingReceiptId = transactionId
+            try {
+                const response = await useWalletAuthFetch('/meter/token/receipt', {
+                    params: { transactionId }
+                })
+
+                // Accept common API shapes: direct URL or nested URL field
+                const receiptUrl =
+                    (typeof response === 'string' && response) ||
+                    response?.url ||
+                    response?.receiptUrl ||
+                    response?.downloadUrl ||
+                    response?.data?.url ||
+                    response?.data?.receiptUrl ||
+                    null
+
+                if (receiptUrl) {
+                    window.open(receiptUrl, '_blank', 'noopener,noreferrer')
+                    return
+                }
+
+                // Fallback: if endpoint returns binary/blob
+                if (response instanceof Blob) {
+                    const objectUrl = URL.createObjectURL(response)
+                    const anchor = document.createElement('a')
+                    anchor.href = objectUrl
+                    anchor.download = `receipt-${transactionId}.pdf`
+                    document.body.appendChild(anchor)
+                    anchor.click()
+                    document.body.removeChild(anchor)
+                    URL.revokeObjectURL(objectUrl)
+                    return
+                }
+
+                this.$toast({
+                    title: 'Receipt unavailable',
+                    description: 'Could not find a downloadable receipt for this transaction.',
+                    variant: 'destructive'
+                })
+            } catch (error) {
+                console.error('Error downloading receipt:', error)
+                this.$toast({
+                    title: 'Error',
+                    description: 'Failed to download receipt',
+                    variant: 'destructive'
+                })
+            } finally {
+                this.downloadingReceiptId = null
             }
         },
         

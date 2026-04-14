@@ -66,6 +66,20 @@
                     <span class="text-xs text-blue-200">Manage</span>
                 </div>
             </NuxtLink>
+            <!-- Profile -->
+            <NuxtLink 
+                class="menu-item group flex items-center justify-start px-4 py-3 rounded-xl text-white hover:bg-white/10 hover:shadow-lg font-medium transition-all duration-200" 
+                to="/profile"
+                @click="isMobile && toggleNav()"
+            >
+                <div class="flex items-center justify-center w-8 h-8 bg-white/10 rounded-lg group-hover:bg-white/20 transition-colors">
+                    <Icon name="lucide:user" class="h-5 w-5"/>
+                </div>
+                <div class="flex flex-col ml-3">
+                    <span class="text-sm font-medium">Profile</span>
+                    <span class="text-xs text-blue-200">Account</span>
+                </div>
+            </NuxtLink>
 
         </nav>
         <!-- Footer links -->
@@ -142,6 +156,11 @@
                 <Icon name="lucide:wallet" class="h-5 w-5"/>
                 <span>Payments</span>
             </NuxtLink>
+            <NuxtLink to="/profile" :class="['flex flex-col items-center justify-center text-xs font-medium w-full relative', isActive('/profile') ? 'text-blue-700' : 'text-gray-700']" @click="toggleNav">
+                <span v-if="isActive('/profile')" class="absolute top-0 inset-x-6 h-0.5 bg-blue-600 rounded-full"></span>
+                <Icon name="lucide:user" class="h-5 w-5"/>
+                <span>Profile</span>
+            </NuxtLink>
 
             <!-- <NuxtLink to="/settings" :class="['flex flex-col items-center justify-center text-xs font-medium w-full relative', isActive('/settings') ? 'text-blue-700' : 'text-gray-700']" @click="toggleNav">
                 <span v-if="isActive('/settings')" class="absolute top-0 inset-x-6 h-0.5 bg-blue-600 rounded-full"></span>
@@ -207,6 +226,9 @@ export default{
 			}
 			if(route === '/payments'){
 				return "Wallet's best friend 💳"
+			}
+			if(route === '/profile'){
+				return "Keep your account up to date 👤"
 			}
 			if(route === '/settings'){
 				return "Get personal ⚙️"
