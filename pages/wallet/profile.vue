@@ -91,7 +91,8 @@
           <Label class="text-xs font-semibold text-gray-800">VAT Number</Label>
           <Input
             v-model="profile.vat_registration_number"
-            placeholder="Enter VAT registration number"
+            :placeholder="isAddressComplete ? 'Enter VAT registration number' : 'Fill in all address fields first'"
+            :disabled="!isAddressComplete"
             class="bg-white border-2 border-gray-300 h-11 focus-visible:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-200"
           />
         </div>
@@ -200,6 +201,14 @@ export default {
         postal_code: ''
       }
     }
+  },
+  computed: {
+    isAddressComplete() {
+      return ['country', 'city', 'address', 'postal_code'].every((field) => {
+        const value = this.profile[field]
+        return typeof value === 'string' && value.trim().length > 0
+      })
+    },
   },
   methods: {
     buildUpdatePayload() {
