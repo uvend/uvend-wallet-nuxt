@@ -163,7 +163,7 @@
                                 v-if="paymentMethods.paygate"
                                 class="w-full py-4 text-lg font-semibold font-scandia bg-gray-300 text-gray-500 shadow-none cursor-not-allowed transition-all duration-300" 
                                 @click="addFunds" 
-                                :disabled="true"
+                                :disabled="amount < 30"
                             >
                                 <span class="font-scandia">paygate</span>
                             </Button>
