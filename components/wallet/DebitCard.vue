@@ -38,11 +38,11 @@
                     <p v-else class="text-sm tracking-widest font-bold">{{ maskedAccount }}</p>
                 </div>
                 <div class="flex flex-col items-end gap-1">
-                    <!-- Loading state - skeleton only while wallet is loading -->
-                    <Skeleton v-if="isWalletLoading" class="h-9 w-28 rounded-xl bg-white/30" />
-                    <!-- Top up button - shown when meters exist -->
+                    <!-- Loading state while wallet or meters are still resolving -->
+                    <Skeleton v-if="isWalletLoading || metersLoading" class="h-9 w-28 rounded-xl bg-white/30" />
+                    <!-- Top up button - shown only when valid meters exist -->
                     <button 
-                        v-else-if="hasMeters || metersLoading"
+                        v-else-if="hasMeters"
                         class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg"
                         @click="handleTopUp"
                         title="Top up your wallet"
