@@ -153,7 +153,7 @@
                         <div v-else class="grid grid-cols-3 gap-2">
                             <Button 
                                 v-if="paymentMethods.payat"
-                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:cursor-not-allowed" 
                                 @click="addPayAtFunds" 
                                 :disabled="amount < 30"
                             >
@@ -161,7 +161,7 @@
                             </Button>
                             <Button 
                                 v-if="paymentMethods.paygate"
-                                class="w-full py-4 text-lg font-semibold font-scandia bg-gray-300 text-gray-500 shadow-none cursor-not-allowed transition-all duration-300" 
+                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:cursor-not-allowed" 
                                 @click="addFunds" 
                                 :disabled="amount < 30"
                             >
