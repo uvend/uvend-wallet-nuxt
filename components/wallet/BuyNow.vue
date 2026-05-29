@@ -51,7 +51,7 @@
 
         <Button
           class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
-          @click="creditToken(false)"
+          @click="requestPurchase"
           :disabled="vending || !value || amount <= 0"
         >
           <Icon name="lucide:shopping-cart" class="w-4 h-4 mr-2" />
@@ -122,6 +122,47 @@
         </Button>
       </div>
     </div>
+
+    <AlertDialog v-model:open="showPurchaseConfirm">
+      <AlertDialogContent class="max-w-md">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Confirm token purchase</AlertDialogTitle>
+          <AlertDialogDescription>
+            Please review your purchase details before continuing. The amount shown below will be deducted from your wallet balance.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3 text-sm">
+          <div class="flex items-start justify-between gap-4">
+            <span class="text-gray-500">Amount</span>
+            <span class="font-semibold text-gray-900 text-right">{{ confirmationAmount }}</span>
+          </div>
+          <div class="flex items-start justify-between gap-4">
+            <span class="text-gray-500">Utility type</span>
+            <span class="font-semibold text-gray-900 text-right capitalize">{{ confirmationUtilityType }}</span>
+          </div>
+          <div class="flex items-start justify-between gap-4">
+            <span class="text-gray-500">Meter</span>
+            <span class="font-semibold text-gray-900 text-right">{{ confirmationMeterLabel }}</span>
+          </div>
+        </div>
+
+        <p class="text-sm text-gray-600">
+          Are you sure you want to purchase this amount of {{ confirmationUtilityType }} utility credit?
+        </p>
+
+        <AlertDialogFooter class="gap-2 sm:gap-0">
+          <AlertDialogCancel :disabled="vending">Cancel</AlertDialogCancel>
+          <Button
+            class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+            :disabled="vending"
+            @click="confirmPurchase"
+          >
+            Yes, I do
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 <script>
@@ -139,10 +180,19 @@ export default {
       value: null,
       amount: 30,
       vendResponse: null,
-      vending: false
+      vending: false,
+      showPurchaseConfirm: false
     }
   },
   methods: {
+    requestPurchase() {
+      if (!this.value || this.amount <= 0 || this.vending) return
+      this.showPurchaseConfirm = true
+    },
+    async confirmPurchase() {
+      this.showPurchaseConfirm = false
+      await this.creditToken(false)
+    },
     getDisplayTokens() {
       const tokenTransactions = this.vendResponse?.listOfTokenTransactions?.[0]
       const tokens = Array.isArray(tokenTransactions?.tokens) ? tokenTransactions.tokens : []
@@ -290,6 +340,20 @@ export default {
     },
   },
   computed: {
+    confirmationAmount() {
+      const { $currency } = useNuxtApp()
+      if ($currency) return $currency(this.amount)
+      return String(this.amount)
+    },
+    confirmationUtilityType() {
+      return this.value?.utilityType || 'utility'
+    },
+    confirmationMeterLabel() {
+      if (!this.value) return ''
+      const name = this.value.name || 'Meter'
+      const number = this.value.meterNumber
+      return number ? `${name} (${number})` : name
+    },
     purchasedUnitsText() {
       const tokenTransactions = this.vendResponse?.listOfTokenTransactions?.[0]
       const tokens = Array.isArray(tokenTransactions?.tokens) ? tokenTransactions.tokens : []
