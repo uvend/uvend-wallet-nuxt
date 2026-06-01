@@ -58,26 +58,29 @@ export default{
     methods:{
         async validateMeterNumber(){
             this.isLoading = true
-            const response = await useWalletAuthFetch(`/meter/valid`,{
-              params: { meterNumber: this.meterNumber.trim() }
-            })
-            const status = response?.response?.status
-            if(!response){
-              this.isValid = true;
-              this.shouldRestore = false;
-            }else if (status === 403 || status === 409) {
-              this.isValid = true;
-              this.shouldRestore = true;
-            }else{
-              this.isValid = false;
-              this.shouldRestore = false;
-              this.$toast({
-                title: 'Uh oh! Something went wrong.',
-                description: 'There was a problem with your request.',
-                variant: "destructive"
+            try {
+              await useWalletAuthFetch(`/meter/valid`,{
+                params: { meterNumber: this.meterNumber.trim() }
               })
+              this.isValid = true;
+              this.shouldRestore = false;
+            } catch (error) {
+              const status = error?.response?.status
+              if (status === 403 || status === 409) {
+                this.isValid = true;
+                this.shouldRestore = true;
+              } else {
+                this.isValid = false;
+                this.shouldRestore = false;
+                this.$toast({
+                  title: 'Uh oh! Something went wrong.',
+                  description: 'There was a problem with your request.',
+                  variant: "destructive"
+                })
+              }
+            } finally {
+              this.isLoading = false
             }
-            this.isLoading = false
         },
         async addNewMeter(){
           this.isLoading = true
