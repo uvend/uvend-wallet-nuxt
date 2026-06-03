@@ -38,11 +38,11 @@
                     <p v-else class="text-sm tracking-widest font-bold">{{ maskedAccount }}</p>
                 </div>
                 <div class="flex flex-col items-end gap-1">
-                    <!-- Loading state - skeleton only while wallet is loading -->
-                    <Skeleton v-if="isWalletLoading" class="h-9 w-28 rounded-xl bg-white/30" />
-                    <!-- Top up button - shown when meters exist -->
+                    <!-- Loading state while wallet or meters are still resolving -->
+                    <Skeleton v-if="isWalletLoading || metersLoading" class="h-9 w-28 rounded-xl bg-white/30" />
+                    <!-- Top up button - shown only when valid meters exist -->
                     <button 
-                        v-else-if="hasMeters || metersLoading"
+                        v-else-if="hasMeters"
                         class="group/btn relative overflow-hidden inline-flex items-center justify-center rounded-xl bg-white/95 text-blue-700 hover:bg-white transition-all duration-300 px-4 py-2 sm:px-6 sm:py-3 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg"
                         @click="handleTopUp"
                         title="Top up your wallet"
@@ -77,6 +77,12 @@
             :hasButton="false"
         >
             <div class="flex flex-col gap-6 overflow-y-auto hide-scrollbar">
+                <div
+                    v-if="paymentInitiationError && currentTab !== 'paygate'"
+                    class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                    {{ paymentInitiationError }}
+                </div>
                 <!-- PayGate iframe for payment processing -->
                 <div v-if="currentTab === 'paygate'" class="space-y-4">
                     <div class="text-center">
@@ -153,7 +159,7 @@
                         <div v-else class="grid grid-cols-3 gap-2">
                             <Button 
                                 v-if="paymentMethods.payat"
-                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:cursor-not-allowed" 
                                 @click="addPayAtFunds" 
                                 :disabled="amount < 30"
                             >
@@ -161,7 +167,7 @@
                             </Button>
                             <Button 
                                 v-if="paymentMethods.paygate"
-                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300" 
+                                class="w-full py-4 text-lg font-semibold font-scandia bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:bg-gray-300 disabled:text-gray-500 disabled:shadow-none disabled:cursor-not-allowed" 
                                 @click="addFunds" 
                                 :disabled="amount < 30"
                             >
@@ -276,6 +282,7 @@ export default {
             actualBalance: 0,
             accountNumber:null,
             isWalletLoading: true,
+            paymentInitiationError: '',
             paymentMethods: {
                 payat: true,
                 paygate: true,
@@ -311,10 +318,49 @@ export default {
         openMpesa(){
             this.currentTab = 'mpesa';
         },
+        getBackendErrorMessage(error, fallback = 'Unable to start payment, please try again') {
+            const responseData = error?.response?._data || error?.data || error?.response?.data;
+            const message = responseData?.message || responseData?.error || error?.message;
+            return typeof message === 'string' && message.trim() ? message.trim() : fallback;
+        },
+        handlePaymentInitiationFailure(message, context, error = null, fallbackTab = 'payment') {
+            const fallbackMessage = 'Unable to start payment, please try again';
+            const resolvedMessage = typeof message === 'string' && message.trim() ? message.trim() : fallbackMessage;
+
+            this.paymentInitiationError = resolvedMessage;
+            this.payRequestId = null;
+            this.checksum = null;
+            this.currentTab = fallbackTab;
+
+            console.error(context, error || resolvedMessage);
+            this.$toast?.({
+                title: 'Payment could not start',
+                description: resolvedMessage,
+                variant: 'destructive'
+            });
+        },
+        startPaygatePayment(response, context, fallbackTab = 'payment') {
+            const payRequestId = response?.PAY_REQUEST_ID;
+            const checksum = response?.CHECKSUM;
+            const paygateId = response?.PAYGATE_ID;
+
+            if (!paygateId || !payRequestId || !checksum) {
+                const message = response?.message || response?.error || 'Unable to start payment, please try again';
+                this.handlePaymentInitiationFailure(message, context, response, fallbackTab);
+                return false;
+            }
+
+            this.paymentInitiationError = '';
+            this.payRequestId = payRequestId;
+            this.checksum = checksum;
+            this.currentTab = 'paygate';
+            return true;
+        },
         handleTopUp(){
             this.showTopUpDialog = true;
             this.currentTab = 'payment';
             this.amount = 0.00;
+            this.paymentInitiationError = '';
             this.getCards();
             this.fetchPaymentMethods();
         },
@@ -322,13 +368,20 @@ export default {
             this.$router.push('/transactions');
         },
         async addCard(){
+            this.isLoading = true;
+            this.paymentInitiationError = '';
             try {
                 const response = await useWalletAuthFetch(`/pay/addCard`)
-                this.payRequestId = response.PAY_REQUEST_ID
-                this.checksum = response.CHECKSUM
-                this.currentTab = 'paygate'
+                this.startPaygatePayment(response, 'PayGate add-card initiation failed', 'cards')
             } catch(error) {
-                console.error('Error adding card:', error)
+                this.handlePaymentInitiationFailure(
+                    this.getBackendErrorMessage(error),
+                    'Error adding card',
+                    error,
+                    'cards'
+                )
+            } finally {
+                this.isLoading = false;
             }
         },
         async getCards(primary = false){
@@ -355,7 +408,11 @@ export default {
         },
         async addFunds(){
             this.isLoading = true;
-            if(!this.selectedCard && this.amount < 1) return;
+            this.paymentInitiationError = '';
+            if(!this.selectedCard && this.amount < 1) {
+                this.isLoading = false;
+                return;
+            }
             try{
                 let url = `/pay/addFunds`;
                 if(this.selectedCard){
@@ -367,12 +424,14 @@ export default {
                         amount: this.amount
                     }
                 })
-                console.log(response)
-                this.payRequestId = response.PAY_REQUEST_ID
-                this.checksum = response.CHECKSUM
-                this.currentTab = "paygate"
+                this.startPaygatePayment(response, 'PayGate add-funds initiation failed', 'payment')
             }catch(error){
-                console.error('Error adding funds:', error)
+                this.handlePaymentInitiationFailure(
+                    this.getBackendErrorMessage(error),
+                    'Error adding funds',
+                    error,
+                    'payment'
+                )
             } finally {
                 this.isLoading = false;
             }
@@ -433,6 +492,7 @@ export default {
             this.amount = 0.00
             this.currentTab = 'payment'
             this.showTopUpDialog = false
+            this.paymentInitiationError = ''
             // Refresh the balance after successful payment
             this.getWalletBalance()
         }
