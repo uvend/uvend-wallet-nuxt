@@ -10,4 +10,5 @@ services:
       - .env
     environment:
       - NUXT_PUBLIC_USE_APP_LOGO=${NUXT_PUBLIC_USE_APP_LOGO:-false}
+      - NUXT_PUBLIC_BRAND_NAME=${NUXT_PUBLIC_BRAND_NAME:-}
     restart: unless-stopped

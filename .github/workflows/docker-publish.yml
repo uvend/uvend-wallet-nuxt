@@ -46,3 +46,4 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             NUXT_PUBLIC_USE_APP_LOGO=${{ vars.NUXT_PUBLIC_USE_APP_LOGO || 'false' }}
+            NUXT_PUBLIC_BRAND_NAME=${{ vars.NUXT_PUBLIC_BRAND_NAME || '' }}

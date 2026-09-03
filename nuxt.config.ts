@@ -119,6 +119,12 @@ vitePWA: {
       useAppLogo: String(
         process.env.NUXT_PUBLIC_USE_APP_LOGO || process.env.USE_APP_LOGO || ''
       ).trim().toLowerCase() === 'true',
+      /** Card / product brand label. Override with NUXT_PUBLIC_BRAND_NAME. */
+      brandName: (
+        process.env.NUXT_PUBLIC_BRAND_NAME ||
+        process.env.BRAND_NAME ||
+        'Uvend Prepaid Utilities'
+      ).trim() || 'Uvend Prepaid Utilities',
     }
     
   },

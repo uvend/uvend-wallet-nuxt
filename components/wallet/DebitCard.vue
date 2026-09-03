@@ -12,7 +12,7 @@
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-white/90 shadow-sm"></div>
-                    <p class="text-base font-bold tracking-wide">Uvend Prepaid Utilities</p>
+                    <p class="text-base font-bold tracking-wide">{{ brandName }}</p>
                 </div>
                 <div class="h-8 w-12 rounded-lg bg-gradient-to-br from-yellow-300 to-amber-500 shadow-inner flex items-center justify-center">
                     <div class="w-6 h-4 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-md shadow-inner"></div>
@@ -291,6 +291,11 @@ export default {
         }
     },
     computed: {
+        brandName() {
+            const config = useRuntimeConfig()
+            const name = String(config.public.brandName || '').trim()
+            return name || 'Uvend Prepaid Utilities'
+        },
         cardBackground(){
             return `linear-gradient(135deg, ${this.bgPrimary} 0%, ${this.bgSecondary} 70%)`;
         },
