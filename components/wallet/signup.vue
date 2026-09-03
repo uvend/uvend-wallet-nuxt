@@ -1,56 +1,41 @@
 <template>
     <Card class="w-[450px] max-w-[90vw] bg-white/95 backdrop-blur-sm border-0 shadow-2xl overflow-hidden">
         <!-- Header with gradient background -->
-        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 p-6 text-white relative overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 px-4 py-3 text-white relative overflow-hidden">
             <!-- Decorative elements -->
             <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
             <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
             
             <div class="relative z-10">
-                <!-- UVend Logo -->
-                <div class="flex items-center gap-3 mb-6">
-                    <h1 class="text-white font-bold text-2xl leading-tight tracking-wide" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                        U-Vend
-                    </h1>
-                    <div class="text-orange-400 font-semibold text-xs leading-tight tracking-wider">
-                        <div>PREPAID</div>
-                        <div>UTILITIES</div>
-                        <div>MANAGEMENT</div>
-                    </div>
-                </div>
-                
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <Icon name="lucide:user-plus" class="h-5 w-5 text-white"/>
-                    </div>
-                    <div>
-                        <h1 class="text-2xl font-bold">Create Account</h1>
-                        <p class="text-sm text-white/90">Join us today</p>
-                    </div>
-                </div>
+                <WalletAuthLogo />
             </div>
         </div>
         
         <!-- Content area -->
-        <CardContent class="p-6 space-y-4">
-            <div class="space-y-2">
+        <CardContent class="p-4 space-y-3">
+            <div class="text-center">
+                <h1 class="text-xl font-bold text-gray-900">Create Account</h1>
+                <p class="text-sm text-gray-500">Join us today</p>
+            </div>
+
+            <div class="space-y-1.5">
                 <Label class="text-sm font-semibold text-gray-700">Email Address</Label>
                 <Input 
                     type="email" 
                     v-model="email"
                     placeholder="you@example.com"
-                    class="h-11"
+                    class="h-10"
                 />
             </div>
             
-            <div class="space-y-2">
+            <div class="space-y-1.5">
                 <Label class="text-sm font-semibold text-gray-700">Password</Label>
                 <div class="relative">
                     <Input 
                         :type="showPassword ? 'text' : 'password'" 
                         v-model="password"
                         placeholder="••••••••"
-                        class="h-11 pr-10"
+                        class="h-10 pr-10"
                     />
                     <button
                         type="button"
@@ -66,9 +51,9 @@
             </div>
         </CardContent>
         
-        <CardFooter class="p-6 pt-0 flex flex-col gap-3">
+        <CardFooter class="p-4 pt-0 flex flex-col gap-2">
             <Button 
-                class="w-full h-11 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200" 
+                class="w-full h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg shadow-blue-500/30 transition-all duration-200" 
                 @click="debounceSignUp"
                 :disabled="isLoading"
             >
@@ -77,7 +62,7 @@
                 {{ isLoading ? 'Creating account...' : 'Create Account' }}
             </Button>
             
-            <div class="relative my-2">
+            <div class="relative my-1">
                 <div class="absolute inset-0 flex items-center">
                     <span class="w-full border-t border-gray-200"></span>
                 </div>
@@ -87,7 +72,7 @@
             </div>
             
             <Button 
-                class="w-full h-11" 
+                class="w-full h-10" 
                 variant="ghost" 
                 @click="$emit('changeState')"
             >
