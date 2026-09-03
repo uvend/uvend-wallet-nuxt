@@ -112,7 +112,13 @@ vitePWA: {
       walletApiUrl: process.env.NUXT_PUBLIC_WALLET_API_URL || '',
       /** ISO 4217 code (e.g. ZAR, KES). Used until /account/currency succeeds. */
       walletCurrencyCode: process.env.NUXT_PUBLIC_WALLET_CURRENCY_CODE || 'ZAR',
-      useAppLogo: String(process.env.USE_APP_LOGO || '').trim().toLowerCase() === 'true',
+      /**
+       * Override at runtime with NUXT_PUBLIC_USE_APP_LOGO=true
+       * (USE_APP_LOGO is supported as a build-time fallback).
+       */
+      useAppLogo: String(
+        process.env.NUXT_PUBLIC_USE_APP_LOGO || process.env.USE_APP_LOGO || ''
+      ).trim().toLowerCase() === 'true',
     }
     
   },

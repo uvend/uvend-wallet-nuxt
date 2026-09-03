@@ -5,8 +5,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NUXT_PUBLIC_USE_APP_LOGO: ${NUXT_PUBLIC_USE_APP_LOGO:-false}
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     env_file:
       - .env
+    environment:
+      - NUXT_PUBLIC_USE_APP_LOGO=${NUXT_PUBLIC_USE_APP_LOGO:-false}
     restart: unless-stopped

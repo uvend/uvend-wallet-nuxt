@@ -44,3 +44,5 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NUXT_PUBLIC_USE_APP_LOGO=${{ vars.NUXT_PUBLIC_USE_APP_LOGO || 'false' }}
