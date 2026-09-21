@@ -343,9 +343,97 @@
 
     <!-- Transactions Table -->
     <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden ">
-        <CardHeader>
-            <CardTitle class="text-lg font-semibold text-gray-800">Transaction History</CardTitle>
-            <CardDescription class="text-sm">{{ summary.transactionCount }} transactions found</CardDescription>
+        <CardHeader class="space-y-4">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex flex-col gap-1 min-w-0">
+                    <CardTitle class="text-lg font-semibold text-gray-800">Transaction History</CardTitle>
+                    <CardDescription class="text-sm">
+                        {{ summary.transactionCount }} transaction{{ summary.transactionCount === 1 ? '' : 's' }} found
+                        <span v-if="dateRangeLabel" class="text-gray-400"> · {{ dateRangeLabel }}</span>
+                    </CardDescription>
+                </div>
+                <!-- Mobile: open filter drawer -->
+                <Button
+                    variant="outline"
+                    size="sm"
+                    class="md:hidden shrink-0 h-9 gap-1.5"
+                    @click="openFilterDrawer"
+                >
+                    <Icon name="lucide:sliders-horizontal" class="w-4 h-4" />
+                    Filters
+                    <span
+                        v-if="activeFilterCount > 0"
+                        class="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-semibold"
+                    >
+                        {{ activeFilterCount }}
+                    </span>
+                </Button>
+            </div>
+
+            <!-- Desktop filters -->
+            <div class="hidden md:flex flex-row items-end gap-3 flex-wrap">
+                <div class="flex flex-col gap-1.5 min-w-[160px]">
+                    <label class="text-xs font-medium text-gray-700">Date range</label>
+                    <Select v-model="dateRangePreset" @update:modelValue="onDateRangePresetChange">
+                        <SelectTrigger class="w-44 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm">
+                            <SelectValue placeholder="Select range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All time</SelectItem>
+                            <SelectItem value="7days">Last 7 days</SelectItem>
+                            <SelectItem value="30days">Last 30 days</SelectItem>
+                            <SelectItem value="90days">Last 90 days</SelectItem>
+                            <SelectItem value="custom">Custom range</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <template v-if="dateRangePreset === 'custom'">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-medium text-gray-700">From</label>
+                        <Input
+                            type="date"
+                            v-model="customStartDate"
+                            class="w-40 bg-white/80 border-gray-200 shadow-sm h-9"
+                            @change="onCustomDateChange"
+                        />
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-medium text-gray-700">To</label>
+                        <Input
+                            type="date"
+                            v-model="customEndDate"
+                            class="w-40 bg-white/80 border-gray-200 shadow-sm h-9"
+                            :min="customStartDate || undefined"
+                            @change="onCustomDateChange"
+                        />
+                    </div>
+                </template>
+                <div class="flex flex-col gap-1.5 min-w-[150px]">
+                    <label class="text-xs font-medium text-gray-700">Sort by date</label>
+                    <Select v-model="sortOrder" @update:modelValue="onSortChange">
+                        <SelectTrigger class="w-44 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm">
+                            <SelectValue placeholder="Sort" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="desc">Newest first</SelectItem>
+                            <SelectItem value="asc">Oldest first</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div class="flex flex-col gap-1.5 min-w-[120px]">
+                    <label class="text-xs font-medium text-gray-700">Per page</label>
+                    <Select v-model="pageSize" @update:modelValue="onPageSizeChange">
+                        <SelectTrigger class="w-28 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm">
+                            <SelectValue placeholder="Page size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="20">20</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         </CardHeader>
         <CardContent class="p-0">
             <div v-if="isLoading" class="p-6 space-y-4">
@@ -682,12 +770,183 @@
             <div v-else class="text-center py-12">
                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Icon name="lucide:receipt" class="w-8 h-8 text-gray-400" />
-    </div>
+                </div>
                 <p class="text-gray-600 font-medium">No transactions found</p>
-                <p class="text-gray-400 text-sm mt-1">Transactions will appear here when they occur</p>
-    </div>
+                <p class="text-gray-400 text-sm mt-1">
+                    {{ dateRangePreset === 'all' ? 'Transactions will appear here when they occur' : 'Try a different date range' }}
+                </p>
+            </div>
+
+            <!-- Pagination -->
+            <div
+                v-if="!isLoading && summary.transactionCount > 0"
+                class="flex flex-col items-center gap-2.5 px-3 py-3 border-t border-gray-200 bg-gray-50/80 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+            >
+                <p class="text-xs text-gray-600 order-2 sm:order-1 sm:text-sm">
+                    Showing
+                    <span class="font-medium text-gray-900">{{ paginationFrom }}</span>
+                    –
+                    <span class="font-medium text-gray-900">{{ paginationTo }}</span>
+                    of
+                    <span class="font-medium text-gray-900">{{ summary.transactionCount }}</span>
+                </p>
+                <div class="flex items-center justify-center gap-1 order-1 sm:order-2 sm:gap-1.5 w-full sm:w-auto">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-2.5 shrink-0"
+                        :disabled="currentPage <= 1 || isLoading"
+                        aria-label="First page"
+                        @click="goToPage(1)"
+                    >
+                        <Icon name="lucide:chevrons-left" class="w-4 h-4" />
+                        <span class="hidden sm:inline ml-1">First</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-2.5 shrink-0"
+                        :disabled="currentPage <= 1 || isLoading"
+                        aria-label="Previous page"
+                        @click="goToPage(currentPage - 1)"
+                    >
+                        <Icon name="lucide:chevron-left" class="w-4 h-4" />
+                        <span class="hidden sm:inline ml-1">Prev</span>
+                    </Button>
+                    <span class="text-xs text-gray-700 px-2 min-w-[4.75rem] text-center sm:text-sm sm:min-w-[5.5rem]">
+                        {{ currentPage }} / {{ totalPages }}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-2.5 shrink-0"
+                        :disabled="currentPage >= totalPages || isLoading"
+                        aria-label="Next page"
+                        @click="goToPage(currentPage + 1)"
+                    >
+                        <span class="hidden sm:inline mr-1">Next</span>
+                        <Icon name="lucide:chevron-right" class="w-4 h-4" />
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-2.5 shrink-0"
+                        :disabled="currentPage >= totalPages || isLoading"
+                        aria-label="Last page"
+                        @click="goToPage(totalPages)"
+                    >
+                        <span class="hidden sm:inline mr-1">Last</span>
+                        <Icon name="lucide:chevrons-right" class="w-4 h-4" />
+                    </Button>
+                </div>
+            </div>
         </CardContent>
     </Card>
+
+    <!-- Mobile filter drawer (bottom sheet) -->
+    <Drawer v-model:open="showFilterDrawer">
+        <DrawerContent class="max-h-[85vh] flex flex-col bg-white">
+            <DrawerHeader class="text-left border-b border-gray-100 pb-3">
+                <DrawerTitle>Filters</DrawerTitle>
+                <DrawerDescription>Refine transaction history by date and sort order.</DrawerDescription>
+            </DrawerHeader>
+
+            <div class="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Date range</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button
+                            v-for="option in dateRangeOptions"
+                            :key="option.value"
+                            type="button"
+                            class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors text-left"
+                            :class="draftDateRangePreset === option.value
+                                ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white text-gray-700'"
+                            @click="draftDateRangePreset = option.value"
+                        >
+                            {{ option.label }}
+                        </button>
+                    </div>
+                    <div v-if="draftDateRangePreset === 'custom'" class="grid grid-cols-2 gap-3 pt-1">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-gray-700">From</label>
+                            <Input type="date" v-model="draftCustomStartDate" class="h-10" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-gray-700">To</label>
+                            <Input
+                                type="date"
+                                v-model="draftCustomEndDate"
+                                class="h-10"
+                                :min="draftCustomStartDate || undefined"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Sort by date</p>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button
+                            type="button"
+                            class="rounded-xl border px-3 py-3 text-sm font-medium transition-colors flex items-center gap-2"
+                            :class="draftSortOrder === 'desc'
+                                ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white text-gray-700'"
+                            @click="draftSortOrder = 'desc'"
+                        >
+                            <Icon name="lucide:arrow-down-wide-narrow" class="w-4 h-4" />
+                            Newest first
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-xl border px-3 py-3 text-sm font-medium transition-colors flex items-center gap-2"
+                            :class="draftSortOrder === 'asc'
+                                ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white text-gray-700'"
+                            @click="draftSortOrder = 'asc'"
+                        >
+                            <Icon name="lucide:arrow-up-narrow-wide" class="w-4 h-4" />
+                            Oldest first
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Per page</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button
+                            v-for="size in ['10', '20', '50']"
+                            :key="size"
+                            type="button"
+                            class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors"
+                            :class="draftPageSize === size
+                                ? 'border-blue-600 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white text-gray-700'"
+                            @click="draftPageSize = size"
+                        >
+                            {{ size }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <DrawerFooter class="border-t border-gray-100 gap-2">
+                <Button class="w-full" @click="applyFilterDrawer">
+                    Apply filters
+                </Button>
+                <div class="grid grid-cols-2 gap-2">
+                    <Button variant="outline" class="w-full" @click="resetFilterDrawer">
+                        Reset
+                    </Button>
+                    <Button variant="ghost" class="w-full" @click="showFilterDrawer = false">
+                        Cancel
+                    </Button>
+                </div>
+            </DrawerFooter>
+        </DrawerContent>
+    </Drawer>
     
     <!-- Purchase Token Dialog -->
     <WalletPurchaseTokenDialog 
@@ -722,6 +981,27 @@ definePageMeta({
             },
             startDate: null,
             endDate: null,
+            dateRangePreset: '30days',
+            customStartDate: '',
+            customEndDate: '',
+            sortOrder: 'desc',
+            currentPage: 1,
+            pageSize: '10',
+            totalPages: 1,
+            lifetimeCount: 0,
+            showFilterDrawer: false,
+            draftDateRangePreset: '30days',
+            draftCustomStartDate: '',
+            draftCustomEndDate: '',
+            draftSortOrder: 'desc',
+            draftPageSize: '10',
+            dateRangeOptions: [
+                { value: 'all', label: 'All time' },
+                { value: '7days', label: 'Last 7 days' },
+                { value: '30days', label: 'Last 30 days' },
+                { value: '90days', label: 'Last 90 days' },
+                { value: 'custom', label: 'Custom range' },
+            ],
             expandedRows: [],
             // Meters data
             meters: null,
@@ -751,10 +1031,28 @@ definePageMeta({
         async fetchTransactionsData() {
             this.isLoading = true;        
             try {
-                const response = await useWalletAuthFetch(`/meter/token/history`, {})
-                this.transactions = response.transactions;
-                this.summary.totalSpent = Number(response.totalAmount).toFixed(2)
-                this.summary.transactionCount = this.transactions.length;
+                const params = {
+                    page: this.currentPage,
+                    limit: Number(this.pageSize) || 10,
+                    sort: this.sortOrder === 'asc' ? 'asc' : 'desc',
+                }
+                if (this.startDate) params.startDate = this.startDate
+                if (this.endDate) params.endDate = this.endDate
+
+                const response = await useWalletAuthFetch(`/meter/token/history`, { params })
+                this.transactions = response.transactions || [];
+                this.summary.totalSpent = Number(response.totalAmount || 0).toFixed(2)
+                this.summary.transactionCount = Number(response.totalCount || 0)
+                this.lifetimeCount = Number(response.lifetimeCount ?? response.totalCount ?? 0)
+                this.totalPages = Math.max(
+                    1,
+                    Number(response.totalPages) ||
+                        Math.ceil((this.summary.transactionCount || 0) / (Number(this.pageSize) || 10)) ||
+                        1
+                )
+                if (this.currentPage > this.totalPages) {
+                    this.currentPage = this.totalPages
+                }
             
                 // Store the totals from the response instead of calculating
                 this.transactionTotals = {
@@ -907,17 +1205,159 @@ definePageMeta({
         },
 
         formatDateForAPI(rawDate) {
-        return rawDate.toISOString();
-      },
+            return rawDate.toISOString();
+        },
 
-        setDateRange(newValue) {
-        const startDate = new Date();
-        const endDate = new Date();
-        startDate.setMonth(startDate.getMonth() - 1);
-    
-        
-        this.startDate = this.formatDateForAPI(startDate);
-        this.endDate = this.formatDateForAPI(endDate);
+        startOfDay(date) {
+            const d = new Date(date)
+            d.setHours(0, 0, 0, 0)
+            return d
+        },
+
+        endOfDay(date) {
+            const d = new Date(date)
+            d.setHours(23, 59, 59, 999)
+            return d
+        },
+
+        setDateRange(preset = this.dateRangePreset) {
+            const end = this.endOfDay(new Date())
+            const start = this.startOfDay(new Date())
+
+            if (preset === 'all') {
+                this.startDate = null
+                this.endDate = null
+                return
+            }
+
+            if (preset === '7days') {
+                start.setDate(start.getDate() - 6)
+            } else if (preset === '90days') {
+                start.setDate(start.getDate() - 89)
+            } else if (preset === 'custom') {
+                if (!this.customStartDate || !this.customEndDate) {
+                    this.startDate = null
+                    this.endDate = null
+                    return
+                }
+                this.startDate = this.formatDateForAPI(this.startOfDay(this.customStartDate))
+                this.endDate = this.formatDateForAPI(this.endOfDay(this.customEndDate))
+                return
+            } else {
+                // Default / 30days
+                start.setDate(start.getDate() - 29)
+            }
+
+            this.startDate = this.formatDateForAPI(start)
+            this.endDate = this.formatDateForAPI(end)
+        },
+
+        ensureCustomDefaults() {
+            if (!this.customStartDate || !this.customEndDate) {
+                const end = new Date()
+                const start = new Date()
+                start.setDate(start.getDate() - 29)
+                this.customStartDate = start.toISOString().slice(0, 10)
+                this.customEndDate = end.toISOString().slice(0, 10)
+            }
+        },
+
+        async onDateRangePresetChange(preset) {
+            this.dateRangePreset = preset
+            this.currentPage = 1
+            if (preset === 'custom') {
+                this.ensureCustomDefaults()
+                this.setDateRange('custom')
+            } else {
+                this.setDateRange(preset)
+            }
+            await this.fetchTransactionsData()
+        },
+
+        async onCustomDateChange() {
+            if (!this.customStartDate || !this.customEndDate) return
+            if (this.customStartDate > this.customEndDate) {
+                this.customEndDate = this.customStartDate
+            }
+            this.currentPage = 1
+            this.setDateRange('custom')
+            await this.fetchTransactionsData()
+        },
+
+        async onSortChange(sort) {
+            this.sortOrder = sort === 'asc' ? 'asc' : 'desc'
+            this.currentPage = 1
+            await this.fetchTransactionsData()
+        },
+
+        async onPageSizeChange(size) {
+            this.pageSize = String(size || '10')
+            this.currentPage = 1
+            await this.fetchTransactionsData()
+        },
+
+        async goToPage(page) {
+            const next = Math.min(Math.max(1, page), this.totalPages)
+            if (next === this.currentPage) return
+            this.currentPage = next
+            this.expandedRows = []
+            await this.fetchTransactionsData()
+        },
+
+        openFilterDrawer() {
+            this.draftDateRangePreset = this.dateRangePreset
+            this.draftCustomStartDate = this.customStartDate
+            this.draftCustomEndDate = this.customEndDate
+            this.draftSortOrder = this.sortOrder
+            this.draftPageSize = this.pageSize
+            if (this.draftDateRangePreset === 'custom') {
+                if (!this.draftCustomStartDate || !this.draftCustomEndDate) {
+                    const end = new Date()
+                    const start = new Date()
+                    start.setDate(start.getDate() - 29)
+                    this.draftCustomStartDate = start.toISOString().slice(0, 10)
+                    this.draftCustomEndDate = end.toISOString().slice(0, 10)
+                }
+            }
+            this.showFilterDrawer = true
+        },
+
+        async applyFilterDrawer() {
+            this.dateRangePreset = this.draftDateRangePreset
+            this.customStartDate = this.draftCustomStartDate
+            this.customEndDate = this.draftCustomEndDate
+            this.sortOrder = this.draftSortOrder === 'asc' ? 'asc' : 'desc'
+            this.pageSize = String(this.draftPageSize || '10')
+            this.currentPage = 1
+
+            if (this.dateRangePreset === 'custom') {
+                if (this.customStartDate && this.customEndDate && this.customStartDate > this.customEndDate) {
+                    this.customEndDate = this.customStartDate
+                }
+                this.setDateRange('custom')
+            } else {
+                this.setDateRange(this.dateRangePreset)
+            }
+
+            this.showFilterDrawer = false
+            await this.fetchTransactionsData()
+        },
+
+        async resetFilterDrawer() {
+            this.draftDateRangePreset = '30days'
+            this.draftSortOrder = 'desc'
+            this.draftPageSize = '10'
+            this.draftCustomStartDate = ''
+            this.draftCustomEndDate = ''
+            this.dateRangePreset = '30days'
+            this.sortOrder = 'desc'
+            this.pageSize = '10'
+            this.customStartDate = ''
+            this.customEndDate = ''
+            this.currentPage = 1
+            this.setDateRange('30days')
+            this.showFilterDrawer = false
+            await this.fetchTransactionsData()
         },
 
 
@@ -1374,7 +1814,7 @@ definePageMeta({
     async mounted() {
         this.checkMobile();
         window.addEventListener('resize', this.checkMobile);
-        this.setDateRange('30days');
+        this.setDateRange(this.dateRangePreset);
         // Fetch both transactions and meters data
         await Promise.all([
             this.fetchTransactionsData(),
@@ -1383,12 +1823,9 @@ definePageMeta({
     },
 
     watch: {
-        '$store.dateRange'(newValue) {
-            this.setDateRange(newValue)
-            this.fetchTransactionsData();
-        },
         '$store.utilityType'(newValue) {
             this.activeFilter = newValue;
+            this.currentPage = 1;
             this.fetchTransactionsData();
         }
     },
@@ -1398,6 +1835,33 @@ definePageMeta({
     },
     
     computed: {
+        dateRangeLabel() {
+            const labels = {
+                all: 'All time',
+                '7days': 'Last 7 days',
+                '30days': 'Last 30 days',
+                '90days': 'Last 90 days',
+                custom: this.customStartDate && this.customEndDate
+                    ? `${this.customStartDate} → ${this.customEndDate}`
+                    : 'Custom range'
+            }
+            return labels[this.dateRangePreset] || ''
+        },
+        activeFilterCount() {
+            let count = 0
+            if (this.dateRangePreset !== 'all') count += 1
+            if (this.sortOrder !== 'desc') count += 1
+            if (String(this.pageSize) !== '10') count += 1
+            return count
+        },
+        paginationFrom() {
+            if (!this.summary.transactionCount) return 0
+            return ((this.currentPage - 1) * Number(this.pageSize)) + 1
+        },
+        paginationTo() {
+            if (!this.summary.transactionCount) return 0
+            return Math.min(this.currentPage * Number(this.pageSize), this.summary.transactionCount)
+        },
         canSaveMeterName() {
             const meter = this.selectedMeterForActions;
             if (!meter) return false;
@@ -1413,11 +1877,12 @@ definePageMeta({
         
         averageTransaction() {
             const { $currency } = useNuxtApp()
-            if (!this.summary.transactionCount || this.summary.transactionCount === 0) {
+            const count = Number(this.lifetimeCount || 0)
+            if (!count) {
                 if ($currency) return $currency(0)
                 return useWalletCurrencyStore().formatValue(0)
             }
-            const avg = (this.transactionTotals.totalAmount / this.summary.transactionCount)
+            const avg = (this.transactionTotals.totalAmount / count)
             if ($currency) return $currency(avg)
             return useWalletCurrencyStore().formatValue(avg)
         },
