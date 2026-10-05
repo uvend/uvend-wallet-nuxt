@@ -1,0 +1,1611 @@
+<template>
+  <div class="flex flex-col p-4 gap-6">
+    <!-- Header -->
+    <div class="flex flex-col gap-4 pb-2 border-b border-gray-200/80">
+      <button
+        type="button"
+        class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors w-fit"
+        @click="$router.push('/transactions')"
+      >
+        <Icon name="lucide:arrow-left" class="w-4 h-4" />
+        Back to transactions
+      </button>
+
+      <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div class="flex items-start gap-4 min-w-0">
+          <div
+            class="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border"
+            :class="[theme.softBg, theme.border]"
+          >
+            <Icon :name="theme.icon" class="w-7 h-7" :class="theme.text" />
+          </div>
+          <div class="min-w-0 pt-0.5">
+            <Skeleton v-if="meterLoading" class="w-56 h-8 mb-2" />
+            <h1 v-else class="text-2xl md:text-3xl font-semibold tracking-tight text-gray-900 truncate">
+              {{ meter?.name || 'Meter' }}
+            </h1>
+            <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-gray-500">
+              <span class="font-mono text-gray-700 bg-gray-100 rounded-md px-2 py-0.5">{{ meterNumber }}</span>
+              <span class="hidden sm:inline text-gray-300">|</span>
+              <span class="inline-flex items-center gap-1.5 capitalize">
+                <span class="w-1.5 h-1.5 rounded-full" :class="theme.dot"></span>
+                {{ meter?.utilityType || 'Utility' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          v-if="meter"
+          class="w-full md:w-auto md:min-w-[10.5rem] h-11"
+          @click="showPurchaseDialog = true"
+        >
+          <Icon name="lucide:credit-card" class="w-4 h-4 mr-2" />
+          Purchase Token
+        </Button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <Card
+        v-for="stat in stats"
+        :key="stat.label"
+        class="bg-white/95 border border-gray-200 shadow-sm"
+      >
+        <CardContent class="p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :class="stat.bg">
+              <Icon :name="stat.icon" class="w-4 h-4" :class="stat.iconClass" />
+            </div>
+            <span class="text-xs font-medium text-gray-600">{{ stat.label }}</span>
+          </div>
+          <Skeleton v-if="stat.loading" class="w-24 h-7" />
+          <template v-else>
+            <p class="text-xl sm:text-2xl font-bold text-gray-900 leading-none whitespace-nowrap">{{ stat.value }}</p>
+            <p class="text-xs text-gray-500 mt-1.5 truncate">{{ stat.hint }}</p>
+          </template>
+        </CardContent>
+      </Card>
+    </div>
+
+    <!-- Usage chart -->
+    <Card class="bg-white/95 border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+      <CardHeader class="pb-2">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <CardTitle class="text-lg font-semibold text-gray-800">Daily Usage</CardTitle>
+            <CardDescription class="text-sm">
+              Consumption per day in {{ usage.unit || 'kWh' }} · {{ dateRangeLabel }}
+            </CardDescription>
+          </div>
+
+          <div class="inline-flex rounded-xl bg-gray-100 p-1 w-full sm:w-fit">
+            <button
+              v-for="option in dateRangeOptions"
+              :key="option.value"
+              type="button"
+              class="flex-1 sm:flex-none px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all"
+              :class="dateRangePreset === option.value
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-800'"
+              @click="onDateRangePresetChange(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent class="pt-4">
+        <div v-if="usageLoading" class="h-[340px] flex flex-col justify-end gap-2">
+          <div class="flex items-end gap-2 h-full">
+            <Skeleton
+              v-for="i in 14"
+              :key="i"
+              class="flex-1 rounded-t-md"
+              :style="{ height: `${30 + ((i * 37) % 60)}%` }"
+            />
+          </div>
+        </div>
+
+        <div v-else-if="usageError" class="h-[340px] flex flex-col items-center justify-center text-center">
+          <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mb-3">
+            <Icon name="lucide:wifi-off" class="w-7 h-7 text-red-400" />
+          </div>
+          <p class="text-gray-800 font-medium">Couldn't load usage data</p>
+          <p class="text-gray-500 text-sm mt-1 max-w-sm">{{ usageError }}</p>
+          <Button variant="outline" size="sm" class="mt-4" @click="fetchUsage">
+            <Icon name="lucide:refresh-cw" class="w-4 h-4 mr-1.5" />
+            Try again
+          </Button>
+        </div>
+
+        <div v-else-if="!usage.supported" class="h-[340px] flex flex-col items-center justify-center text-center">
+          <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+            <Icon name="lucide:bar-chart-3" class="w-7 h-7 text-gray-400" />
+          </div>
+          <p class="text-gray-800 font-medium">Usage data isn't available for this meter</p>
+          <p class="text-gray-500 text-sm mt-1">
+            {{ usage.profileName ? `The "${usage.profileName}" meter type isn't supported yet.` : 'This meter isn\'t reporting usage yet.' }}
+          </p>
+        </div>
+
+        <div v-else-if="!hasUsageData" class="h-[340px] flex flex-col items-center justify-center text-center">
+          <div class="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+            <Icon name="lucide:calendar-x" class="w-7 h-7 text-gray-400" />
+          </div>
+          <p class="text-gray-800 font-medium">No readings in this period</p>
+          <p class="text-gray-500 text-sm mt-1">Try a longer date range</p>
+        </div>
+
+        <div v-else class="h-[340px]">
+          <BarChart
+            :data="chartData"
+            index="date"
+            :categories="['usage']"
+            :colors="[theme.chart]"
+            :show-legend="false"
+            :rounded-corners="4"
+            :x-formatter="formatUsageDateTick"
+            :y-formatter="formatUsageTick"
+            class="h-[340px]"
+          />
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Transactions -->
+    <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+      <CardHeader class="space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex flex-col gap-1 min-w-0">
+            <CardTitle class="text-lg font-semibold text-gray-800">Transaction History</CardTitle>
+            <CardDescription class="text-sm">
+              {{ transactionCount }} transaction{{ transactionCount === 1 ? '' : 's' }} found
+              <span v-if="txDateRangeLabel" class="text-gray-400"> · {{ txDateRangeLabel }}</span>
+            </CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            class="md:hidden shrink-0 h-9 gap-1.5"
+            @click="openFilterDrawer"
+          >
+            <Icon name="lucide:sliders-horizontal" class="w-4 h-4" />
+            Filters
+            <span
+              v-if="activeFilterCount > 0"
+              class="ml-0.5 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-semibold"
+            >
+              {{ activeFilterCount }}
+            </span>
+          </Button>
+        </div>
+
+        <div class="hidden md:flex flex-row items-end gap-3 flex-wrap">
+          <div class="flex flex-col gap-1.5 min-w-[160px]">
+            <label class="text-xs font-medium text-gray-700">Date range</label>
+            <Select v-model="txDateRangePreset" @update:modelValue="onTxDateRangePresetChange">
+              <SelectTrigger class="w-44 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm">
+                <SelectValue placeholder="Select range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in txDateRangeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <template v-if="txDateRangePreset === 'custom'">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-700">From</label>
+              <Input
+                type="date"
+                v-model="txCustomStartDate"
+                class="w-40 bg-white/80 border-gray-200 shadow-sm h-9"
+                @change="onTxCustomDateChange"
+              />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium text-gray-700">To</label>
+              <Input
+                type="date"
+                v-model="txCustomEndDate"
+                class="w-40 bg-white/80 border-gray-200 shadow-sm h-9"
+                :min="txCustomStartDate || undefined"
+                @change="onTxCustomDateChange"
+              />
+            </div>
+          </template>
+          <div class="flex flex-col gap-1.5 min-w-[150px]">
+            <label class="text-xs font-medium text-gray-700">Sort by date</label>
+            <Select v-model="sortOrder" @update:modelValue="onSortChange">
+              <SelectTrigger class="w-44 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">Newest first</SelectItem>
+                <SelectItem value="asc">Oldest first</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div class="flex flex-col gap-1.5 min-w-[120px]">
+            <label class="text-xs font-medium text-gray-700">Per page</label>
+            <Select v-model="pageSize" @update:modelValue="onPageSizeChange">
+              <SelectTrigger class="w-28 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm">
+                <SelectValue placeholder="Page size" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent class="p-0">
+        <div v-if="transactionsLoading" class="p-6 space-y-4">
+          <div class="hidden md:block overflow-x-auto">
+            <div class="inline-block min-w-full align-middle">
+              <table class="min-w-[1000px] w-full">
+                <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                  <tr>
+                    <th class="text-left py-3 px-2"><Skeleton class="w-28 h-4" /></th>
+                    <th class="text-left py-3 px-2"><Skeleton class="w-20 h-4" /></th>
+                    <th class="text-left py-3 px-2"><Skeleton class="w-24 h-4" /></th>
+                    <th class="text-left py-3 px-2"><Skeleton class="w-16 h-4" /></th>
+                    <th class="text-center py-3 px-2"><Skeleton class="mx-auto w-16 h-4" /></th>
+                    <th class="text-right py-3 px-2"><Skeleton class="ml-auto w-16 h-4" /></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white">
+                  <tr v-for="i in 6" :key="'tx-row-' + i">
+                    <td class="py-3 px-2">
+                      <div class="space-y-1">
+                        <Skeleton class="w-32 h-4" />
+                        <Skeleton class="w-20 h-3" />
+                      </div>
+                    </td>
+                    <td class="py-3 px-2">
+                      <div class="flex items-center gap-2">
+                        <Skeleton class="w-8 h-8 rounded-lg" />
+                        <div class="space-y-1">
+                          <Skeleton class="w-20 h-4" />
+                          <Skeleton class="w-16 h-3" />
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-2">
+                      <div class="space-y-1">
+                        <Skeleton class="w-28 h-4" />
+                        <Skeleton class="w-24 h-3" />
+                      </div>
+                    </td>
+                    <td class="py-3 px-2">
+                      <div class="space-y-1">
+                        <Skeleton class="w-14 h-4" />
+                        <Skeleton class="w-10 h-3" />
+                      </div>
+                    </td>
+                    <td class="py-3 px-2 text-center"><Skeleton class="mx-auto w-20 h-6 rounded-md" /></td>
+                    <td class="py-3 px-2 text-right"><Skeleton class="ml-auto w-20 h-4" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="md:hidden space-y-3">
+            <div v-for="i in 5" :key="'tx-m-row-' + i" class="p-4 border rounded-lg bg-white">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <Skeleton class="w-12 h-12 rounded-xl" />
+                  <div class="space-y-2">
+                    <Skeleton class="w-24 h-4" />
+                    <Skeleton class="w-20 h-3" />
+                  </div>
+                </div>
+                <div class="text-right space-y-2">
+                  <Skeleton class="w-20 h-4" />
+                  <Skeleton class="w-16 h-3" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else-if="transactions.length > 0">
+          <!-- Desktop table -->
+          <div class="hidden md:block overflow-x-auto">
+            <div class="inline-block min-w-full align-middle">
+              <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <table class="min-w-[1000px] w-full">
+                  <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                    <tr>
+                      <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Date & Time</th>
+                      <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Service</th>
+                      <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Meter Number</th>
+                      <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[90px]">Battery</th>
+                      <th class="text-center py-3 px-2 text-xs font-semibold text-gray-700 w-[90px]">State</th>
+                      <th class="text-right py-3 px-2 text-xs font-semibold text-gray-700 w-[110px]">Amount</th>
+                      <th class="text-center py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Receipt</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100 bg-white">
+                    <tr
+                      v-for="transaction in transactions"
+                      :key="transaction.id"
+                      class="hover:bg-blue-50/50 transition-colors duration-200"
+                    >
+                      <td class="py-3 px-2 whitespace-nowrap">
+                        <p class="text-sm font-medium text-gray-900">{{ formatDate(transaction.created) }}</p>
+                        <p class="text-xs text-gray-500">{{ formatTime(transaction.created) }}</p>
+                      </td>
+                      <td class="py-3 px-2 whitespace-nowrap">
+                        <div class="flex items-center gap-2">
+                          <div class="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm border" :class="getUtilityBg(transaction.utilityType)">
+                            <Icon :name="getUtilityIcon(transaction.utilityType)" class="w-4 h-4" :class="getUtilityIconClass(transaction.utilityType)" />
+                          </div>
+                          <div>
+                            <span class="text-sm font-semibold text-gray-900">{{ transaction.utilityType }}</span>
+                            <p class="text-xs text-gray-500">Utility Service</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="py-3 px-2 whitespace-nowrap">
+                        <p class="text-sm text-gray-900 font-mono">{{ transaction.meterNumber }}</p>
+                        <div v-if="getRemainingUnits(transaction)" class="mt-1">
+                          <div
+                            class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border shadow-sm"
+                            :class="getRemainingUnitsBg(transaction.utilityType)"
+                          >
+                            <div class="w-1.5 h-1.5 rounded-full animate-pulse" :class="getRemainingUnitsDot(transaction.utilityType)"></div>
+                            <span class="text-xs font-semibold" :class="getRemainingUnitsText(transaction.utilityType)">
+                              {{ getRemainingUnits(transaction) }}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="py-3 px-2 whitespace-nowrap">
+                        <div v-if="hasValidBattery(transaction)" class="flex items-center gap-1">
+                          <Icon
+                            name="lucide:battery"
+                            :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
+                            class="w-3 h-3"
+                          />
+                          <div class="flex flex-col">
+                            <span
+                              class="text-xs font-semibold"
+                              :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
+                            >
+                              {{ convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage) }}%
+                            </span>
+                            <span class="text-xs text-gray-500">{{ transaction.latestReading.meterVoltage.Voltage.toFixed(2) }}V</span>
+                          </div>
+                        </div>
+                        <span v-else class="text-xs text-gray-400">No data</span>
+                      </td>
+                      <td class="py-3 px-2 text-center whitespace-nowrap">
+                        <div
+                          v-if="hasValidState(transaction)"
+                          class="inline-flex items-center gap-1 px-2 py-1 rounded-md"
+                          :class="getStateBg(transaction.latestReading.meterState.State)"
+                        >
+                          <div
+                            class="w-1.5 h-1.5 rounded-full"
+                            :class="transaction.latestReading.meterState.State === 1 ? 'bg-green-500' : 'bg-red-500'"
+                          ></div>
+                          <span class="text-xs font-semibold" :class="getStateText(transaction.latestReading.meterState.State)">
+                            {{ transaction.latestReading.meterState.State === 1 ? 'Active' : 'Offline' }}
+                          </span>
+                        </div>
+                        <span v-else class="text-xs text-gray-400">No data</span>
+                      </td>
+                      <td class="py-3 px-2 text-right whitespace-nowrap">
+                        <p class="text-sm font-semibold" :class="getAmountClass(transaction.utilityType)">
+                          {{ $currency(transaction.amount) }}
+                        </p>
+                        <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
+                          {{ transaction.unitsIssued }} units
+                        </p>
+                        <p
+                          v-for="token in getDisplayTokens(transaction)"
+                          :key="`${transaction.id}-${token.label}-${token.value}`"
+                          class="text-xs text-gray-500 font-mono mt-1"
+                        >
+                          <span class="font-semibold text-gray-600">{{ token.label }}:</span>
+                          {{ token.value }}
+                        </p>
+                      </td>
+                      <td class="py-3 px-2 text-center whitespace-nowrap">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          class="text-xs"
+                          :disabled="downloadingReceiptId === transaction.id"
+                          @click="downloadReceipt(transaction.id)"
+                        >
+                          <Icon
+                            :name="downloadingReceiptId === transaction.id ? 'lucide:loader-2' : 'lucide:download'"
+                            :class="downloadingReceiptId === transaction.id ? 'w-3 h-3 mr-1 animate-spin' : 'w-3 h-3 mr-1'"
+                          />
+                          {{ downloadingReceiptId === transaction.id ? 'Downloading...' : 'Download' }}
+                        </Button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile cards -->
+          <div class="md:hidden divide-y divide-gray-100">
+            <div v-for="transaction in transactions" :key="transaction.id" class="p-4">
+              <div class="flex items-center justify-between cursor-pointer" @click="toggleExpand(transaction.id)">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border" :class="getUtilityBg(transaction.utilityType)">
+                    <Icon :name="getUtilityIcon(transaction.utilityType)" class="w-6 h-6" :class="getUtilityIconClass(transaction.utilityType)" />
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-gray-900">{{ transaction.utilityType }}</p>
+                    <p class="text-xs text-gray-500">{{ formatDate(transaction.created) }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="text-right">
+                    <p class="text-sm font-bold" :class="getAmountClass(transaction.utilityType)">
+                      {{ $currency(transaction.amount) }}
+                    </p>
+                    <p v-if="transaction.unitsIssued" class="text-xs text-gray-600 font-medium mt-1">
+                      {{ transaction.unitsIssued }} units
+                    </p>
+                    <p
+                      v-for="token in getDisplayTokens(transaction)"
+                      :key="`${transaction.id}-mobile-${token.label}-${token.value}`"
+                      class="text-xs text-gray-500 font-mono mt-1"
+                    >
+                      <span class="font-semibold text-gray-600">{{ token.label }}:</span>
+                      {{ token.value }}
+                    </p>
+                  </div>
+                  <Icon
+                    :name="expandedRows.includes(transaction.id) ? 'lucide:chevron-up' : 'lucide:chevron-down'"
+                    class="w-5 h-5 text-gray-500 transition-colors duration-200"
+                  />
+                </div>
+              </div>
+
+              <div v-if="expandedRows.includes(transaction.id)" class="mt-4 space-y-3 bg-gray-50 p-3 rounded-lg">
+                <div class="flex justify-between">
+                  <span class="text-xs text-gray-600">Meter Number</span>
+                  <div class="text-right">
+                    <span class="text-xs font-medium text-gray-900 font-mono">{{ transaction.meterNumber }}</span>
+                    <div v-if="getRemainingUnits(transaction)" class="mt-1">
+                      <div
+                        class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border shadow-sm"
+                        :class="getRemainingUnitsBg(transaction.utilityType)"
+                      >
+                        <div class="w-1.5 h-1.5 rounded-full animate-pulse" :class="getRemainingUnitsDot(transaction.utilityType)"></div>
+                        <span class="text-xs font-semibold" :class="getRemainingUnitsText(transaction.utilityType)">
+                          {{ getRemainingUnits(transaction) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="hasValidBattery(transaction)" class="flex justify-between items-center">
+                  <span class="text-xs text-gray-600">Battery</span>
+                  <div class="flex items-center gap-1.5 px-2 py-1 rounded-md border shadow-sm bg-white">
+                    <Icon
+                      name="lucide:battery"
+                      :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
+                      class="w-3 h-3"
+                    />
+                    <div class="flex flex-col">
+                      <span
+                        class="text-xs font-semibold"
+                        :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
+                      >
+                        {{ convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage) }}%
+                      </span>
+                      <span class="text-xs text-gray-500">{{ transaction.latestReading.meterVoltage.Voltage.toFixed(2) }}V</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="hasValidState(transaction)" class="flex justify-between items-center">
+                  <span class="text-xs text-gray-600">State</span>
+                  <div
+                    class="inline-flex items-center gap-1 px-2 py-1 rounded-md"
+                    :class="getStateBg(transaction.latestReading.meterState.State)"
+                  >
+                    <div
+                      class="w-1.5 h-1.5 rounded-full"
+                      :class="transaction.latestReading.meterState.State === 1 ? 'bg-green-500' : 'bg-red-500'"
+                    ></div>
+                    <span class="text-xs font-semibold" :class="getStateText(transaction.latestReading.meterState.State)">
+                      {{ transaction.latestReading.meterState.State === 1 ? 'Active' : 'Offline' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex justify-between">
+                  <span class="text-xs text-gray-600">Time</span>
+                  <span class="text-xs font-medium text-gray-900">{{ formatTime(transaction.created) }}</span>
+                </div>
+                <div class="pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    class="w-full text-xs"
+                    :disabled="downloadingReceiptId === transaction.id"
+                    @click="downloadReceipt(transaction.id)"
+                  >
+                    <Icon
+                      :name="downloadingReceiptId === transaction.id ? 'lucide:loader-2' : 'lucide:download'"
+                      :class="downloadingReceiptId === transaction.id ? 'w-3 h-3 mr-1 animate-spin' : 'w-3 h-3 mr-1'"
+                    />
+                    {{ downloadingReceiptId === transaction.id ? 'Downloading receipt...' : 'Download Receipt' }}
+                  </Button>
+                </div>
+
+                <div v-if="transaction.token" class="pt-2 border-t border-gray-200">
+                  <span class="text-xs text-gray-600">Token</span>
+                  <p class="text-xs font-mono text-gray-900 mt-1 break-all">{{ transaction.token }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="text-center py-12">
+          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Icon name="lucide:receipt" class="w-8 h-8 text-gray-400" />
+          </div>
+          <p class="text-gray-600 font-medium">No transactions found</p>
+          <p class="text-gray-400 text-sm mt-1">
+            {{ txDateRangePreset === 'all' ? 'Transactions will appear here when they occur' : 'Try a different date range' }}
+          </p>
+        </div>
+
+        <div
+          v-if="!transactionsLoading && transactionCount > 0"
+          class="flex flex-col items-center gap-2.5 px-3 py-3 border-t border-gray-200 bg-gray-50/80 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+        >
+          <p class="text-xs text-gray-600 order-2 sm:order-1 sm:text-sm">
+            Showing
+            <span class="font-medium text-gray-900">{{ paginationFrom }}</span>
+            –
+            <span class="font-medium text-gray-900">{{ paginationTo }}</span>
+            of
+            <span class="font-medium text-gray-900">{{ transactionCount }}</span>
+          </p>
+          <div class="flex items-center justify-center gap-1 order-1 sm:order-2 sm:gap-1.5 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              class="h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-2.5 shrink-0"
+              :disabled="currentPage <= 1 || transactionsLoading"
+              aria-label="First page"
+              @click="goToPage(1)"
+            >
+              <Icon name="lucide:chevrons-left" class="w-4 h-4" />
+              <span class="hidden sm:inline ml-1">First</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              class="h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-2.5 shrink-0"
+              :disabled="currentPage <= 1 || transactionsLoading"
+              aria-label="Previous page"
+              @click="goToPage(currentPage - 1)"
+            >
+              <Icon name="lucide:chevron-left" class="w-4 h-4" />
+              <span class="hidden sm:inline ml-1">Prev</span>
+            </Button>
+            <span class="text-xs text-gray-700 px-2 min-w-[4.75rem] text-center sm:text-sm sm:min-w-[5.5rem]">
+              {{ currentPage }} / {{ totalPages }}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              class="h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-2.5 shrink-0"
+              :disabled="currentPage >= totalPages || transactionsLoading"
+              aria-label="Next page"
+              @click="goToPage(currentPage + 1)"
+            >
+              <span class="hidden sm:inline mr-1">Next</span>
+              <Icon name="lucide:chevron-right" class="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              class="h-9 w-9 p-0 sm:h-8 sm:w-auto sm:px-2.5 shrink-0"
+              :disabled="currentPage >= totalPages || transactionsLoading"
+              aria-label="Last page"
+              @click="goToPage(totalPages)"
+            >
+              <span class="hidden sm:inline mr-1">Last</span>
+              <Icon name="lucide:chevrons-right" class="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Mobile filter drawer -->
+    <Drawer v-model:open="showFilterDrawer">
+      <DrawerContent class="max-h-[85vh] flex flex-col bg-white">
+        <DrawerHeader class="text-left border-b border-gray-100 pb-3">
+          <DrawerTitle>Filters</DrawerTitle>
+          <DrawerDescription>Refine transaction history by date and sort order.</DrawerDescription>
+        </DrawerHeader>
+
+        <div class="flex-1 overflow-y-auto px-4 py-4 space-y-5">
+          <div class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Date range</p>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                v-for="option in txDateRangeOptions"
+                :key="option.value"
+                type="button"
+                class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors text-left"
+                :class="draftTxDateRangePreset === option.value
+                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-700'"
+                @click="draftTxDateRangePreset = option.value"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+            <div v-if="draftTxDateRangePreset === 'custom'" class="grid grid-cols-2 gap-3 pt-1">
+              <div class="space-y-1.5">
+                <label class="text-xs font-medium text-gray-700">From</label>
+                <Input type="date" v-model="draftTxCustomStartDate" class="h-10" />
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-xs font-medium text-gray-700">To</label>
+                <Input
+                  type="date"
+                  v-model="draftTxCustomEndDate"
+                  class="h-10"
+                  :min="draftTxCustomStartDate || undefined"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Sort by date</p>
+            <div class="grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                class="rounded-xl border px-3 py-3 text-sm font-medium transition-colors flex items-center gap-2"
+                :class="draftSortOrder === 'desc'
+                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-700'"
+                @click="draftSortOrder = 'desc'"
+              >
+                <Icon name="lucide:arrow-down-wide-narrow" class="w-4 h-4" />
+                Newest first
+              </button>
+              <button
+                type="button"
+                class="rounded-xl border px-3 py-3 text-sm font-medium transition-colors flex items-center gap-2"
+                :class="draftSortOrder === 'asc'
+                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-700'"
+                @click="draftSortOrder = 'asc'"
+              >
+                <Icon name="lucide:arrow-up-narrow-wide" class="w-4 h-4" />
+                Oldest first
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Per page</p>
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                v-for="size in ['10', '20', '50']"
+                :key="size"
+                type="button"
+                class="rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors"
+                :class="draftPageSize === size
+                  ? 'border-blue-600 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-700'"
+                @click="draftPageSize = size"
+              >
+                {{ size }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <DrawerFooter class="border-t border-gray-100 gap-2">
+          <Button class="w-full" @click="applyFilterDrawer">Apply filters</Button>
+          <div class="grid grid-cols-2 gap-2">
+            <Button variant="outline" class="w-full" @click="resetFilterDrawer">Reset</Button>
+            <Button variant="ghost" class="w-full" @click="showFilterDrawer = false">Cancel</Button>
+          </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+
+    <Dialog v-model:open="showCustomRangeDialog">
+      <DialogContent class="max-w-sm bg-white rounded-2xl">
+        <DialogHeader>
+          <DialogTitle>Custom date range</DialogTitle>
+          <DialogDescription>Choose the period to show daily usage for.</DialogDescription>
+        </DialogHeader>
+
+        <div class="grid gap-4 py-2">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">From</label>
+            <Input
+              type="date"
+              v-model="draftStartDate"
+              class="w-full bg-white border-gray-200"
+              :max="draftEndDate || todayKey"
+            />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium text-gray-700">To</label>
+            <Input
+              type="date"
+              v-model="draftEndDate"
+              class="w-full bg-white border-gray-200"
+              :min="draftStartDate || undefined"
+              :max="todayKey"
+            />
+          </div>
+          <p v-if="customRangeError" class="text-sm text-red-600">{{ customRangeError }}</p>
+        </div>
+
+        <DialogFooter class="gap-2">
+          <Button variant="outline" @click="showCustomRangeDialog = false">Cancel</Button>
+          <Button :disabled="!!customRangeError" @click="applyCustomRange">Apply</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <WalletPurchaseTokenDialog
+      v-model="showPurchaseDialog"
+      :selectedMeter="meter"
+    />
+  </div>
+</template>
+
+<script>
+import { BarChart } from '@/components/ui/chart-bar'
+
+definePageMeta({
+  layout: 'wallet',
+})
+
+const THEMES = {
+  electricity: {
+    icon: 'lucide:zap',
+    chart: '#f97316',
+    text: 'text-orange-600',
+    softBg: 'bg-orange-50',
+    border: 'border-orange-100',
+    dot: 'bg-orange-500',
+  },
+  water: {
+    icon: 'lucide:droplet',
+    chart: '#2563eb',
+    text: 'text-blue-600',
+    softBg: 'bg-blue-50',
+    border: 'border-blue-100',
+    dot: 'bg-blue-500',
+  },
+  default: {
+    icon: 'lucide:gauge',
+    chart: '#2563eb',
+    text: 'text-blue-600',
+    softBg: 'bg-blue-50',
+    border: 'border-blue-100',
+    dot: 'bg-blue-500',
+  },
+}
+
+export default {
+  components: {
+    BarChart,
+  },
+  data() {
+    return {
+      meter: null,
+      meterLoading: true,
+      showPurchaseDialog: false,
+      usageLoading: false,
+      usageError: null,
+      usage: {
+        supported: true,
+        profileName: null,
+        unit: 'kWh',
+        days: [],
+        totalUsage: 0,
+      },
+      transactions: [],
+      transactionsLoading: false,
+      transactionCount: 0,
+      currentPage: 1,
+      pageSize: '10',
+      totalPages: 1,
+      sortOrder: 'desc',
+      dateRangePreset: '30days',
+      dateRangeOptions: [
+        { value: '7days', label: '7 days' },
+        { value: '30days', label: '30 days' },
+        { value: '90days', label: '90 days' },
+        { value: 'custom', label: 'Custom' },
+      ],
+      customStartDate: '',
+      customEndDate: '',
+      showCustomRangeDialog: false,
+      draftStartDate: '',
+      draftEndDate: '',
+      startDate: null,
+      endDate: null,
+      txDateRangePreset: '30days',
+      txDateRangeOptions: [
+        { value: 'all', label: 'All time' },
+        { value: '7days', label: 'Last 7 days' },
+        { value: '30days', label: 'Last 30 days' },
+        { value: '90days', label: 'Last 90 days' },
+        { value: 'custom', label: 'Custom range' },
+      ],
+      txCustomStartDate: '',
+      txCustomEndDate: '',
+      txStartDate: null,
+      txEndDate: null,
+      showFilterDrawer: false,
+      draftTxDateRangePreset: '30days',
+      draftTxCustomStartDate: '',
+      draftTxCustomEndDate: '',
+      draftSortOrder: 'desc',
+      draftPageSize: '10',
+      expandedRows: [],
+      downloadingReceiptId: null,
+    }
+  },
+  computed: {
+    meterNumber() {
+      return this.$route.params.meterNumber
+    },
+    theme() {
+      const type = String(this.meter?.utilityType || '').toLowerCase()
+      return THEMES[type] || THEMES.default
+    },
+    chartData() {
+      return (this.usage.days || []).map((day) => ({
+        date: day.date,
+        usage: Number(day.usage) || 0,
+      }))
+    },
+    daysWithData() {
+      return (this.usage.days || []).filter((day) => day.hasData)
+    },
+    hasUsageData() {
+      return this.daysWithData.length > 0
+    },
+    peakDay() {
+      return this.daysWithData.reduce(
+        (peak, day) => (!peak || day.usage > peak.usage ? day : peak),
+        null
+      )
+    },
+    stats() {
+      const unit = this.usage.unit || 'kWh'
+      const usageReady = !this.usageLoading && this.usage.supported && !this.usageError
+      const average = this.daysWithData.length
+        ? this.usage.totalUsage / this.daysWithData.length
+        : 0
+
+      return [
+        {
+          label: 'Total usage',
+          value: usageReady ? `${this.formatNumber(this.usage.totalUsage)} ${unit}` : '—',
+          hint: this.dateRangeLabel,
+          icon: 'lucide:activity',
+          bg: 'bg-purple-100',
+          iconClass: 'text-purple-600',
+          loading: this.usageLoading,
+        },
+        {
+          label: 'Daily average',
+          value: usageReady ? `${this.formatNumber(average)} ${unit}` : '—',
+          hint: `${this.daysWithData.length} day${this.daysWithData.length === 1 ? '' : 's'} with readings`,
+          icon: 'lucide:trending-up',
+          bg: 'bg-green-100',
+          iconClass: 'text-green-600',
+          loading: this.usageLoading,
+        },
+        {
+          label: 'Peak day',
+          value: usageReady && this.peakDay ? `${this.formatNumber(this.peakDay.usage)} ${unit}` : '—',
+          hint: this.peakDay ? this.formatShortDate(this.peakDay.date) : 'No readings yet',
+          icon: 'lucide:flame',
+          bg: 'bg-orange-100',
+          iconClass: 'text-orange-600',
+          loading: this.usageLoading,
+        },
+        {
+          label: 'Purchases',
+          value: String(this.transactionCount),
+          hint: this.txDateRangeLabel,
+          icon: 'lucide:receipt',
+          bg: 'bg-blue-100',
+          iconClass: 'text-blue-600',
+          loading: this.transactionsLoading,
+        },
+      ]
+    },
+    todayKey() {
+      const d = new Date()
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    },
+    customRangeError() {
+      if (!this.draftStartDate || !this.draftEndDate) return 'Please choose both dates.'
+      if (this.draftStartDate > this.draftEndDate) return 'The start date must be before the end date.'
+      const days = (new Date(this.draftEndDate) - new Date(this.draftStartDate)) / 86400000 + 1
+      if (days > 366) return 'Please choose a range of 366 days or less.'
+      return null
+    },
+    dateRangeLabel() {
+      const labels = {
+        '7days': 'Last 7 days',
+        '30days': 'Last 30 days',
+        '90days': 'Last 90 days',
+        custom: this.customStartDate && this.customEndDate
+          ? `${this.formatShortDate(this.customStartDate)} – ${this.formatShortDate(this.customEndDate)}`
+          : 'Custom range',
+      }
+      return labels[this.dateRangePreset] || ''
+    },
+    txDateRangeLabel() {
+      const labels = {
+        all: 'All time',
+        '7days': 'Last 7 days',
+        '30days': 'Last 30 days',
+        '90days': 'Last 90 days',
+        custom: this.txCustomStartDate && this.txCustomEndDate
+          ? `${this.txCustomStartDate} → ${this.txCustomEndDate}`
+          : 'Custom range',
+      }
+      return labels[this.txDateRangePreset] || ''
+    },
+    activeFilterCount() {
+      let count = 0
+      if (this.txDateRangePreset !== 'all') count += 1
+      if (this.sortOrder !== 'desc') count += 1
+      if (String(this.pageSize) !== '10') count += 1
+      return count
+    },
+    paginationFrom() {
+      if (!this.transactionCount) return 0
+      return ((this.currentPage - 1) * Number(this.pageSize)) + 1
+    },
+    paginationTo() {
+      if (!this.transactionCount) return 0
+      return Math.min(this.currentPage * Number(this.pageSize), this.transactionCount)
+    },
+  },
+  methods: {
+    formatNumber(value) {
+      return Number(value || 0).toLocaleString('en-ZA', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    },
+
+    formatShortDate(value) {
+      const date = new Date(value)
+      if (isNaN(date.getTime())) return String(value || '')
+      return date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })
+    },
+
+    formatUsageTick(value) {
+      return `${Number(value || 0).toFixed(1)}`
+    },
+
+    formatUsageDateTick(tick) {
+      const dateValue = this.chartData[tick]?.date
+      if (!dateValue) return ''
+      return this.formatShortDate(dateValue)
+    },
+
+    formatDateForAPI(rawDate) {
+      return new Date(rawDate).toISOString()
+    },
+
+    startOfDay(date) {
+      const d = new Date(date)
+      d.setHours(0, 0, 0, 0)
+      return d
+    },
+
+    endOfDay(date) {
+      const d = new Date(date)
+      d.setHours(23, 59, 59, 999)
+      return d
+    },
+
+    setDateRange(preset = this.dateRangePreset) {
+      const end = this.endOfDay(new Date())
+      const start = this.startOfDay(new Date())
+
+      if (preset === '7days') {
+        start.setDate(start.getDate() - 6)
+      } else if (preset === '90days') {
+        start.setDate(start.getDate() - 89)
+      } else if (preset === 'custom') {
+        if (!this.customStartDate || !this.customEndDate) {
+          this.startDate = null
+          this.endDate = null
+          return
+        }
+        this.startDate = this.formatDateForAPI(this.startOfDay(this.customStartDate))
+        this.endDate = this.formatDateForAPI(this.endOfDay(this.customEndDate))
+        return
+      } else {
+        start.setDate(start.getDate() - 29)
+      }
+
+      this.startDate = this.formatDateForAPI(start)
+      this.endDate = this.formatDateForAPI(end)
+    },
+
+    ensureCustomDefaults() {
+      if (!this.customStartDate || !this.customEndDate) {
+        const start = new Date()
+        start.setDate(start.getDate() - 29)
+        const pad = (n) => String(n).padStart(2, '0')
+        this.customStartDate = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`
+        this.customEndDate = this.todayKey
+      }
+    },
+
+    async onDateRangePresetChange(preset) {
+      if (preset === 'custom') {
+        this.ensureCustomDefaults()
+        this.draftStartDate = this.customStartDate
+        this.draftEndDate = this.customEndDate
+        this.showCustomRangeDialog = true
+        return
+      }
+      if (preset === this.dateRangePreset) return
+      this.dateRangePreset = preset
+      this.setDateRange(preset)
+      await this.fetchUsage()
+    },
+
+    async applyCustomRange() {
+      if (this.customRangeError) return
+      this.customStartDate = this.draftStartDate
+      this.customEndDate = this.draftEndDate
+      this.dateRangePreset = 'custom'
+      this.showCustomRangeDialog = false
+      this.setDateRange('custom')
+      await this.fetchUsage()
+    },
+
+    defaultCustomDates() {
+      const start = new Date()
+      start.setDate(start.getDate() - 29)
+      const pad = (n) => String(n).padStart(2, '0')
+      return {
+        start: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
+        end: this.todayKey,
+      }
+    },
+
+    setTxDateRange(preset = this.txDateRangePreset) {
+      const end = this.endOfDay(new Date())
+      const start = this.startOfDay(new Date())
+
+      if (preset === 'all') {
+        this.txStartDate = null
+        this.txEndDate = null
+        return
+      }
+
+      if (preset === '7days') {
+        start.setDate(start.getDate() - 6)
+      } else if (preset === '90days') {
+        start.setDate(start.getDate() - 89)
+      } else if (preset === 'custom') {
+        if (!this.txCustomStartDate || !this.txCustomEndDate) {
+          this.txStartDate = null
+          this.txEndDate = null
+          return
+        }
+        this.txStartDate = this.formatDateForAPI(this.startOfDay(this.txCustomStartDate))
+        this.txEndDate = this.formatDateForAPI(this.endOfDay(this.txCustomEndDate))
+        return
+      } else {
+        start.setDate(start.getDate() - 29)
+      }
+
+      this.txStartDate = this.formatDateForAPI(start)
+      this.txEndDate = this.formatDateForAPI(end)
+    },
+
+    async onTxDateRangePresetChange(preset) {
+      this.txDateRangePreset = preset
+      this.currentPage = 1
+      if (preset === 'custom' && (!this.txCustomStartDate || !this.txCustomEndDate)) {
+        const { start, end } = this.defaultCustomDates()
+        this.txCustomStartDate = start
+        this.txCustomEndDate = end
+      }
+      this.setTxDateRange(preset)
+      await this.fetchTransactions()
+    },
+
+    async onTxCustomDateChange() {
+      if (!this.txCustomStartDate || !this.txCustomEndDate) return
+      if (this.txCustomStartDate > this.txCustomEndDate) {
+        this.txCustomEndDate = this.txCustomStartDate
+      }
+      this.currentPage = 1
+      this.setTxDateRange('custom')
+      await this.fetchTransactions()
+    },
+
+    openFilterDrawer() {
+      this.draftTxDateRangePreset = this.txDateRangePreset
+      this.draftTxCustomStartDate = this.txCustomStartDate
+      this.draftTxCustomEndDate = this.txCustomEndDate
+      this.draftSortOrder = this.sortOrder
+      this.draftPageSize = this.pageSize
+      if (this.draftTxDateRangePreset === 'custom' && (!this.draftTxCustomStartDate || !this.draftTxCustomEndDate)) {
+        const { start, end } = this.defaultCustomDates()
+        this.draftTxCustomStartDate = start
+        this.draftTxCustomEndDate = end
+      }
+      this.showFilterDrawer = true
+    },
+
+    async applyFilterDrawer() {
+      this.txDateRangePreset = this.draftTxDateRangePreset
+      this.txCustomStartDate = this.draftTxCustomStartDate
+      this.txCustomEndDate = this.draftTxCustomEndDate
+      this.sortOrder = this.draftSortOrder === 'asc' ? 'asc' : 'desc'
+      this.pageSize = String(this.draftPageSize || '10')
+      this.currentPage = 1
+
+      if (
+        this.txDateRangePreset === 'custom' &&
+        this.txCustomStartDate &&
+        this.txCustomEndDate &&
+        this.txCustomStartDate > this.txCustomEndDate
+      ) {
+        this.txCustomEndDate = this.txCustomStartDate
+      }
+      this.setTxDateRange(this.txDateRangePreset)
+
+      this.showFilterDrawer = false
+      await this.fetchTransactions()
+    },
+
+    async resetFilterDrawer() {
+      this.draftTxDateRangePreset = '30days'
+      this.draftSortOrder = 'desc'
+      this.draftPageSize = '10'
+      this.draftTxCustomStartDate = ''
+      this.draftTxCustomEndDate = ''
+      this.txDateRangePreset = '30days'
+      this.sortOrder = 'desc'
+      this.pageSize = '10'
+      this.txCustomStartDate = ''
+      this.txCustomEndDate = ''
+      this.currentPage = 1
+      this.setTxDateRange('30days')
+      this.showFilterDrawer = false
+      await this.fetchTransactions()
+    },
+
+    toggleExpand(transactionId) {
+      const index = this.expandedRows.indexOf(transactionId)
+      if (index > -1) {
+        this.expandedRows.splice(index, 1)
+      } else {
+        this.expandedRows.push(transactionId)
+      }
+    },
+
+    async onSortChange(sort) {
+      this.sortOrder = sort === 'asc' ? 'asc' : 'desc'
+      this.currentPage = 1
+      await this.fetchTransactions()
+    },
+
+    async onPageSizeChange(size) {
+      this.pageSize = String(size || '10')
+      this.currentPage = 1
+      await this.fetchTransactions()
+    },
+
+    async goToPage(page) {
+      const next = Math.min(Math.max(1, page), this.totalPages)
+      if (next === this.currentPage) return
+      this.currentPage = next
+      this.expandedRows = []
+      await this.fetchTransactions()
+    },
+
+    async refreshAll() {
+      await Promise.all([this.fetchUsage(), this.fetchTransactions()])
+    },
+
+    async resolveMeter() {
+      this.meterLoading = true
+      try {
+        const metersStore = useMetersStore()
+        if (!metersStore.isLoaded) {
+          await metersStore.fetchMeters()
+        }
+        this.meter = metersStore.meters.find((m) => m.meterNumber === this.meterNumber) || null
+
+        if (!this.meter) {
+          this.meter = await useWalletAuthFetch(`/meter/${encodeURIComponent(this.meterNumber)}`)
+        }
+      } catch (error) {
+        console.error('Error loading meter:', error)
+      } finally {
+        this.meterLoading = false
+      }
+    },
+
+    async fetchUsage() {
+      this.usageLoading = true
+      this.usageError = null
+      try {
+        const params = {}
+        if (this.startDate) params.startDate = this.startDate
+        if (this.endDate) params.endDate = this.endDate
+
+        const response = await useWalletAuthFetch(
+          `/meter/${encodeURIComponent(this.meterNumber)}/usage`,
+          { params }
+        )
+
+        this.usage = {
+          supported: response?.supported !== false,
+          profileName: response?.profileName || null,
+          unit: response?.unit || 'kWh',
+          days: response?.days || [],
+          totalUsage: Number(response?.totalUsage || 0),
+        }
+      } catch (error) {
+        console.error('Error fetching meter usage:', error)
+        const status = error?.statusCode || error?.status || error?.response?.status
+        if (status === 404) {
+          this.usage = {
+            supported: false,
+            profileName: null,
+            unit: null,
+            days: [],
+            totalUsage: 0,
+          }
+          this.usageError = null
+        } else {
+          this.usageError = error?.data?.error || error?.message || 'Failed to load usage data'
+        }
+      } finally {
+        this.usageLoading = false
+      }
+    },
+
+    async fetchTransactions() {
+      this.transactionsLoading = true
+      try {
+        const params = {
+          page: this.currentPage,
+          limit: Number(this.pageSize) || 10,
+          sort: this.sortOrder === 'asc' ? 'asc' : 'desc',
+          meterNumber: this.meterNumber,
+        }
+        if (this.txStartDate) params.startDate = this.txStartDate
+        if (this.txEndDate) params.endDate = this.txEndDate
+
+        const response = await useWalletAuthFetch('/meter/token/history', { params })
+        const rows = response.transactions || []
+
+        this.transactions = rows.map((transaction) => {
+          let vendResponse = transaction.vendResponse
+          if (typeof vendResponse === 'string') {
+            try {
+              vendResponse = JSON.parse(vendResponse)
+            } catch {
+              vendResponse = null
+            }
+          }
+          const tokenTransactions = vendResponse?.listOfTokenTransactions?.[0]?.tokens || []
+          const tokenCount = Number(
+            vendResponse?.listOfTokenTransactions?.[0]?.tokenCount || tokenTransactions.length || 0
+          )
+          const creditTokenIndex = tokenCount > 1 ? tokenTransactions.length - 1 : 0
+          const creditToken = tokenTransactions[creditTokenIndex] || tokenTransactions[0] || null
+          const delimitedTokenNumber = creditToken?.delimitedTokenNumber || creditToken?.tokenNumber || ''
+          return {
+            ...transaction,
+            tokenCount,
+            tokenDetails: tokenTransactions.map((token) => ({
+              delimitedTokenNumber: token?.delimitedTokenNumber || token?.tokenNumber || '',
+              tokenNumber: token?.tokenNumber || '',
+            })),
+            unitsIssued: creditToken?.units || '',
+            delimitedTokenNumber,
+            token: delimitedTokenNumber,
+          }
+        })
+
+        this.transactionCount = Number(response.totalCount || 0)
+        this.totalPages = Math.max(
+          1,
+          Number(response.totalPages) ||
+            Math.ceil(this.transactionCount / (Number(this.pageSize) || 10)) ||
+            1
+        )
+        if (this.currentPage > this.totalPages) {
+          this.currentPage = this.totalPages
+        }
+      } catch (error) {
+        console.error('Error fetching meter transactions:', error)
+        this.$toast({
+          title: 'Error',
+          description: 'Failed to load meter transactions',
+          variant: 'destructive',
+        })
+      } finally {
+        this.transactionsLoading = false
+      }
+    },
+
+    async downloadReceipt(transactionId) {
+      if (!transactionId) return
+      this.downloadingReceiptId = transactionId
+      try {
+        const response = await useWalletAuthFetch('/meter/token/receipt', {
+          params: { transactionId },
+        })
+
+        const receiptUrl =
+          (typeof response === 'string' && response) ||
+          response?.url ||
+          response?.receiptUrl ||
+          response?.downloadUrl ||
+          response?.data?.url ||
+          response?.data?.receiptUrl ||
+          null
+
+        if (receiptUrl) {
+          window.open(receiptUrl, '_blank', 'noopener,noreferrer')
+          return
+        }
+
+        if (response instanceof Blob) {
+          const objectUrl = URL.createObjectURL(response)
+          const anchor = document.createElement('a')
+          anchor.href = objectUrl
+          anchor.download = `receipt-${transactionId}.pdf`
+          document.body.appendChild(anchor)
+          anchor.click()
+          document.body.removeChild(anchor)
+          URL.revokeObjectURL(objectUrl)
+          return
+        }
+
+        this.$toast({
+          title: 'Receipt unavailable',
+          description: 'Could not find a downloadable receipt for this transaction.',
+          variant: 'destructive',
+        })
+      } catch (error) {
+        console.error('Error downloading receipt:', error)
+        this.$toast({
+          title: 'Error',
+          description: 'Failed to download receipt',
+          variant: 'destructive',
+        })
+      } finally {
+        this.downloadingReceiptId = null
+      }
+    },
+
+    getDisplayTokens(transaction) {
+      const tokenDetails = Array.isArray(transaction?.tokenDetails) ? transaction.tokenDetails : []
+      const fallbackToken = transaction?.delimitedTokenNumber || ''
+      const tokenCount = Number(transaction?.tokenCount || tokenDetails.length || (fallbackToken ? 1 : 0))
+
+      if (!tokenCount) return []
+
+      if (tokenCount <= 1) {
+        const singleToken = tokenDetails[0]?.delimitedTokenNumber || tokenDetails[0]?.tokenNumber || fallbackToken
+        return singleToken ? [{ label: 'Credit token', value: singleToken }] : []
+      }
+
+      return tokenDetails
+        .map((token, index) => {
+          const tokenValue = token?.delimitedTokenNumber || token?.tokenNumber || ''
+          if (!tokenValue) return null
+
+          let label = `${index + 1}thDecoderKey`
+          if (index === 0) label = '1stDecoderKey'
+          if (index === 1) label = '2ndDecoderKey'
+          if (index === tokenDetails.length - 1) label = 'Credit token'
+
+          return { label, value: tokenValue }
+        })
+        .filter(Boolean)
+    },
+
+    normalizeUtilityType(type) {
+      const raw = String(type || '').toLowerCase()
+      if (raw === 'electricity' || raw === 'electric') return 'electricity'
+      if (raw === 'gas') return 'gas'
+      return 'water'
+    },
+
+    getUtilityIcon(type) {
+      const normalized = this.normalizeUtilityType(type)
+      if (normalized === 'electricity') return 'lucide:zap'
+      if (normalized === 'gas') return 'lucide:flame'
+      return 'lucide:droplet'
+    },
+
+    getUtilityBg(type) {
+      return type === 'Electricity' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'
+    },
+
+    getUtilityIconClass(type) {
+      return type === 'Electricity' ? 'text-orange-600' : 'text-blue-600'
+    },
+
+    getAmountClass(type) {
+      return type === 'Electricity' ? 'text-orange-600' : 'text-blue-600'
+    },
+
+    convertVoltageToBattery(voltage) {
+      if (!voltage || isNaN(voltage)) return 0
+      const minVoltage = 3.0
+      const maxVoltage = 3.7
+      const percentage = Math.min(100, Math.max(0, ((voltage - minVoltage) / (maxVoltage - minVoltage)) * 100))
+      return Math.round(percentage)
+    },
+
+    getBatteryColor(percentage) {
+      if (percentage >= 80) return 'text-green-600'
+      if (percentage >= 50) return 'text-yellow-600'
+      if (percentage >= 20) return 'text-orange-600'
+      return 'text-red-600'
+    },
+
+    getStateBg(state) {
+      if (state === 1) return 'bg-green-100 border-green-200'
+      if (state === 0) return 'bg-red-100 border-red-200'
+      return 'bg-gray-100 border-gray-200'
+    },
+
+    getStateText(state) {
+      if (state === 1) return 'text-green-700'
+      if (state === 0) return 'text-red-700'
+      return 'text-gray-700'
+    },
+
+    getRemainingUnits(transaction) {
+      const remaining = transaction?.latestReading?.remainingTokens
+      if (!remaining) return ''
+
+      if (transaction.utilityType === 'Electricity') {
+        const credit = remaining['Remaining Credit']
+        if (credit !== null && credit !== undefined && credit >= 0) {
+          return `${(parseFloat(credit) / 1000).toFixed(2)} KWh`
+        }
+      } else if (transaction.utilityType === 'Water') {
+        const litres = remaining['Remaining Litres']
+        if (litres !== null && litres !== undefined && litres >= 0) {
+          return `${parseFloat(litres).toFixed(2)} L`
+        }
+      }
+      return ''
+    },
+
+    getRemainingUnitsBg(utilityType) {
+      if (utilityType === 'Electricity') return 'bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200'
+      if (utilityType === 'Water') return 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-200'
+      return 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-200'
+    },
+
+    getRemainingUnitsDot(utilityType) {
+      if (utilityType === 'Electricity') return 'bg-orange-400'
+      if (utilityType === 'Water') return 'bg-blue-400'
+      return 'bg-gray-400'
+    },
+
+    getRemainingUnitsText(utilityType) {
+      if (utilityType === 'Electricity') return 'text-orange-700'
+      if (utilityType === 'Water') return 'text-blue-700'
+      return 'text-gray-700'
+    },
+
+    hasValidBattery(transaction) {
+      const voltage = transaction?.latestReading?.meterVoltage?.Voltage
+      return voltage !== null && voltage !== undefined && voltage >= 0
+    },
+
+    hasValidState(transaction) {
+      const state = transaction?.latestReading?.meterState?.State
+      return state === 0 || state === 1
+    },
+
+    formatDate(dateString) {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      return date.toLocaleDateString('en-ZA', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      })
+    },
+
+    formatTime(dateString) {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return ''
+      return date.toLocaleTimeString('en-ZA', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      })
+    },
+  },
+  async mounted() {
+    this.setDateRange(this.dateRangePreset)
+    this.setTxDateRange(this.txDateRangePreset)
+    await this.resolveMeter()
+    await this.refreshAll()
+  },
+  watch: {
+    '$route.params.meterNumber': {
+      async handler() {
+        this.currentPage = 1
+        await this.resolveMeter()
+        await this.refreshAll()
+      },
+    },
+  },
+}
+</script>
+
+<style scoped>
+.scrollbar-thin::-webkit-scrollbar {
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+</style>

@@ -84,10 +84,13 @@
         
         <div class="p-6">
           <div class="h-[400px]">
-            <MyBarChart 
-              :data="graphTransactions" 
-              index="date" 
+            <BarChart
+              :data="graphTransactions"
+              index="date"
               :categories="['amount']"
+              :colors="['#2563eb']"
+              :show-legend="false"
+              :rounded-corners="4"
             />
           </div>
         </div>
@@ -276,10 +279,15 @@
 </div>    
 </template>
 <script>
+import { BarChart } from '@/components/ui/chart-bar'
+
  definePageMeta({
     layout: 'wallet'
 })
   export default {
+    components: {
+      BarChart,
+    },
     data() {
       return {
         isLoading: true,

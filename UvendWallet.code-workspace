@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../uvend-wallet-api"
+		}
+	],
+	"settings": {}
+}

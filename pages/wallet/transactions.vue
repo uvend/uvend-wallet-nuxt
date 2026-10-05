@@ -194,8 +194,17 @@
                             </div>
                         </div>
                         
-                        <!-- Buy Button -->
+                        <!-- Actions -->
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <Button
+                                @click.stop="viewMeter(meter)"
+                                size="sm"
+                                variant="outline"
+                                class="px-4 py-2 text-sm border-blue-200 text-blue-700 hover:bg-blue-50 shadow-sm"
+                            >
+                                <Icon name="lucide:bar-chart-3" class="w-4 h-4 mr-2"/>
+                                View Meter
+                            </Button>
                             <Button 
                                 @click="openPurchaseDialog(meter)"
                                 @click.stop
@@ -1506,6 +1515,11 @@ definePageMeta({
         openPurchaseDialog(meter) {
             this.selectedMeterForPurchase = meter;
             this.showPurchaseDialog = true;
+        },
+
+        viewMeter(meter) {
+            if (!meter?.meterNumber) return;
+            this.$router.push(`/meter/${encodeURIComponent(meter.meterNumber)}`);
         },
 
         openMeterActions(meter) {
