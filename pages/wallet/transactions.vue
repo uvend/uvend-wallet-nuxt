@@ -527,14 +527,12 @@
                 <div class="hidden md:block overflow-x-auto">
                     <div class="inline-block min-w-full align-middle">
                         <div class="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                            <table class="min-w-[1000px] w-full">
+                            <table class="min-w-[800px] w-full">
                                 <thead class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                                     <tr>
                                         <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Date & Time</th>
                                         <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Service</th>
                                         <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Meter Number</th>
-                                        <th class="text-left py-3 px-2 text-xs font-semibold text-gray-700 w-[90px]">Battery</th>
-                                        <th class="text-center py-3 px-2 text-xs font-semibold text-gray-700 w-[90px]">State</th>
                                         <th class="text-right py-3 px-2 text-xs font-semibold text-gray-700 w-[110px]">Amount</th>
                                         <th class="text-center py-3 px-2 text-xs font-semibold text-gray-700 w-[140px]">Receipt</th>
                                     </tr>
@@ -561,48 +559,6 @@
                                         </td>
                                         <td class="py-3 px-2 whitespace-nowrap">
                                             <p class="text-sm text-gray-900 font-mono">{{ transaction.meterNumber }}</p>
-                                            <div v-if="getRemainingUnits(transaction)" class="mt-1">
-                                                <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border shadow-sm"
-                                                 :class="getRemainingUnitsBg(transaction.utilityType)">
-                                                <div class="w-1.5 h-1.5 rounded-full animate-pulse"
-                                                     :class="getRemainingUnitsDot(transaction.utilityType)"></div>
-                                                <span class="text-xs font-semibold"
-                                                      :class="getRemainingUnitsText(transaction.utilityType)">
-                                                    {{ getRemainingUnits(transaction) }}
-                                                </span>
-                                            </div>
-                                            </div>
-                                        </td>
-                                        
-                                        <!-- Battery Column -->
-                                        <td class="py-3 px-2 whitespace-nowrap">
-                                            <div v-if="hasValidBattery(transaction)" class="flex items-center gap-1">
-                                                <Icon name="lucide:battery" 
-                                                      :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
-                                                      class="w-3 h-3"/>
-                                                <div class="flex flex-col">
-                                                    <span class="text-xs font-semibold"
-                                                          :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))">
-                                                        {{ convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage) }}%
-                                                    </span>
-                                                    <span class="text-xs text-gray-500">{{ transaction.latestReading.meterVoltage.Voltage.toFixed(2) }}V</span>
-                                                </div>
-                                            </div>
-                                            <span v-else class="text-xs text-gray-400">No data</span>
-                                        </td>
-                                        
-                                        <!-- State Column -->
-                                        <td class="py-3 px-2 text-center whitespace-nowrap">
-                                            <div v-if="hasValidState(transaction)" class="inline-flex items-center gap-1 px-2 py-1 rounded-md"
-                                                 :class="getStateBg(transaction.latestReading.meterState.State)">
-                                                <div class="w-1.5 h-1.5 rounded-full"
-                                                     :class="transaction.latestReading.meterState.State === 1 ? 'bg-green-500' : 'bg-red-500'"></div>
-                                                <span class="text-xs font-semibold"
-                                                      :class="getStateText(transaction.latestReading.meterState.State)">
-                                                    {{ transaction.latestReading.meterState.State === 1 ? 'Active' : 'Offline' }}
-                                                </span>
-                                            </div>
-                                            <span v-else class="text-xs text-gray-400">No data</span>
                                         </td>
                                       
                                         <td class="py-3 px-2 text-right whitespace-nowrap">
@@ -691,52 +647,7 @@
                         <div v-if="expandedRows.includes(transaction.id)" class="mt-4 space-y-3 bg-gray-50 p-3 rounded-lg">
                             <div class="flex justify-between">
                                 <span class="text-xs text-gray-600">Meter Number</span>
-                                <div class="text-right">
                                 <span class="text-xs font-medium text-gray-900 font-mono">{{ transaction.meterNumber }}</span>
-                                    <div v-if="getRemainingUnits(transaction)" class="mt-1">
-                                <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border shadow-sm"
-                                     :class="getRemainingUnitsBg(transaction.utilityType)">
-                                    <div class="w-1.5 h-1.5 rounded-full animate-pulse"
-                                         :class="getRemainingUnitsDot(transaction.utilityType)"></div>
-                                    <span class="text-xs font-semibold"
-                                          :class="getRemainingUnitsText(transaction.utilityType)">
-                                        {{ getRemainingUnits(transaction) }}
-                                    </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            
-                            <!-- Battery Status - Enhanced -->
-                            <div v-if="hasValidBattery(transaction)" class="flex justify-between items-center">
-                                <span class="text-xs text-gray-600">Battery</span>
-                                <div class="flex items-center gap-1.5 px-2 py-1 rounded-md border shadow-sm bg-white">
-                                    <Icon name="lucide:battery" 
-                                          :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
-                                          class="w-3 h-3"/>
-                                    <div class="flex flex-col">
-                                        <span class="text-xs font-semibold"
-                                              :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))">
-                                            {{ convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage) }}%
-                                        </span>
-                                        <span class="text-xs text-gray-500">{{ transaction.latestReading.meterVoltage.Voltage.toFixed(2) }}V</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Meter State - Enhanced -->
-                            <div v-if="hasValidState(transaction)" class="flex justify-between items-center">
-                                <span class="text-xs text-gray-600">State</span>
-                                <div class="inline-flex items-center gap-1 px-2 py-1 rounded-md"
-                                     :class="getStateBg(transaction.latestReading.meterState.State)">
-                                    <div class="w-1.5 h-1.5 rounded-full"
-                                         :class="transaction.latestReading.meterState.State === 1 ? 'bg-green-500' : 'bg-red-500'"></div>
-                                    <span class="text-xs font-semibold"
-                                          :class="getStateText(transaction.latestReading.meterState.State)">
-                                        {{ transaction.latestReading.meterState.State === 1 ? 'Active' : 'Offline' }}
-                                    </span>
-                                </div>
                             </div>
                             
                             <div class="flex justify-between">
@@ -1157,19 +1068,6 @@ definePageMeta({
         },
         
         
-        // State styling methods
-        getStateBg(state) {
-            if (state === 1) return 'bg-green-100 border-green-200';
-            if (state === 0) return 'bg-red-100 border-red-200';
-            return 'bg-gray-100 border-gray-200';
-        },
-        getStateText(state) {
-            if (state === 1) return 'text-green-700';
-            if (state === 0) return 'text-red-700';
-            return 'text-gray-700';
-        },
-
-
         formatDate(dateString) {
             try {
                 const date = new Date(dateString);
