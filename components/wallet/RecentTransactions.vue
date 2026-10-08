@@ -64,41 +64,8 @@
                                 <p v-if="transaction.token" class="text-xs text-gray-500 font-mono break-all">
                                     {{ transaction.token }}
                                 </p>
-                                <!-- <p v-if="getRemainingUnits(transaction)" class="text-xs text-gray-500 font-medium">
-                                    {{ getRemainingUnits(transaction) }}
-                                </p> -->
-                                
-                                <!-- Battery and State Info -->
-                                <div v-if="hasValidBatteryOrState(transaction)" class="flex items-center gap-3 mt-2">
-                                    <!-- Battery Status -->
-                                <div v-if="hasValidBattery(transaction)" class="flex items-center gap-2">
-                                    <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-md">
-                                        <Icon :name="transaction.type === 'electricity' ? 'lucide:zap' : 'lucide:droplet'"
-                                              :class="transaction.type === 'electricity' ? 'w-3 h-3 text-orange-500' : 'w-3 h-3 text-blue-500'"/>
-                                        <span class="text-[11px] font-medium text-gray-600">{{ getRemainingUnits(transaction) }}</span>
-                                    </div>
-                                        <Icon name="lucide:battery" 
-                                              :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
-                                              class="w-3 h-3"/>
-                                        <span class="text-xs font-medium"
-                                              :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))">
-                                            {{ convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage) }}%
-                                        </span>
-                                        <span class="text-xs text-gray-500">{{ transaction.latestReading.meterVoltage.Voltage.toFixed(2) }}V</span>
-                                    </div>
-                                    
-                                    <!-- State Status -->
-                                    <div v-if="hasValidState(transaction)" class="flex items-center gap-1">
-                                        <div class="w-1.5 h-1.5 rounded-full"
-                                             :class="transaction.latestReading.meterState.State === 1 ? 'bg-green-500' : 'bg-red-500'"></div>
-                                        <span class="text-xs font-medium"
-                                              :class="getStateColor(transaction.latestReading.meterState.State)">
-                                            {{ transaction.latestReading.meterState.State === 1 ? 'Active' : 'Offline' }}
-                                        </span>
-                                    </div>
-                                </div>
-                                </div>
                             </div>
+                        </div>
                         <div class="text-right shrink-0">
                             <p class="text-base lg:text-lg font-bold whitespace-nowrap leading-none"
                                :class="transaction.type === 'electricity' ? 'text-orange-600' : 'text-blue-600'">
@@ -140,40 +107,6 @@
                                 <p v-if="transaction.totalUnits" class="text-xs text-gray-600 font-medium mt-1">
                                     {{ transaction.totalUnits }} units
                                 </p>
-                            </div>
-                        </div>
-                        <!-- <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-2">
-                            <div class="w-1.5 h-1.5 rounded-full"
-                                 :class="transaction.type === 'electricity' ? 'bg-orange-400' : 'bg-blue-400'"></div>
-                            <p class="text-xs text-gray-600 font-medium">{{ getRemainingUnits(transaction) }}</p> -->
-                        <!-- </div> -->
-
-                        <!-- Battery and State Info - Mobile -->
-                        <div v-if="hasValidBatteryOrState(transaction)" class="flex items-center justify-between">
-                            <!-- Battery Status -->
-                            <div v-if="hasValidBattery(transaction)" class="flex items-center gap-2">
-                                <div v-if="getRemainingUnits(transaction)" class="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-md">
-                                    <Icon :name="getTypeIcon(transaction.type)"
-                                          :class="getTypeRemainingIconClass(transaction.type)"/>
-                                    <span class="text-[11px] font-medium text-gray-600">{{ getRemainingUnits(transaction) }}</span>
-                                </div>
-                                <Icon name="lucide:battery" 
-                                      :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))"
-                                      class="w-3 h-3"/>
-                                <span class="text-xs font-medium"
-                                      :class="getBatteryColor(convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage))">
-                                    {{ convertVoltageToBattery(transaction.latestReading.meterVoltage.Voltage) }}%
-                                </span>
-                            </div>
-                            
-                            <!-- State Status -->
-                            <div v-if="hasValidState(transaction)" class="flex items-center gap-1">
-                                <div class="w-1.5 h-1.5 rounded-full"
-                                     :class="transaction.latestReading.meterState.State === 1 ? 'bg-green-500' : 'bg-red-500'"></div>
-                                <span class="text-xs font-medium"
-                                      :class="getStateColor(transaction.latestReading.meterState.State)">
-                                    {{ transaction.latestReading.meterState.State === 1 ? 'Active' : 'Offline' }}
-                                </span>
                             </div>
                         </div>
                     </div>
@@ -260,13 +193,6 @@ function getTypeAmountClass(type) {
     return 'text-blue-600'
 }
 
-function getTypeRemainingIconClass(type) {
-    const normalized = normalizeType(type)
-    if (normalized === 'electricity') return 'w-3 h-3 text-orange-500'
-    if (normalized === 'gas') return 'w-3 h-3 text-red-500'
-    return 'w-3 h-3 text-blue-500'
-}
-
 function formatAmount(amount) {
     return useWalletCurrencyStore().formatValue(amount)
 }
@@ -309,75 +235,6 @@ function formatTime(dateString) {
     return `${hours}:${minutes}`
 }
 
-function getRemainingUnits(transaction) {
-    if (!transaction.latestReading || !transaction.latestReading.remainingTokens) {
-        return '';
-    }
-    
-    if (normalizeType(transaction.type) === 'electricity') {
-        const credit = transaction.latestReading.remainingTokens["Remaining Credit"];
-        if (credit !== null && credit !== undefined && credit >= 0) {
-            return `${(parseFloat(credit) / 1000).toFixed(2)} KWh`;
-        }
-    } else if (normalizeType(transaction.type) === 'water') {
-        const litres = transaction.latestReading.remainingTokens["Remaining Litres"];
-        if (litres !== null && litres !== undefined && litres >= 0) {
-            return `${(parseFloat(litres) ).toFixed(2)} L`;
-        }
-    }
-    
-    return '';
-}
-
-// Battery and voltage methods
-function convertVoltageToBattery(voltage) {
-    if (!voltage || isNaN(voltage)) return 0;
-    
-    const minVoltage = 3.0;
-    const maxVoltage = 3.7;
-    
-    const percentage = Math.min(100, Math.max(0, 
-        ((voltage - minVoltage) / (maxVoltage - minVoltage)) * 100
-    ));
-    
-    return Math.round(percentage);
-}
-
-function getBatteryColor(percentage) {
-    if (percentage >= 80) return 'text-green-600';
-    if (percentage >= 50) return 'text-yellow-600';
-    if (percentage >= 20) return 'text-orange-600';
-    return 'text-red-600';
-}
-
-// State methods
-function getStateColor(state) {
-    if (state === 1) return 'text-green-600';
-    if (state === 0) return 'text-red-600';
-    return 'text-gray-600';
-}
-
-// Validation methods
-function hasValidBattery(transaction) {
-    return transaction.latestReading && 
-           transaction.latestReading.meterVoltage && 
-           transaction.latestReading.meterVoltage.Voltage !== null && 
-           transaction.latestReading.meterVoltage.Voltage !== undefined &&
-           transaction.latestReading.meterVoltage.Voltage >= 0;
-}
-
-function hasValidState(transaction) {
-    return transaction.latestReading && 
-           transaction.latestReading.meterState && 
-           transaction.latestReading.meterState.State !== null && 
-           transaction.latestReading.meterState.State !== undefined &&
-           (transaction.latestReading.meterState.State === 0 || transaction.latestReading.meterState.State === 1);
-}
-
-function hasValidBatteryOrState(transaction) {
-    return hasValidBattery(transaction) || hasValidState(transaction);
-}
-
 async function fetchRecentTransactions() {
     isLoading.value = true
     try {
@@ -414,8 +271,7 @@ async function fetchRecentTransactions() {
                     meterNumber: transaction.meterNumber,
                     totalUnits: totalUnitsPaid,
                     token: tokenNumber,
-                    amount: parseFloat(transaction.amount),
-                    latestReading: transaction.latestReading
+                    amount: parseFloat(transaction.amount)
                 }
             })
             // console.log(recentTransactions.value)
