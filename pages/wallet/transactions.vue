@@ -203,7 +203,7 @@
                                 class="px-4 py-2 text-sm border-blue-200 text-blue-700 hover:bg-blue-50 shadow-sm"
                             >
                                 <Icon name="lucide:bar-chart-3" class="w-4 h-4 mr-2"/>
-                                View Meter
+                                View Meter Activity
                             </Button>
                             <Button 
                                 @click="openPurchaseDialog(meter)"
