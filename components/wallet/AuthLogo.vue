@@ -1,15 +1,11 @@
 <template>
     <div class="flex items-center justify-center gap-3">
-        <div
+        <img
             v-if="useAppLogo"
-            class="relative h-16 w-[220px] max-w-full overflow-hidden rounded-lg"
-        >
-            <img
-                src="/icons/IMG-20260902-WA0001-removebg-preview.png"
-                alt="App logo"
-                class="absolute inset-0 h-full w-full object-cover object-center scale-[1]"
-            />
-        </div>
+            src="/icons/IMG-20260902-WA0001-removebg-preview.png"
+            alt="App logo"
+            class="block h-auto w-full max-w-[240px] object-contain"
+        />
         <template v-else>
             <h1 class="text-white font-bold text-2xl leading-tight tracking-wide" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
                 U-Vend
