@@ -11,7 +11,7 @@
         Back to transactions
       </button>
 
-      <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div class="flex items-start gap-4 min-w-0">
           <div
             class="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border"
@@ -35,14 +35,31 @@
           </div>
         </div>
 
-        <Button
-          v-if="meter"
-          class="w-full md:w-auto md:min-w-[10.5rem] h-11"
-          @click="showPurchaseDialog = true"
-        >
-          <Icon name="lucide:credit-card" class="w-4 h-4 mr-2" />
-          Purchase Token
-        </Button>
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <Button
+            v-if="meter"
+            class="w-full lg:w-auto lg:min-w-[10.5rem] h-11"
+            @click="showPurchaseDialog = true"
+          >
+            <Icon name="lucide:credit-card" class="w-4 h-4 mr-2" />
+            Purchase Token
+          </Button>
+
+          <div class="inline-flex rounded-xl bg-gray-100 p-1 w-full lg:w-fit">
+            <button
+              v-for="option in dateRangeOptions"
+              :key="option.value"
+              type="button"
+              class="flex-1 lg:flex-none px-3 py-2 lg:py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all"
+              :class="dateRangePreset === option.value
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-800'"
+              @click="onDateRangePresetChange(option.value)"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -72,29 +89,10 @@
     <!-- Usage chart -->
     <Card class="bg-white/95 border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
       <CardHeader class="pb-2">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <CardTitle class="text-lg font-semibold text-gray-800">Daily Usage</CardTitle>
-            <CardDescription class="text-sm">
-              Consumption per day in {{ usage.unit || 'kWh' }} · {{ dateRangeLabel }}
-            </CardDescription>
-          </div>
-
-          <div class="inline-flex rounded-xl bg-gray-100 p-1 w-full sm:w-fit">
-            <button
-              v-for="option in dateRangeOptions"
-              :key="option.value"
-              type="button"
-              class="flex-1 sm:flex-none px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all"
-              :class="dateRangePreset === option.value
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-800'"
-              @click="onDateRangePresetChange(option.value)"
-            >
-              {{ option.label }}
-            </button>
-          </div>
-        </div>
+        <CardTitle class="text-lg font-semibold text-gray-800">Usage Report</CardTitle>
+        <CardDescription class="text-sm">
+          Consumption per day in {{ usage.unit || 'kWh' }} · {{ dateRangeLabel }}
+        </CardDescription>
       </CardHeader>
       <CardContent class="pt-4">
         <div v-if="usageLoading" class="h-[340px] flex flex-col justify-end gap-2">
@@ -738,7 +736,7 @@
       <DialogContent class="max-w-sm bg-white rounded-2xl">
         <DialogHeader>
           <DialogTitle>Custom date range</DialogTitle>
-          <DialogDescription>Choose the period to show daily usage for.</DialogDescription>
+          <DialogDescription>Choose the period to show the usage report for.</DialogDescription>
         </DialogHeader>
 
         <div class="grid gap-4 py-2">
