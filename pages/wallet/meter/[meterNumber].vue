@@ -1294,7 +1294,7 @@ export default {
           }
           this.usageError = null
         } else {
-          this.usageError = error?.data?.error || error?.message || 'Failed to load usage data'
+          this.usageError = 'Usage data is temporarily unavailable. Please try again.'
         }
       } finally {
         this.usageLoading = false
