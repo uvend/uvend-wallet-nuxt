@@ -82,7 +82,7 @@
         </div>
     </div>
         <!-- My Meters Section -->
-    <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden">
+    <Card class="bg-white/95 backdrop-blur-sm border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl">
         <CardHeader>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
@@ -127,16 +127,16 @@
             </div>
             <div v-else-if="meters && meters.length > 0" class="divide-y divide-gray-100">
                 <div v-for="meter in meters" :key="meter.meterNumber" class="p-6">
-                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                         <!-- Meter Info -->
                         <div
-                            class="flex items-center gap-4 flex-1 cursor-pointer"
+                            class="flex items-start gap-4 flex-auto min-w-0 cursor-pointer"
                             role="button"
                             tabindex="0"
                             @click="openMeterActions(meter)"
                         >
                             <!-- Service Icon -->
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 self-center"
                                  :class="getServiceIconBg(meter.utilityType || 'all')">
                                 <Icon :name="getServiceIcon(meter.utilityType || 'all')" 
                                       :class="getServiceIconColor(meter.utilityType || 'all')"
@@ -144,7 +144,7 @@
                             </div>
                             
                             <!-- Meter Details -->
-                            <div class="flex-1 min-w-0">
+                            <div class="flex flex-col flex-auto min-w-0 min-h-min">
                                 <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                                     <h3 class="text-lg font-bold text-gray-900 truncate">{{ meter.name }}</h3>
                                     <!-- State Badge -->
@@ -162,7 +162,7 @@
                                 <p class="text-xs text-gray-500 capitalize">{{ meter.utilityType || 'General' }}</p>
                                 
                                 <!-- Meter Status Row -->
-                                <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mt-3">
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mt-3 shrink-0">
                                     <!-- Remaining Units Display -->
                                     <div v-if="getRemainingUnits(meter)" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-sm"
                                          :class="getRemainingUnitsBg(meter.utilityType)">
@@ -195,7 +195,7 @@
                         </div>
                         
                         <!-- Actions -->
-                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 lg:self-center shrink-0">
                             <Button
                                 @click.stop="viewMeter(meter)"
                                 size="sm"
