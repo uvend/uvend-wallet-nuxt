@@ -124,14 +124,14 @@
         <div 
           v-for="meter in filteredMeters" 
           :key="meter.meterNumber"
-          class="bg-white/95 backdrop-blur-sm border border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden group"
+          class="bg-white/95 backdrop-blur-sm border border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl group"
         >
           <div class="p-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <!-- Meter Info -->
-              <div class="flex items-center gap-4">
+              <div class="flex items-start gap-4 flex-auto min-w-0">
                 <!-- Service Icon -->
-                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center flex-shrink-0 self-center"
                      :class="getServiceIconBg(meter.utilityType || 'all')">
                   <Icon :name="getServiceIcon(meter.utilityType || 'all')" 
                         :class="getServiceIconColor(meter.utilityType || 'all')"
@@ -139,7 +139,7 @@
                 </div>
                 
                 <!-- Meter Details -->
-                <div class="flex-1 min-w-0">
+                <div class="flex flex-col flex-auto min-w-0 min-h-min">
                   <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                     <h3 class="text-base sm:text-lg font-bold text-gray-900 truncate">{{ meter.name }}</h3>
                     <!-- State Badge -->
@@ -156,7 +156,7 @@
                   <p class="text-sm font-medium text-gray-600 mb-1">{{ meter.meterNumber }}</p>
                   
                   <!-- Remaining Units Display -->
-                  <div v-if="getRemainingUnits(meter)" class="mb-3">
+                  <div v-if="getRemainingUnits(meter)" class="mb-3 shrink-0">
                     <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border shadow-sm"
                          :class="getRemainingUnitsBg(meter.utilityType)">
                       <div class="w-2 h-2 rounded-full animate-pulse"
@@ -172,7 +172,7 @@
                   </div>
                   
                   <!-- Meter Status Row -->
-                  <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 shrink-0">
                     <div class="flex items-center gap-2">
                       <span class="text-xs text-gray-500">Service Type:</span>
                       <span class="text-xs font-semibold text-gray-700 capitalize">{{ meter.utilityType || 'General' }}</span>
@@ -196,7 +196,7 @@
               </div>
               
               <!-- Action Buttons -->
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 sm:self-center shrink-0">
                 <!-- <Button 
                   @click="selectedMeter = meter"
                   variant="outline" 
