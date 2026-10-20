@@ -125,6 +125,12 @@ vitePWA: {
         process.env.BRAND_NAME ||
         'Uvend Prepaid Utilities'
       ).trim() || 'Uvend Prepaid Utilities',
+      /** Image URL shown when useAppLogo is true. Override with NUXT_PUBLIC_BRAND_LOGO. */
+      brandLogo: (
+        process.env.NUXT_PUBLIC_BRAND_LOGO ||
+        process.env.BRAND_LOGO ||
+        ''
+      ).trim(),
     }
     
   },

@@ -1,13 +1,13 @@
 <template>
     <div class="flex items-center justify-center gap-3">
         <div
-            v-if="useAppLogo"
-            class="relative h-16 w-[220px] max-w-full overflow-hidden rounded-lg"
+            v-if="useAppLogo && brandLogo"
+            class="relative h-24 w-[240px] max-w-full overflow-hidden"
         >
             <img
-                src="/icons/IMG-20260902-WA0001-removebg-preview.png"
+                :src="brandLogo"
                 alt="App logo"
-                class="absolute inset-0 h-full w-full object-cover object-center scale-[1]"
+                class="absolute inset-0 h-full w-full object-cover object-center"
             />
         </div>
         <template v-else>
@@ -28,4 +28,5 @@ const useAppLogo = computed(() => {
     const value = publicConfig.useAppLogo
     return value === true || String(value).trim().toLowerCase() === 'true'
 })
+const brandLogo = computed(() => String(publicConfig.brandLogo || '').trim())
 </script>
