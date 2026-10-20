@@ -16,12 +16,14 @@ export const useMetersStore = defineStore('meters', {
   },
 
   actions: {
-    async fetchMeters() {
+    async fetchMeters({ includeReadings = false }: { includeReadings?: boolean } = {}) {
       if (this.isLoading) return;
       
       this.isLoading = true;
       try {
-        const response = await useWalletAuthFetch(`/meter`) as any;
+        const response = await useWalletAuthFetch(`/meter`, {
+          params: includeReadings ? { includeReadings: true } : undefined,
+        }) as any;
         this.meters = response?.meters || [];
         this.isLoaded = true;
       } catch (error) {

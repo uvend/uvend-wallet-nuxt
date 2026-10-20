@@ -1367,7 +1367,9 @@ definePageMeta({
                     this.allMeters = [...metersStore.meters];
                     this.meters = [...metersStore.meters];
                 } else {
-                    const response = await useWalletAuthFetch(`/meter`)
+                    const response = await useWalletAuthFetch(`/meter`, {
+                        params: { includeReadings: true },
+                    })
                     const meters = (response.meters || []).filter(meter => meter?.active !== 0 && meter?.active !== '0');
                     // Update store with fetched meters
                     metersStore.setMeters(meters);
@@ -1398,7 +1400,9 @@ definePageMeta({
             // Refresh meters from API and update store
             const metersStore = useMetersStore();
             try {
-                const response = await useWalletAuthFetch(`/meter`)
+                const response = await useWalletAuthFetch(`/meter`, {
+                    params: { includeReadings: true },
+                })
                 const meters = (response.meters || []).filter(meter => meter?.active !== 0 && meter?.active !== '0');
                 // Update store with fresh meters
                 metersStore.setMeters(meters);

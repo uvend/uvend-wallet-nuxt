@@ -559,7 +559,9 @@ import { BarChart } from '@/components/ui/chart-bar'
       async fetchMeters() {
         this.isLoading = true;
         try {
-          const response = await useWalletAuthFetch(`/meter`)
+          const response = await useWalletAuthFetch(`/meter`, {
+            params: { includeReadings: true },
+          })
           //console.log(response)
           
           // Reset when API integrations are ready
